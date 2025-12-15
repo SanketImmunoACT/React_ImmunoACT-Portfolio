@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react'
 
-const VideoBackground = ({ 
-  videoSrc, 
-  posterSrc, 
-  className = "", 
-  overlayClassName = "bg-gradient-to-r from-orange-500/70 to-orange-600/70",
-  children 
+const VideoBackground = ({
+  children,
+  className = "",
+  overlayClassName = "tri-gradient-overlay",
+  posterSrc,
+  videoSrc
 }) => {
   const videoRef = useRef(null)
 
@@ -16,10 +16,10 @@ const VideoBackground = ({
       video.addEventListener('loadstart', () => console.log('Video loading started'))
       video.addEventListener('canplay', () => console.log('Video can start playing'))
       video.addEventListener('error', (e) => console.error('Video error:', e))
-      
+
       // Try to play video, but handle autoplay restrictions gracefully
       const playPromise = video.play()
-      
+
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
@@ -51,9 +51,9 @@ const VideoBackground = ({
         <source src={videoSrc} type="video/mp4" />
         {/* Fallback for browsers that don't support video */}
         {posterSrc && (
-          <img 
-            src={posterSrc} 
-            alt="Background" 
+          <img
+            src={posterSrc}
+            alt="Background"
             className="w-full h-full object-cover"
           />
         )}
