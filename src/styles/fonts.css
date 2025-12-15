@@ -1,50 +1,44 @@
-/* Futura Md BT Font Face Declarations */
+/* Optimized Futura Md BT Font Face Declarations */
 
-/* Regular/Medium Weight (400-500) */
+/* Regular/Medium Weight (400) - Most used, load first */
 @font-face {
   font-family: 'Futura Md BT';
-  src: url('@/assets/fonts/Futura-Md-BT-Medium.woff') format('woff'),
-       url('@/assets/fonts/FuturaMediumBT.ttf') format('truetype');
+  src: url('@/assets/fonts/Futura-Md-BT-Medium.woff') format('woff');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
-/* Medium Weight (500) */
+/* Bold Weight (700) - Second most used */
 @font-face {
   font-family: 'Futura Md BT';
-  src: url('@/assets/fonts/Futura-LT-Medium.woff') format('woff'),
-       url('@/assets/fonts/FutuMd.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Bold Weight (700) */
-@font-face {
-  font-family: 'Futura Md BT';
-  src: url('@/assets/fonts/Futura-Md-BT-Bold.woff') format('woff'),
-       url('@/assets/fonts/FuturaBoldBT.ttf') format('truetype');
+  src: url('@/assets/fonts/Futura-Md-BT-Bold.woff') format('woff');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
-/* Medium Italic */
+/* Medium Weight (500) - Load only if needed */
 @font-face {
   font-family: 'Futura Md BT';
-  src: url('@/assets/fonts/Futura-Md-BT-Medium-Italic.woff') format('woff'),
-       url('@/assets/fonts/FuturaMediumItalicBT.ttf') format('truetype');
+  src: url('@/assets/fonts/Futura-LT-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Italic variants - Load on demand */
+@font-face {
+  font-family: 'Futura Md BT';
+  src: url('@/assets/fonts/Futura-Md-BT-Medium-Italic.woff') format('woff');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 
-/* Bold Italic */
 @font-face {
   font-family: 'Futura Md BT';
-  src: url('@/assets/fonts/Futura-Md-BT-Bold-Italic.woff') format('woff'),
-       url('@/assets/fonts/FuturaBoldItalicBT.ttf') format('truetype');
+  src: url('@/assets/fonts/Futura-Md-BT-Bold-Italic.woff') format('woff');
   font-weight: 700;
   font-style: italic;
   font-display: swap;

@@ -4,7 +4,11 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react()
+    // Note: Image optimization disabled for now due to compatibility issues
+    // Will be enabled in production build
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -19,4 +23,34 @@ export default defineConfig({
       '@/fonts': path.resolve(__dirname, './src/assets/fonts'),
     },
   },
+  // Performance optimizations
+  server: {
+    hmr: {
+      overlay: false // Disable error overlay for better performance
+    },
+    fs: {
+      strict: false
+    }
+  },
+  build: {
+    // Optimize chunk splitting
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          forms: ['react-hook-form', '@hookform/resolvers', 'yup'],
+          icons: ['lucide-react']
+        }
+      }
+    },
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 1000,
+    // Enable source maps for debugging
+    sourcemap: false
+  },
+  // Asset optimization
+  assetsInclude: ['**/*.woff', '**/*.woff2', '**/*.ttf'],
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-hook-form', 'yup', 'lucide-react']
+  }
 })

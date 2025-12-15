@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Preload critical fonts for better performance -->
+    <link rel="preload" href="/src/assets/fonts/Futura-Md-BT-Medium.woff" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="/src/assets/fonts/Futura-Md-BT-Bold.woff" as="font" type="font/woff" crossorigin>
+    
+    <!-- DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="//localhost:5000">
+    
     <title>ImmunoACT</title>
   </head>
   <body>
