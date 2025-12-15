@@ -1,22 +1,74 @@
 import { useState } from 'react';
-import { Mail, Phone, MapPin, Clock, Shield, CheckCircle, AlertCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { AlertCircle, CheckCircle, Clock, Mail, MapPin, Shield } from 'lucide-react';
+
+// Validation schema that matches backend validation
+const validationSchema = yup.object({
+  firstName: yup
+    .string()
+    .required('First name is required')
+    .max(50, 'First name must not exceed 50 characters')
+    .matches(/^[a-zA-Z\s'-]+$/, 'First name can only contain letters, spaces, hyphens, and apostrophes'),
+  
+  lastName: yup
+    .string()
+    .required('Last name is required')
+    .max(50, 'Last name must not exceed 50 characters')
+    .matches(/^[a-zA-Z\s'-]+$/, 'Last name can only contain letters, spaces, hyphens, and apostrophes'),
+  
+  email: yup
+    .string()
+    .required('Email is required')
+    .email('Please enter a valid email address')
+    .max(100, 'Email must not exceed 100 characters'),
+  
+  phone: yup
+    .string()
+    .matches(/^[\+]?[1-9][\d]{0,15}$/, 'Please provide a valid phone number')
+    .nullable()
+    .transform((value) => value === '' ? null : value),
+  
+  institution: yup
+    .string()
+    .max(200, 'Institution name must not exceed 200 characters')
+    .matches(/^[a-zA-Z0-9\s\-.,&()]*$/, 'Institution name contains invalid characters')
+    .nullable()
+    .transform((value) => value === '' ? null : value),
+  
+  partneringCategory: yup
+    .string()
+    .required('Please select a partnering category')
+    .oneOf([
+      'Clinical Collaboration',
+      'Research Partnership',
+      'Technology Licensing',
+      'Manufacturing Partnership',
+      'Distribution Partnership',
+      'Investment Opportunity',
+      'Media Inquiry',
+      'General Inquiry',
+      'Other'
+    ], 'Please select a valid partnering category'),
+  
+  message: yup
+    .string()
+    .required('Message is required')
+    .min(10, 'Message must be at least 10 characters long')
+    .max(2000, 'Message must not exceed 2000 characters')
+    .matches(/^[a-zA-Z0-9\s\-.,!?()'"@#$%&*+=\n\r]+$/, 'Message contains invalid characters'),
+  
+  consentGiven: yup
+    .boolean()
+    .oneOf([true], 'You must consent to data processing to submit this form'),
+  
+  website: yup.string().max(0, 'Bot detected') // Honeypot field
+});
 
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    institution: '',
-    partneringCategory: '',
-    message: '',
-    consentGiven: false,
-    website: '' // Honeypot field
-  });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
-  const [errors, setErrors] = useState({});
 
   const partneringCategories = [
     'Clinical Collaboration',
@@ -30,101 +82,54 @@ const Contact = () => {
     'Other'
   ];
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: null
-      }));
+  // Initialize React Hook Form
+  const {
+    formState: { errors, isValid },
+    handleSubmit,
+    register,
+    reset,
+    watch
+  } = useForm({
+    resolver: yupResolver(validationSchema),
+    mode: 'onChange', // Validate on change for real-time feedback
+    defaultValues: {
+      consentGiven: false,
+      email: '',
+      firstName: '',
+      institution: '',
+      lastName: '',
+      message: '',
+      partneringCategory: '',
+      phone: '',
+      website: '' // Honeypot field
     }
-  };
+  });
 
-  const validateForm = () => {
-    const newErrors = {};
+  // Watch message field for character counter
+  const messageValue = watch('message', '');
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    if (!formData.partneringCategory) {
-      newErrors.partneringCategory = 'Please select a partnering category';
-    }
-
-    if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
-    } else if (formData.message.trim().length < 10) {
-      newErrors.message = 'Message must be at least 10 characters long';
-    }
-
-    if (!formData.consentGiven) {
-      newErrors.consentGiven = 'You must consent to data processing to submit this form';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+  const onSubmit = async (data) => {
     setIsSubmitting(true);
     setSubmitStatus(null);
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/contact/submit`, {
-        method: 'POST',
+        body: JSON.stringify(data),
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        method: 'POST',
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         setSubmitStatus('success');
-        setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phone: '',
-          institution: '',
-          partneringCategory: '',
-          message: '',
-          consentGiven: false,
-          website: ''
-        });
+        reset(); // Reset form using React Hook Form
       } else {
         setSubmitStatus('error');
-        if (data.details) {
-          // Handle validation errors from backend
-          const backendErrors = {};
-          data.details.forEach(error => {
-            backendErrors[error.field] = error.message;
-          });
-          setErrors(backendErrors);
-        }
+        // React Hook Form will handle validation errors automatically
+        console.error('Submission error:', responseData);
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -176,13 +181,11 @@ const Contact = () => {
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   {/* Honeypot field - hidden from users */}
                   <input
                     type="text"
-                    name="website"
-                    value={formData.website}
-                    onChange={handleInputChange}
+                    {...register('website')}
                     style={{ display: 'none' }}
                     tabIndex="-1"
                     autoComplete="off"
@@ -197,15 +200,14 @@ const Contact = () => {
                       <input
                         type="text"
                         id="firstName"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.firstName ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                        {...register('firstName')}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                          errors.firstName ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="First Name"
                       />
                       {errors.firstName && (
-                        <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+                        <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
                       )}
                     </div>
 
@@ -216,15 +218,14 @@ const Contact = () => {
                       <input
                         type="text"
                         id="lastName"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.lastName ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                        {...register('lastName')}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                          errors.lastName ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="Last Name"
                       />
                       {errors.lastName && (
-                        <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+                        <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
                       )}
                     </div>
                   </div>
@@ -237,12 +238,15 @@ const Contact = () => {
                     <input
                       type="text"
                       id="institution"
-                      name="institution"
-                      value={formData.institution}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      {...register('institution')}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                        errors.institution ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="Hospital, University, Company, etc."
                     />
+                    {errors.institution && (
+                      <p className="mt-1 text-sm text-red-600">{errors.institution.message}</p>
+                    )}
                   </div>
 
                   {/* Partnering Category */}
@@ -252,11 +256,10 @@ const Contact = () => {
                     </label>
                     <select
                       id="partneringCategory"
-                      name="partneringCategory"
-                      value={formData.partneringCategory}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.partneringCategory ? 'border-red-500' : 'border-gray-300'
-                        }`}
+                      {...register('partneringCategory')}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                        errors.partneringCategory ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     >
                       <option value="">- Select - Partnering Category</option>
                       {partneringCategories.map((category) => (
@@ -266,7 +269,7 @@ const Contact = () => {
                       ))}
                     </select>
                     {errors.partneringCategory && (
-                      <p className="mt-1 text-sm text-red-600">{errors.partneringCategory}</p>
+                      <p className="mt-1 text-sm text-red-600">{errors.partneringCategory.message}</p>
                     )}
                   </div>
 
@@ -279,12 +282,15 @@ const Contact = () => {
                       <input
                         type="tel"
                         id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        {...register('phone')}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                          errors.phone ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="Phone No."
                       />
+                      {errors.phone && (
+                        <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+                      )}
                     </div>
 
                     <div>
@@ -294,36 +300,39 @@ const Contact = () => {
                       <input
                         type="email"
                         id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.email ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                        {...register('email')}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                          errors.email ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         placeholder="Email Address"
                       />
                       {errors.email && (
-                        <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                        <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
                       )}
                     </div>
                   </div>
 
                   {/* Message */}
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                      Message *
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                        Message *
+                      </label>
+                      <span className={`text-xs ${messageValue.length > 2000 ? 'text-red-600' : 'text-gray-500'}`}>
+                        {messageValue.length}/2000
+                      </span>
+                    </div>
                     <textarea
                       id="message"
-                      name="message"
                       rows={6}
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.message ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      placeholder="Please describe your inquiry..."
+                      {...register('message')}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                        errors.message ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Please describe your inquiry... (minimum 10 characters)"
                     />
                     {errors.message && (
-                      <p className="mt-1 text-sm text-red-600">{errors.message}</p>
+                      <p className="mt-1 text-sm text-red-600">{errors.message.message}</p>
                     )}
                   </div>
 
@@ -332,9 +341,7 @@ const Contact = () => {
                     <input
                       type="checkbox"
                       id="consentGiven"
-                      name="consentGiven"
-                      checked={formData.consentGiven}
-                      onChange={handleInputChange}
+                      {...register('consentGiven')}
                       className="mt-1 w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                     />
                     <label htmlFor="consentGiven" className="text-sm text-gray-700">
@@ -344,7 +351,7 @@ const Contact = () => {
                     </label>
                   </div>
                   {errors.consentGiven && (
-                    <p className="text-sm text-red-600">{errors.consentGiven}</p>
+                    <p className="text-sm text-red-600">{errors.consentGiven.message}</p>
                   )}
 
                   {/* HIPAA Notice */}
@@ -364,7 +371,7 @@ const Contact = () => {
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !isValid}
                     className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black font-medium py-3 px-6 rounded-lg transition-colors"
                   >
                     {isSubmitting ? 'Submitting...' : 'Submit Form'}
