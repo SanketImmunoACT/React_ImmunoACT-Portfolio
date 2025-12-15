@@ -17,10 +17,21 @@ const VideoBackground = ({
       video.addEventListener('canplay', () => console.log('Video can start playing'))
       video.addEventListener('error', (e) => console.error('Video error:', e))
       
-      // Ensure video plays automatically and loops
-      video.play().catch((error) => {
-        console.error('Video autoplay failed:', error)
-      })
+      // Try to play video, but handle autoplay restrictions gracefully
+      const playPromise = video.play()
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            // Video started playing successfully
+            console.log('Video autoplay started')
+          })
+          .catch((error) => {
+            // Autoplay was prevented - this is normal behavior
+            console.log('Video autoplay prevented by browser policy:', error.name)
+            // Don't show this as an error since it's expected behavior
+          })
+      }
     }
   }, [])
 
@@ -34,6 +45,7 @@ const VideoBackground = ({
         muted
         loop
         playsInline
+        preload="metadata"
         poster={posterSrc}
       >
         <source src={videoSrc} type="video/mp4" />
