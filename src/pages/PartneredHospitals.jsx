@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Wrapper } from '@googlemaps/react-wrapper';
-import { MapPin, Phone, Mail, Navigation, Filter, Search, AlertCircle, CheckCircle, Shield } from 'lucide-react';
+import { AlertCircle, CheckCircle, Filter, Mail, MapPin, Navigation, Phone, Search, Shield } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import PageBanner from '@/components/PageBanner';
+import immunoactFavicon from '@/assets/logos/immunoact-favicon.png';
 
 // Validation schema for collaboration form
 const collaborationSchema = yup.object({
@@ -67,48 +68,28 @@ const collaborationSchema = yup.object({
   website: yup.string().max(0, 'Bot detected') // Honeypot field
 });
 
-// Sample hospital data - you'll replace this with your actual data
-const sampleHospitals = [
-  {
-    id: 1,
-    name: "AIIMS, Mumbai",
-    address: "Bandra East, Mumbai, Maharashtra 400051",
-    phone: "+91-22-2659-8000",
-    email: "info@aiimsmumbai.edu.in",
-    city: "Mumbai",
-    state: "Maharashtra",
-    coordinates: { lat: 19.0760, lng: 72.8777 },
-    type: "Government"
-  },
-  {
-    id: 2,
-    name: "Apollo Hospitals, Mumbai",
-    address: "Sector 15, CBD Belapur, Navi Mumbai, Maharashtra 400614",
-    phone: "+91-22-3982-3982",
-    email: "info@apollohospitals.com",
-    city: "Mumbai",
-    state: "Maharashtra",
-    coordinates: { lat: 19.0330, lng: 73.0297 },
-    type: "Private"
-  },
-  {
-    id: 3,
-    name: "Tata Memorial Hospital, Mumbai",
-    address: "Dr. E Borges Road, Parel, Mumbai, Maharashtra 400012",
-    phone: "+91-22-2417-7000",
-    email: "info@tmc.gov.in",
-    city: "Mumbai",
-    state: "Maharashtra",
-    coordinates: { lat: 19.0176, lng: 72.8562 },
-    type: "Government"
-  }
-];
+// Import real hospital data
+import hospitalData from '../data/allHospitalsData.js';
+
+// Utility function to calculate distance between two coordinates using Haversine formula
+const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in kilometers
+};
 
 // Map component
-const Map = ({ hospitals, selectedHospital, onHospitalSelect }) => {
+const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radiusKm, onRadiusChange }) => {
   const mapRef = React.useRef(null);
   const [map, setMap] = React.useState(null);
   const [markers, setMarkers] = React.useState([]);
+  const [radiusCircle, setRadiusCircle] = React.useState(null);
 
   const initializeMap = useCallback(() => {
     if (!mapRef.current) return;
@@ -118,13 +99,13 @@ const Map = ({ hospitals, selectedHospital, onHospitalSelect }) => {
       zoom: 5,
       styles: [
         {
-          featureType: "water",
           elementType: "geometry",
+          featureType: "water",
           stylers: [{ color: "#e9e9e9" }, { lightness: 17 }]
         },
         {
-          featureType: "landscape",
           elementType: "geometry",
+          featureType: "landscape",
           stylers: [{ color: "#f5f5f5" }, { lightness: 20 }]
         }
       ]
@@ -133,27 +114,59 @@ const Map = ({ hospitals, selectedHospital, onHospitalSelect }) => {
     setMap(mapInstance);
   }, []);
 
+  const createRadiusCircle = useCallback(() => {
+    if (!map || !radiusCenter) return;
+
+    // Clear existing circle
+    if (radiusCircle) {
+      radiusCircle.setMap(null);
+    }
+
+    // Create new circle
+    const circle = new window.google.maps.Circle({
+      strokeColor: '#f97316',
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: '#f97316',
+      fillOpacity: 0.1,
+      map: map,
+      center: radiusCenter,
+      radius: radiusKm * 1000 // Convert km to meters
+    });
+
+    setRadiusCircle(circle);
+  }, [map, radiusCenter, radiusKm, radiusCircle]);
+
   const createMarkers = useCallback(() => {
     if (!map || !hospitals.length) return;
 
     // Clear existing markers
     markers.forEach(marker => marker.setMap(null));
 
-    const newMarkers = hospitals.map(hospital => {
+    // Filter hospitals within radius if radiusCenter is set
+    let filteredHospitals = hospitals;
+    if (radiusCenter) {
+      filteredHospitals = hospitals.filter(hospital => {
+        const distance = calculateDistance(
+          radiusCenter.lat,
+          radiusCenter.lng,
+          hospital.coordinates.lat,
+          hospital.coordinates.lng
+        );
+        return distance <= radiusKm;
+      });
+    }
+
+    const newMarkers = filteredHospitals.map(hospital => {
       const marker = new window.google.maps.Marker({
-        position: hospital.coordinates,
-        map: map,
-        title: hospital.name,
         icon: {
-          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="16" cy="16" r="12" fill="#f97316" stroke="#fff" stroke-width="2"/>
-              <path d="M16 8v8m-4-4h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          `),
+          anchor: new window.google.maps.Point(16, 16),
           scaledSize: new window.google.maps.Size(32, 32),
-          anchor: new window.google.maps.Point(16, 16)
-        }
+          url: immunoactFavicon
+        },
+        map: map,
+        position: hospital.coordinates,
+        title: hospital.name
       });
 
       const infoWindow = new window.google.maps.InfoWindow({
@@ -161,10 +174,6 @@ const Map = ({ hospitals, selectedHospital, onHospitalSelect }) => {
           <div class="p-3 max-w-xs">
             <h3 class="font-bold text-lg text-gray-800 mb-2">${hospital.name}</h3>
             <p class="text-sm text-gray-600 mb-2">${hospital.address}</p>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs text-gray-500">📞</span>
-              <span class="text-sm text-gray-700">${hospital.phone}</span>
-            </div>
             <div class="flex items-center gap-2 mb-3">
               <span class="text-xs text-gray-500">✉️</span>
               <span class="text-sm text-gray-700">${hospital.email}</span>
@@ -188,7 +197,12 @@ const Map = ({ hospitals, selectedHospital, onHospitalSelect }) => {
     });
 
     setMarkers(newMarkers);
-  }, [map, hospitals, onHospitalSelect]);
+
+    // Notify parent component about filtered hospitals
+    if (onRadiusChange) {
+      onRadiusChange(filteredHospitals);
+    }
+  }, [map, hospitals, onHospitalSelect, radiusCenter, radiusKm, onRadiusChange]);
 
   useEffect(() => {
     if (window.google && window.google.maps) {
@@ -199,6 +213,10 @@ const Map = ({ hospitals, selectedHospital, onHospitalSelect }) => {
   useEffect(() => {
     createMarkers();
   }, [createMarkers]);
+
+  useEffect(() => {
+    createRadiusCircle();
+  }, [createRadiusCircle]);
 
   // Focus on selected hospital
   useEffect(() => {
@@ -236,10 +254,6 @@ const HospitalList = ({ hospitals, onHospitalSelect, selectedHospital }) => {
                 <p className="text-sm text-gray-600 mb-2">{hospital.address}</p>
                 
                 <div className="flex items-center gap-4 text-xs text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <Phone size={12} />
-                    {hospital.phone}
-                  </span>
                   <span className="px-2 py-1 bg-gray-100 rounded">
                     {hospital.type}
                   </span>
@@ -260,17 +274,65 @@ const HospitalList = ({ hospitals, onHospitalSelect, selectedHospital }) => {
   );
 };
 
+// Radius Control Component
+const RadiusControl = ({ radiusKm, onRadiusChange, radiusCenter, selectedHospital, onResetRadius }) => {
+  const radiusOptions = [
+    { value: 10, label: '10 km' },
+    { value: 20, label: '20 km' },
+    { value: 50, label: '50 km' },
+    { value: 100, label: '100 km' },
+    { value: 500, label: '500 km' },
+    { value: 1000, label: '1000 km' },
+    { value: 1500, label: '1500 km' }
+  ];
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h3 className="text-lg font-semibold text-gray-800">Search Radius</h3>
+          <select
+            value={radiusKm}
+            onChange={(e) => onRadiusChange(parseInt(e.target.value))}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+            {radiusOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {selectedHospital && (
+            <button
+              onClick={onResetRadius}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
+            >
+              Reset to Center
+            </button>
+          )}
+        </div>
+        <div className="text-sm text-gray-600">
+          {selectedHospital ? 
+            `Showing hospitals within ${radiusKm}km of ${selectedHospital.name}` :
+            `Showing hospitals within ${radiusKm}km of India center`
+          }
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Filter component
 const FilterPanel = ({ 
-  hospitals, 
   filteredHospitals, 
+  hospitals, 
   onFilterChange, 
-  searchTerm, 
-  onSearchChange,
-  selectedState,
+  onSearchChange, 
   onStateChange,
-  selectedType,
-  onTypeChange 
+  onTypeChange,
+  searchTerm,
+  selectedState,
+  selectedType 
 }) => {
   const states = [...new Set(hospitals.map(h => h.state))];
   const types = [...new Set(hospitals.map(h => h.type))];
@@ -329,43 +391,6 @@ const CollaborateSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
 
-  const partneringCategories = [
-    'Clinical Collaboration',
-    'Research Partnership',
-    'Technology Licensing',
-    'Manufacturing Partnership',
-    'Distribution Partnership',
-    'Investment Opportunity',
-    'Hospital Partnership',
-    'Other'
-  ];
-
-  // Initialize React Hook Form
-  const {
-    formState: { errors, isValid },
-    handleSubmit,
-    register,
-    reset,
-    watch
-  } = useForm({
-    resolver: yupResolver(collaborationSchema),
-    mode: 'onChange',
-    defaultValues: {
-      consentGiven: false,
-      email: '',
-      firstName: '',
-      institution: '',
-      lastName: '',
-      message: '',
-      partneringCategory: '',
-      phone: '',
-      website: '' // Honeypot field
-    }
-  });
-
-  // Watch message field for character counter
-  const messageValue = watch('message', '');
-
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setSubmitStatus(null);
@@ -398,6 +423,45 @@ const CollaborateSection = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Initialize React Hook Form
+  const {
+    formState: { errors, isValid },
+    handleSubmit,
+    register,
+    reset,
+    watch
+  } = useForm({
+    defaultValues: {
+      consentGiven: false,
+      email: '',
+      firstName: '',
+      institution: '',
+      lastName: '',
+      message: '',
+      partneringCategory: '',
+      phone: '',
+      website: '' // Honeypot field
+    },
+    mode: 'onChange',
+    resolver: yupResolver(collaborationSchema)
+  });
+
+  // Watch message field for character counter
+  const messageValue = watch('message', '');
+
+  null
+
+  const partneringCategories = [
+    'Clinical Collaboration',
+    'Research Partnership',
+    'Technology Licensing',
+    'Manufacturing Partnership',
+    'Distribution Partnership',
+    'Investment Opportunity',
+    'Hospital Partnership',
+    'Other'
+  ];
 
   return (
     <div className="bg-gray-50 py-16">
@@ -644,16 +708,57 @@ const CollaborateSection = () => {
 };
 
 const PartneredHospitals = () => {
-  const [hospitals] = useState(sampleHospitals);
-  const [filteredHospitals, setFilteredHospitals] = useState(sampleHospitals);
+  const [hospitals] = useState(hospitalData);
+  const [filteredHospitals, setFilteredHospitals] = useState(hospitalData);
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedState, setSelectedState] = useState('');
   const [selectedType, setSelectedType] = useState('');
+  
+  // Radius functionality
+  const [radiusKm, setRadiusKm] = useState(1500);
+  const [radiusCenter, setRadiusCenter] = useState({ lat: 20.5937, lng: 78.9629 }); // Center of India initially
+  const [radiusFilteredHospitals, setRadiusFilteredHospitals] = useState([]);
 
-  // Filter hospitals based on search and filters
+  // Initialize radius filtered hospitals on mount
   useEffect(() => {
-    let filtered = hospitals;
+    const filtered = hospitals.filter(hospital => {
+      const distance = calculateDistance(
+        radiusCenter.lat,
+        radiusCenter.lng,
+        hospital.coordinates.lat,
+        hospital.coordinates.lng
+      );
+      return distance <= radiusKm;
+    });
+    setRadiusFilteredHospitals(filtered);
+  }, [hospitals, radiusCenter, radiusKm]);
+
+  // Handle hospital selection and radius center change
+  const handleHospitalSelect = (hospital) => {
+    setSelectedHospital(hospital);
+    setRadiusCenter(hospital.coordinates);
+  };
+
+  // Handle radius change
+  const handleRadiusChange = (newRadius) => {
+    setRadiusKm(newRadius);
+  };
+
+  // Handle radius reset to center of India
+  const handleResetRadius = () => {
+    setSelectedHospital(null);
+    setRadiusCenter({ lat: 20.5937, lng: 78.9629 });
+  };
+
+  // Handle radius filtered hospitals update from Map component
+  const handleRadiusFilteredHospitals = (hospitals) => {
+    setRadiusFilteredHospitals(hospitals);
+  };
+
+  // Filter hospitals based on search and filters (applied to radius-filtered hospitals)
+  useEffect(() => {
+    let filtered = radiusFilteredHospitals;
 
     if (searchTerm) {
       filtered = filtered.filter(hospital =>
@@ -672,30 +777,59 @@ const PartneredHospitals = () => {
     }
 
     setFilteredHospitals(filtered);
-  }, [hospitals, searchTerm, selectedState, selectedType]);
+  }, [radiusFilteredHospitals, searchTerm, selectedState, selectedType]);
 
   const render = (status) => {
-    if (status === 'LOADING') return <div className="flex items-center justify-center h-96">Loading...</div>;
-    if (status === 'FAILURE') return <div className="flex items-center justify-center h-96 text-red-500">Error loading map</div>;
+    if (status === 'LOADING') {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading map...</p>
+          </div>
+        </div>
+      );
+    }
+    if (status === 'FAILURE') {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center text-red-500">
+            <p className="text-lg font-semibold mb-2">Error loading map</p>
+            <p className="text-sm">Please check your internet connection and try again.</p>
+          </div>
+        </div>
+      );
+    }
     return (
       <Map 
-        hospitals={filteredHospitals} 
+        hospitals={hospitals}
         selectedHospital={selectedHospital}
-        onHospitalSelect={setSelectedHospital}
+        onHospitalSelect={handleHospitalSelect}
+        radiusCenter={radiusCenter}
+        radiusKm={radiusKm}
+        onRadiusChange={handleRadiusFilteredHospitals}
       />
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Hero Section */}
       <PageBanner 
         title="Partnered Hospitals" 
-        subtitle="Our strong association with over 50+ leading hospitals in India and around the world has contributed to our customers."
+        subtitle={`Our strong association with ${hospitals.length}+ leading hospitals across India has contributed to our customers' access to advanced cancer treatments.`}
       />
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <RadiusControl
+          radiusKm={radiusKm}
+          onRadiusChange={handleRadiusChange}
+          radiusCenter={radiusCenter}
+          selectedHospital={selectedHospital}
+          onResetRadius={handleResetRadius}
+        />
+        
         <FilterPanel
           hospitals={hospitals}
           filteredHospitals={filteredHospitals}
@@ -707,23 +841,34 @@ const PartneredHospitals = () => {
           onTypeChange={setSelectedType}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Hospital List */}
-          <div className="lg:col-span-1">
-            <HospitalList
-              hospitals={filteredHospitals}
-              onHospitalSelect={setSelectedHospital}
-              selectedHospital={selectedHospital}
-            />
+          <div className="lg:col-span-1 order-2 lg:order-1">
+            <div className="h-[400px] lg:h-[600px]">
+              <HospitalList
+                hospitals={filteredHospitals}
+                onHospitalSelect={handleHospitalSelect}
+                selectedHospital={selectedHospital}
+              />
+            </div>
           </div>
 
           {/* Map */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden h-full">
-              <Wrapper 
-                apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "YOUR_API_KEY_HERE"} 
-                render={render}
-              />
+          <div className="lg:col-span-2 order-1 lg:order-2">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[400px] lg:h-[600px] w-full relative">
+              {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
+                <Wrapper 
+                  apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} 
+                  render={render}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full bg-gray-100">
+                  <div className="text-center text-gray-600">
+                    <p className="text-lg font-semibold mb-2">Map Configuration Required</p>
+                    <p className="text-sm">Please configure Google Maps API key to view the map.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
