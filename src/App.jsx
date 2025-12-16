@@ -1,20 +1,21 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
 import Home from '@/pages/Home'
 import Contact from '@/pages/Contact'
+import NewsMedia from '@/pages/NewsMedia'
+import BlogPost from '@/pages/BlogPost'
+import Careers from '@/pages/Careers'
+import Philanthropy from '@/pages/Philanthropy'
+import Publications from '@/pages/Publications'
+import PrivacyPolicy from '@/pages/PrivacyPolicy'
+import PartneredHospitals from '@/pages/PartneredHospitals'
 
-// About Pages
-import WhoWeAre from '@/pages/About/WhoWeAre'
-import Team from '@/pages/About/Team'
-
-// NexCAR19 Pages
-import ForPatients from '@/pages/NexCAR19/ForPatients'
-import ForHCP from '@/pages/NexCAR19/ForHCP'
-
-// Science Pages
-import Research from '@/pages/Science/Research'
+// Main Pages
+import About from '@/pages/About'
+import Science from '@/pages/Science'
+import NexCAR19 from '@/pages/NexCAR19'
 
 import '@/App.css'
 
@@ -27,25 +28,33 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             
-            {/* About Routes */}
-            <Route path="/about/who-we-are" element={<WhoWeAre />} />
-            <Route path="/about/team" element={<Team />} />
+            {/* Main Page Routes */}
+            <Route path="/about" element={<About />} />
+            <Route path="/about/who-we-are" element={<About />} />
+            <Route path="/about/team" element={<About />} />
             
-            {/* Science Routes */}
-            <Route path="/science/research" element={<Research />} />
-            <Route path="/science/process" element={<Research />} />
-            <Route path="/science/pipeline" element={<Research />} />
-            <Route path="/science/publications" element={<Research />} />
+            <Route path="/science" element={<Science />} />
+            <Route path="/science/research" element={<Science />} />
+            <Route path="/science/process" element={<Science />} />
+            <Route path="/science/pipeline" element={<Science />} />
+            <Route path="/science/publications" element={<Science />} />
             
-            {/* NexCAR19 Routes */}
-            <Route path="/nexcar19" element={<ForPatients />} />
-            <Route path="/nexcar19-hcp" element={<ForHCP />} />
+            <Route path="/nexcar19" element={<NexCAR19 />} />
+            <Route path="/nexcar19-hcp" element={<NexCAR19 />} />
+            
+            {/* Media Routes */}
+            <Route path="/news-media" element={<NewsMedia />} />
+            <Route path="/news-media/:id" element={<BlogPost />} />
             
             {/* Other Routes */}
             <Route path="/contact" element={<Contact />} />
-            <Route path="/media" element={<Home />} />
-            <Route path="/philanthropy" element={<Home />} />
-            <Route path="/careers" element={<Home />} />
+            <Route path="/media" element={<NewsMedia />} />
+            <Route path="/philanthropy" element={<Philanthropy />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/publications" element={<Publications />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/partnered-hospitals" element={<PartneredHospitals />} />
+            <Route path="/treatment-centres" element={<PartneredHospitals />} />
           </Routes>
         </main>
         <Footer />

@@ -20,23 +20,23 @@ const Footer = () => {
 
             {/* Social Media Icons */}
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
+              <a href="https://www.facebook.com/people/Immunoadoptive-Cell/pfbid07T31Ez4ULUrLEvo1Q87XFnY8ZPTXR5DCFoR1n47BeepmJ3S3jv7PuMquhcisPG81l/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 transition-colors">
                 <span className="sr-only">Meta (Facebook)</span>
                 <FooterMeta />
               </a>
-              <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
+              <a href="https://www.instagram.com/actimmuno/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 transition-colors">
                 <span className="sr-only">Instagram</span>
                 <FooterInstagram />
               </a>
-              <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
+              <a href="https://x.com/ActImmuno" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 transition-colors">
                 <span className="sr-only">Twitter</span>
                 <FooterTwitter />
               </a>
-              <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
+              <a href="https://www.linkedin.com/company/immunoact/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 transition-colors">
                 <span className="sr-only">LinkedIn</span>
                 <FooterLinkedIn />
               </a>
-              <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors">
+              <a href="https://www.youtube.com/@immunoact4858" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 transition-colors">
                 <span className="sr-only">YouTube</span>
                 <FooterYouTube />
               </a>
@@ -46,7 +46,7 @@ const Footer = () => {
           {/* Quick Links */}
           <div>
             <h3 className="text-[20px] font-semibold text-[#363636] mb-4">Quick Links:</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               <li><a href="/" className="text-[#363636] hover:text-gray-800 transition-colors text-lg">Home</a></li>
               <li><a href="/about" className="text-[#363636] hover:text-gray-800 transition-colors text-lg">About</a></li>
               <li><a href="/science" className="text-[#363636] hover:text-gray-800 transition-colors text-lg">Science</a></li>
@@ -68,7 +68,7 @@ const Footer = () => {
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-8">Support & Legal:</h3>
             <ul className="space-y-3">
               <li><a href="/contact" className="text-[#363636] hover:text-gray-800 transition-colors text-lg">Contact Us</a></li>
-              <li><a href="/privacy" className="text-[#363636] hover:text-gray-800 transition-colors text-lg">Privacy Policy</a></li>
+              <li><a href="/privacy-policy" className="text-[#363636] hover:text-gray-800 transition-colors text-lg">Privacy Policy</a></li>
             </ul>
           </div>
 
@@ -82,8 +82,6 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-
-
       </div>
     </footer>
   )

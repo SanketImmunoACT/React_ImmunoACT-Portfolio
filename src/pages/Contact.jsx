@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { AlertCircle, CheckCircle, Clock, Mail, MapPin, Shield } from 'lucide-react';
+import PageBanner from '@/components/PageBanner';
 
 // Validation schema that matches backend validation
 const validationSchema = yup.object({
@@ -140,22 +141,16 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-400 via-red-400 to-pink-400">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="relative py-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Contact Us
-          </h1>
-          <p className="text-xl text-white/90 max-w-3xl mx-auto">
-            Contact us today, here to help.
-          </p>
-        </div>
-      </div>
+      <PageBanner 
+        title="Contact Us" 
+        subtitle="Contact us today, here to help."
+      />
 
       {/* Main Content */}
       <div className="bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
 
             {/* Contact Form */}

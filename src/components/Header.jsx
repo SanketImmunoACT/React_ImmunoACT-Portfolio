@@ -84,10 +84,10 @@ const Header = () => {
               </button>
               {activeDropdown === 'about' && (
                 <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
-                  <Link to="/about/who-we-are" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  <Link to="/about" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     Who we are
                   </Link>
-                  <Link to="/about/team" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  <Link to="/about" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     Team
                   </Link>
                 </div>
@@ -109,16 +109,16 @@ const Header = () => {
               </button>
               {activeDropdown === 'science' && (
                 <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
-                  <Link to="/science/research" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  <Link to="/science" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     Research
                   </Link>
-                  <Link to="/science/process" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  <Link to="/science" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     Process
                   </Link>
-                  <Link to="/science/pipeline" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  <Link to="/science" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     Pipeline
                   </Link>
-                  <Link to="/science/publications" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  <Link to="/publications" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     Publications
                   </Link>
                 </div>
@@ -143,7 +143,7 @@ const Header = () => {
                   <Link to="/nexcar19" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     For Patients
                   </Link>
-                  <Link to="/nexcar19-hcp" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  <Link to="/nexcar19" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     For HCP
                   </Link>
                 </div>
@@ -151,7 +151,7 @@ const Header = () => {
             </div>
 
             {/* Regular Links */}
-            <Link to="/media" className="text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors">Media</Link>
+            <Link to="/news-media" className="text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors">Media</Link>
             <Link to="/philanthropy" className="text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors">Philanthropy</Link>
             <Link to="/careers" className="text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors">Careers</Link>
           </nav>
@@ -187,8 +187,8 @@ const Header = () => {
               </button>
               {activeDropdown === 'mobile-about' && (
                 <div className="mt-2 ml-4 space-y-2">
-                  <Link to="/about/who-we-are" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Who we are</Link>
-                  <Link to="/about/team" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Team</Link>
+                  <Link to="/about" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Who we are</Link>
+                  <Link to="/about" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Team</Link>
                 </div>
               )}
             </div>
@@ -204,10 +204,10 @@ const Header = () => {
               </button>
               {activeDropdown === 'mobile-science' && (
                 <div className="mt-2 ml-4 space-y-2">
-                  <Link to="/science/research" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Research</Link>
-                  <Link to="/science/process" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Process</Link>
-                  <Link to="/science/pipeline" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Pipeline</Link>
-                  <Link to="/science/publications" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Publications</Link>
+                  <Link to="/science" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Research</Link>
+                  <Link to="/science" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Process</Link>
+                  <Link to="/science" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Pipeline</Link>
+                  <Link to="/publications" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Publications</Link>
                 </div>
               )}
             </div>
@@ -224,12 +224,12 @@ const Header = () => {
               {activeDropdown === 'mobile-nexcar19' && (
                 <div className="mt-2 ml-4 space-y-2">
                   <Link to="/nexcar19" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">For Patients</Link>
-                  <Link to="/nexcar19-hcp" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">For HCP</Link>
+                  <Link to="/nexcar19" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">For HCP</Link>
                 </div>
               )}
             </div>
 
-            <Link to="/media" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">Media</Link>
+            <Link to="/news-media" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">Media</Link>
             <Link to="/philanthropy" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">Philanthropy</Link>
             <Link to="/careers" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">Careers</Link>
             <Link

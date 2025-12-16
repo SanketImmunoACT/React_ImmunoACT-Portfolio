@@ -1,49 +1,44 @@
+import PageBanner from '@/components/PageBanner'
+
 const Team = () => {
   const teamMembers = [
     {
-      name: "Dr. Rahul Purwar",
-      position: "Founder & CEO",
       description: "Leading immunologist with 15+ years of experience in CAR-T cell therapy research.",
-      image: "/api/placeholder/300/300"
+      image: "/api/placeholder/300/300",
+      name: "Dr. Rahul Purwar",
+      position: "Founder & CEO"
     },
     {
-      name: "Dr. Priya Sharma",
-      position: "Chief Scientific Officer",
       description: "Expert in cell and gene therapy with extensive clinical trial experience.",
-      image: "/api/placeholder/300/300"
+      image: "/api/placeholder/300/300",
+      name: "Dr. Priya Sharma",
+      position: "Chief Scientific Officer"
     },
     {
-      name: "Dr. Amit Kumar",
-      position: "Head of Manufacturing",
       description: "Specialist in GMP manufacturing and quality control for cell therapies.",
-      image: "/api/placeholder/300/300"
+      image: "/api/placeholder/300/300",
+      name: "Dr. Amit Kumar",
+      position: "Head of Manufacturing"
     },
     {
-      name: "Dr. Sneha Patel",
-      position: "Clinical Director",
       description: "Oncologist with expertise in CAR-T cell therapy clinical applications.",
-      image: "/api/placeholder/300/300"
+      image: "/api/placeholder/300/300",
+      name: "Dr. Sneha Patel",
+      position: "Clinical Director"
     }
   ]
 
   return (
-    <div className="min-h-screen bg-white font-futura">
+    <div className="min-h-screen bg-gray-50 font-futura">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-teal-500 to-blue-600 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-white">
-            <h1 className="text-5xl font-bold mb-6">Our Team</h1>
-            <p className="text-xl max-w-3xl mx-auto">
-              Meet the dedicated professionals driving innovation in CAR-T cell therapy 
-              and transforming cancer treatment in India.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageBanner 
+        title="Our Team" 
+        subtitle="Meet the dedicated professionals driving innovation in CAR-T cell therapy and transforming cancer treatment in India."
+      />
 
       {/* Team Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-16 bg-white">
+        <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-800 mb-4">Leadership Team</h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">

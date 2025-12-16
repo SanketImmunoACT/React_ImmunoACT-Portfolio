@@ -1,3 +1,5 @@
+import PageBanner from '@/components/PageBanner'
+
 const ForPatients = () => {
   const benefits = [
     {
@@ -51,24 +53,23 @@ const ForPatients = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-white font-futura">
+    <div className="min-h-screen bg-gray-50 font-futura">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-orange-500 to-orange-600 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-white">
-            <h1 className="text-5xl font-bold mb-6">NexCAR19™ for Patients</h1>
-            <p className="text-xl max-w-3xl mx-auto mb-8">
-              India's first approved CAR-T cell therapy, offering new hope for patients 
-              with relapsed or refractory B-cell malignancies.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-yellow-400 hover:bg-yellow-500 text-black px-8 py-3 rounded-full font-bold transition-colors">
-                Find a Treatment Centre
-              </button>
-              <button className="border-2 border-white text-white hover:bg-white hover:text-orange-600 px-8 py-3 rounded-full font-bold transition-colors">
-                Download Patient Guide
-              </button>
-            </div>
+      <PageBanner 
+        title="NexCAR19™ for Patients" 
+        subtitle="India's first approved CAR-T cell therapy, offering new hope for patients with relapsed or refractory B-cell malignancies."
+      />
+      
+      {/* Action Buttons Section */}
+      <section className="py-8 bg-white">
+        <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button className="bg-yellow-400 hover:bg-yellow-500 text-black px-8 py-3 rounded-full font-bold transition-colors">
+              Find a Treatment Centre
+            </button>
+            <button className="border-2 border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white px-8 py-3 rounded-full font-bold transition-colors">
+              Download Patient Guide
+            </button>
           </div>
         </div>
       </section>

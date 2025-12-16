@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const MediaSection = () => {
   const mediaItems = [
     {
@@ -39,9 +41,12 @@ const MediaSection = () => {
         </div>
         
         <div className="text-center">
-          <button className="border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+          <Link 
+            to="/news-media"
+            className="border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white px-8 py-3 rounded-lg font-semibold transition-colors inline-block"
+          >
             View More
-          </button>
+          </Link>
         </div>
       </div>
     </section>
