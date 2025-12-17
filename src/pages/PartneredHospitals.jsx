@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import PageBanner from '@/components/PageBanner';
-import immunoactFavicon from '@/assets/logos/immunoact-favicon.png';
+import { LocationPin } from '@/assets/svg/Icons';
 
 // Validation schema for collaboration form
 const collaborationSchema = yup.object({
@@ -88,8 +88,8 @@ const calculateDistance = (lat1, lng1, lat2, lng2) => {
 const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radiusKm, onRadiusChange }) => {
   const mapRef = React.useRef(null);
   const [map, setMap] = React.useState(null);
-  const [markers, setMarkers] = React.useState([]);
-  const [radiusCircle, setRadiusCircle] = React.useState(null);
+  const markersRef = React.useRef([]);
+  const radiusCircleRef = React.useRef(null);
 
   const initializeMap = useCallback(() => {
     if (!mapRef.current) return;
@@ -114,34 +114,41 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
     setMap(mapInstance);
   }, []);
 
-  const createRadiusCircle = useCallback(() => {
-    if (!map || !radiusCenter) return;
 
-    // Clear existing circle
-    if (radiusCircle) {
-      radiusCircle.setMap(null);
+
+  // Memoize the SVG icon to prevent recreation
+  const svgIcon = React.useMemo(() => {
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <path d="M12 1.5C7.85953 1.5 4.5 4.52391 4.5 8.25C4.5 14.25 12 22.5 12 22.5C12 22.5 19.5 14.25 19.5 8.25C19.5 4.52391 16.1405 1.5 12 1.5ZM12 12C11.4067 12 10.8266 11.8241 10.3333 11.4944C9.83994 11.1648 9.45542 10.6962 9.22836 10.1481C9.0013 9.59987 8.94189 8.99667 9.05764 8.41473C9.1734 7.83279 9.45912 7.29824 9.87868 6.87868C10.2982 6.45912 10.8328 6.1734 11.4147 6.05764C11.9967 5.94189 12.5999 6.0013 13.148 6.22836C13.6962 6.45542 14.1648 6.83994 14.4944 7.33329C14.8241 7.82664 15 8.40666 15 9C14.9991 9.79538 14.6828 10.5579 14.1204 11.1204C13.5579 11.6828 12.7954 11.9991 12 12Z" fill="#f97316" stroke="#ffffff" stroke-width="1"/>
+      </svg>
+    `)}`;
+  }, []);
+
+
+
+  useEffect(() => {
+    if (window.google && window.google.maps) {
+      initializeMap();
     }
+  }, [initializeMap]);
 
-    // Create new circle
-    const circle = new window.google.maps.Circle({
-      strokeColor: '#f97316',
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
-      fillColor: '#f97316',
-      fillOpacity: 0.1,
-      map: map,
-      center: radiusCenter,
-      radius: radiusKm * 1000 // Convert km to meters
-    });
+  // Store callback refs to avoid dependency issues
+  const onHospitalSelectRef = React.useRef(onHospitalSelect);
+  const onRadiusChangeRef = React.useRef(onRadiusChange);
+  
+  // Update refs when props change
+  React.useEffect(() => {
+    onHospitalSelectRef.current = onHospitalSelect;
+    onRadiusChangeRef.current = onRadiusChange;
+  });
 
-    setRadiusCircle(circle);
-  }, [map, radiusCenter, radiusKm, radiusCircle]);
-
-  const createMarkers = useCallback(() => {
+  // Handle markers updates
+  useEffect(() => {
     if (!map || !hospitals.length) return;
 
     // Clear existing markers
-    markers.forEach(marker => marker.setMap(null));
+    markersRef.current.forEach(marker => marker.setMap(null));
 
     // Filter hospitals within radius if radiusCenter is set
     let filteredHospitals = hospitals;
@@ -160,9 +167,9 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
     const newMarkers = filteredHospitals.map(hospital => {
       const marker = new window.google.maps.Marker({
         icon: {
-          anchor: new window.google.maps.Point(16, 16),
+          anchor: new window.google.maps.Point(16, 32),
           scaledSize: new window.google.maps.Size(32, 32),
-          url: immunoactFavicon
+          url: svgIcon
         },
         map: map,
         position: hospital.coordinates,
@@ -190,33 +197,45 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
 
       marker.addListener('click', () => {
         infoWindow.open(map, marker);
-        onHospitalSelect(hospital);
+        if (onHospitalSelectRef.current) {
+          onHospitalSelectRef.current(hospital);
+        }
       });
 
       return marker;
     });
 
-    setMarkers(newMarkers);
+    markersRef.current = newMarkers;
 
     // Notify parent component about filtered hospitals
-    if (onRadiusChange) {
-      onRadiusChange(filteredHospitals);
+    if (onRadiusChangeRef.current) {
+      onRadiusChangeRef.current(filteredHospitals);
     }
-  }, [map, hospitals, onHospitalSelect, radiusCenter, radiusKm, onRadiusChange]);
+  }, [map, hospitals, radiusCenter, radiusKm, svgIcon]);
 
+  // Handle radius circle updates
   useEffect(() => {
-    if (window.google && window.google.maps) {
-      initializeMap();
+    if (!map || !radiusCenter) return;
+
+    // Clear existing circle
+    if (radiusCircleRef.current) {
+      radiusCircleRef.current.setMap(null);
     }
-  }, [initializeMap]);
 
-  useEffect(() => {
-    createMarkers();
-  }, [createMarkers]);
+    // Create new circle
+    const circle = new window.google.maps.Circle({
+      strokeColor: '#f97316',
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: '#f97316',
+      fillOpacity: 0.1,
+      map: map,
+      center: radiusCenter,
+      radius: radiusKm * 1000 // Convert km to meters
+    });
 
-  useEffect(() => {
-    createRadiusCircle();
-  }, [createRadiusCircle]);
+    radiusCircleRef.current = circle;
+  }, [map, radiusCenter, radiusKm]);
 
   // Focus on selected hospital
   useEffect(() => {
@@ -226,6 +245,16 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
     }
   }, [selectedHospital, map]);
 
+  // Cleanup markers on unmount
+  useEffect(() => {
+    return () => {
+      markersRef.current.forEach(marker => marker.setMap(null));
+      if (radiusCircleRef.current) {
+        radiusCircleRef.current.setMap(null);
+      }
+    };
+  }, []);
+
   return <div ref={mapRef} className="w-full h-full" />;
 };
 
@@ -233,7 +262,7 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
 const HospitalList = ({ hospitals, onHospitalSelect, selectedHospital }) => {
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 h-full overflow-y-auto">
-      <h3 className="text-lg font-bold text-gray-800 mb-4">
+      <h3 className="text-lg text-gray-800 mb-4">
         Partnered Treatment Centers ({hospitals.length})
       </h3>
       
@@ -290,7 +319,7 @@ const RadiusControl = ({ radiusKm, onRadiusChange, radiusCenter, selectedHospita
     <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h3 className="text-lg font-semibold text-gray-800">Search Radius</h3>
+          <h3 className="text-lg text-gray-800">Search Radius</h3>
           <select
             value={radiusKm}
             onChange={(e) => onRadiusChange(parseInt(e.target.value))}
