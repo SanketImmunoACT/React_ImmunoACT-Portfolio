@@ -407,9 +407,9 @@ const FilterPanel = ({
           ))}
         </select>
 
-        <div className="text-sm text-gray-600">
+        {/* <div className="text-sm text-gray-600">
           Showing {filteredHospitals.length} of {hospitals.length} hospitals
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -846,7 +846,7 @@ const PartneredHospitals = () => {
       {/* Hero Section */}
       <PageBanner 
         title="Partnered Hospitals" 
-        subtitle={`Our strong association with ${hospitals.length}+ leading hospitals across India has contributed to our customers' access to advanced cancer treatments.`}
+        subtitle={`Our strong association with ${hospitals.length} leading hospitals across India has contributed to our customers' access to advanced cancer treatments.`}
       />
 
       {/* Main Content */}
