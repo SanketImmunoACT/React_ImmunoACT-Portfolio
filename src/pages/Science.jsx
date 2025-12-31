@@ -44,43 +44,43 @@ const Science = () => {
       id: 1,
       title: "Leukapheresis",
       description: "Peripheral Blood Mononuclear Cells (PBMCs) are collected from the patient using leukapheresis. This forms the foundational starting material for autologous CAR-T cell manufacturing.",
-      image: "/src/assets/images/science/Manufacturing-Process/1.png"
+      image: "/images/science/Manufacturing-Process/1.png"
     },
     {
       id: 2,
       title: "Monocyte Depletion",
       description: "Monocytes are removed from the PBMC population to reduce non-T-cell components. This enhances T-cell purity and improves the efficiency of downstream processes.",
-      image: "/src/assets/images/science/Manufacturing-Process/2.png"
+      image: "/images/science/Manufacturing-Process/2.png"
     },
     {
       id: 3,
       title: "T-Cell Activation",
       description: "T lymphocytes are activated using CD3/CD28 costimulatory signals in a controlled environment. This primes the cells for efficient gene transfer during the transduction step.",
-      image: "/src/assets/images/science/Manufacturing-Process/3.png"
+      image: "/images/science/Manufacturing-Process/3.png"
     },
     {
       id: 4,
       title: "Lentiviral Transduction",
       description: "Activated T-cells are genetically modified with a lentiviral vector encoding the anti-CD19 CAR. This step equips T-cells to recognize and attack CD19-expressing tumor cells.",
-      image: "/src/assets/images/science/Manufacturing-Process/4.png"
+      image: "/images/science/Manufacturing-Process/4.png"
     },
     {
       id: 5,
       title: "CAR-T Cell Production",
       description: "Following transduction, T-cells begin expressing the chimeric antigen receptor on their surface. These cells are now classified as NexCAR19 - genetically reprogrammed to target B-cell malignancies.",
-      image: "/src/assets/images/science/Manufacturing-Process/5.png"
+      image: "/images/science/Manufacturing-Process/5.png"
     },
     {
       id: 6,
       title: "Expansion to Target Dose",
       description: "The CAR-T cells are cultured under GMP conditions to reach the therapeutic dose. Cell growth is monitored to maintain viability, potency, and phenotype consistency.",
-      image: "/src/assets/images/science/Manufacturing-Process/6.png"
+      image: "/images/science/Manufacturing-Process/6.png"
     },
     {
       id: 7,
       title: "Formulation & Cryopreservation",
       description: "The final CAR-T product is formulated with infusion-ready buffer and cryopreserved. Post quality checks, it is stored under ultra-low temperatures until patient infusion.",
-      image: "/src/assets/images/science/Manufacturing-Process/7.png"
+      image: "/images/science/Manufacturing-Process/7.png"
     }
   ]
   const researchData = [
@@ -225,7 +225,7 @@ const Science = () => {
             <div className="flex justify-center items-center">
               <div className="w-full max-w-[600px]">
                 <img
-                  src="/src/assets/images/science/Construct-Design.png"
+                  src="/images/science/Construct-Design.png"
                   alt="Final Construct Design - CAR-T Cell Structure"
                   className="w-auto h-auto"
                 />
@@ -239,7 +239,7 @@ const Science = () => {
             <div className="flex justify-center">
               <div className="w-[442px] h-[367px]">
                 <img
-                  src="/src/assets/images/science/CAR-HCAR19.avif"
+                  src="/images/science/CAR-HCAR19.avif"
                   alt="3D Molecular Structure - CAR Protein Complex"
                   className="w-full h-auto"
                 />
@@ -351,7 +351,7 @@ const Science = () => {
           <div className="flex justify-center mt-20">
             <div className="w-full max-w-5xl">
               <img
-                src="/src/assets/images/science/LV-Diagram.webp"
+                src="/images/science/LV-Diagram.webp"
                 alt="Plasmid DNA Platform Process Flow - From Gag+Pol, Rev, Env, Gene of Interest through manufacturing steps"
                 className="w-full h-auto rounded-xl shadow-lg"
               />
@@ -412,7 +412,7 @@ const Science = () => {
               <div className="flex flex-col justify-center items-center">
                 <h5 className="text-[#363636] text-2xl text-center">1. Vial Thaw</h5>
                 <img
-                  src="/src/assets/images/science/LV-Platform/1.png"
+                  src="/images/science/LV-Platform/1.png"
                   alt="Vial Thaw Process"
                   className="w-40 h-40"
                 />
@@ -427,7 +427,7 @@ const Science = () => {
               <div className="flex flex-col justify-center items-center">
                 <h5 className="text-[#363636] text-2xl text-center">2. Seeding & Expansion</h5>
                 <img
-                  src="/src/assets/images/science/LV-Platform/2.png"
+                  src="/images/science/LV-Platform/2.png"
                   alt="Seeding & Expansion Process"
                   className="w-40 h-40"
                 />
@@ -442,7 +442,7 @@ const Science = () => {
               <div className="flex flex-col justify-center items-center">
                 <h5 className="text-[#363636] text-2xl text-center">3. Scaled Expansion in Cell Factories</h5>
                 <img
-                  src="/src/assets/images/science/LV-Platform/3.png"
+                  src="/images/science/LV-Platform/3.png"
                   alt="Scaled Expansion in Cell Factories"
                   className="w-40 h-40"
                 />
@@ -457,7 +457,7 @@ const Science = () => {
               <div className="flex flex-col justify-center items-center">
                 <h5 className="text-[#363636] text-2xl text-center">4. Nuclease Treatment</h5>
                 <img
-                  src="/src/assets/images/science/LV-Platform/4.png"
+                  src="/images/science/LV-Platform/4.png"
                   alt="Nuclease Treatment"
                   className="w-40 h-40"
                 />
@@ -472,7 +472,7 @@ const Science = () => {
               <div className="flex flex-col justify-center items-center">
                 <h5 className="text-[#363636] text-2xl text-center">5. Harvest Clarification</h5>
                 <img
-                  src="/src/assets/images/science/LV-Platform/5.png"
+                  src="/images/science/LV-Platform/5.png"
                   alt="Harvest Clarification"
                   className="w-40 h-40"
                 />
@@ -487,7 +487,7 @@ const Science = () => {
               <div className="flex flex-col justify-center items-center">
                 <h5 className="text-[#363636] text-2xl text-center">6. Concentration & Diafiltration</h5>
                 <img
-                  src="/src/assets/images/science/LV-Platform/6.png"
+                  src="/images/science/LV-Platform/6.png"
                   alt="Concentration & Diafiltration"
                   className="w-40 h-40"
                 />
@@ -502,7 +502,7 @@ const Science = () => {
               <div className="flex flex-col justify-center items-center">
                 <h5 className="text-[#363636] text-2xl text-center">7. Chromatographic Purification</h5>
                 <img
-                  src="/src/assets/images/science/LV-Platform/7.png"
+                  src="/images/science/LV-Platform/7.png"
                   alt="Chromatographic Purification"
                   className="w-40 h-40"
                 />
@@ -517,7 +517,7 @@ const Science = () => {
               <div className="flex flex-col justify-center items-center">
                 <h5 className="text-[#363636] text-2xl text-center">8. Sterile Filtration</h5>
                 <img
-                  src="/src/assets/images/science/LV-Platform/8.png"
+                  src="/images/science/LV-Platform/8.png"
                   alt="Sterile Filtration"
                   className="w-40 h-40"
                 />
@@ -532,7 +532,7 @@ const Science = () => {
               <div className="flex flex-col justify-center items-center">
                 <h5 className="text-[#363636] text-2xl text-center">9. Fill-Finish</h5>
                 <img
-                  src="/src/assets/images/science/LV-Platform/9.png"
+                  src="/images/science/LV-Platform/9.png"
                   alt="Fill-Finish"
                   className="w-40 h-40"
                 />
@@ -735,7 +735,7 @@ const Science = () => {
             {/* Left Column - Image */}
             <div className="flex justify-center lg:justify-start">
               <img
-                src="/src/assets/images/science/Publications.jpg"
+                src="/images/science/Publications.jpg"
                 alt="Scientific Publications - Laboratory research"
                 className="w-full max-w-xl h-auto rounded-3xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer"
               />
