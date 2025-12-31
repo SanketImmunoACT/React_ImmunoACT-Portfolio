@@ -116,34 +116,49 @@ const MediaManagement = () => {
 
   const getStatusBadge = (status) => {
     const colors = {
-      draft: 'bg-yellow-100 text-yellow-800',
-      published: 'bg-green-100 text-green-800',
-      archived: 'bg-gray-100 text-gray-800'
+      draft: 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-yellow-300',
+      published: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300',
+      archived: 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-800 border-slate-300'
     };
-    return `px-2 py-1 text-xs font-medium rounded-full ${colors[status]}`;
+    const icons = {
+      draft: '📝',
+      published: '✅',
+      archived: '📦'
+    };
+    return (
+      <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border ${colors[status]}`}>
+        <span className="mr-1.5">{icons[status]}</span>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
   };
 
   if (loading && media.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        <div className="relative">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent absolute top-0 left-0"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Media Management</h1>
-          <p className="text-gray-600">Manage media articles and press coverage</p>
+          <h1 className="text-3xl font-bold text-slate-900">Media Management</h1>
+          <p className="text-slate-600 mt-1">Manage media articles and press coverage</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center"
+          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-medium hover:shadow-strong transition-all duration-200 hover:-translate-y-0.5"
         >
-          <span className="mr-2">+</span>
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
           Add Media Article
         </button>
       </div>
@@ -212,28 +227,45 @@ const MediaManagement = () => {
 
       {/* Bulk Actions */}
       {selectedItems.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 p-6 rounded-2xl shadow-soft animate-slide-down">
           <div className="flex items-center justify-between">
-            <span className="text-blue-800">
-              {selectedItems.length} item(s) selected
-            </span>
-            <div className="space-x-2">
+            <div className="flex items-center">
+              <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-sm mr-4">
+                {selectedItems.length}
+              </div>
+              <div>
+                <span className="text-blue-900 font-semibold">
+                  {selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected
+                </span>
+                <p className="text-blue-700 text-sm">Choose an action to apply to selected items</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
               <button
                 onClick={() => handleBulkStatusUpdate('published')}
-                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-medium"
               >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 Publish
               </button>
               <button
                 onClick={() => handleBulkStatusUpdate('draft')}
-                className="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-medium rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-medium"
               >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
                 Draft
               </button>
               <button
                 onClick={() => handleBulkStatusUpdate('archived')}
-                className="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white font-medium rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-medium"
               >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8l6 6m0 0l6-6m-6 6V4" />
+                </svg>
                 Archive
               </button>
             </div>

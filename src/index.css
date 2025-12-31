@@ -6,19 +6,17 @@
 /* Custom fonts */
 @import './styles/fonts.css';
 
-/* Apply WordPress font stack to headings by default */
 h1, h2, h3, h4, h5, h6 {
   font-family: "Futura Md BT", Corbel, "URW Gothic", source-sans-pro, sans-serif !important;
 }
 
-/* Ensure font-futura class has high specificity */
 .font-futura {
   font-family: "Futura Md BT", Corbel, "URW Gothic", source-sans-pro, sans-serif !important;
 }
 
 /* Match WordPress body font configuration */
 body {
-  /* font-size: 1.8rem; */
+  font-size: 0.875rem; /* 14px */
   font-family: "Futura Md BT", Corbel, "URW Gothic", source-sans-pro, sans-serif;
   font-weight: 400;
   line-height: 1.6;

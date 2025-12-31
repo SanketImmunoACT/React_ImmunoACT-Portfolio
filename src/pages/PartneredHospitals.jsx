@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Wrapper } from '@googlemaps/react-wrapper';
-import { AlertCircle, CheckCircle, Filter, Mail, MapPin, Navigation, Phone, Search, Shield } from 'lucide-react';
+import { AlertCircle, CheckCircle, Diameter, Filter, Mail, MapPin, Navigation, Phone, Search, Shield } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -71,6 +71,56 @@ const collaborationSchema = yup.object({
 // Import real hospital data
 import hospitalData from '../data/allHospitalsData.js';
 
+// Hospital Service for API calls
+const hospitalService = {
+  async searchByLocation(location, radius = 50) {
+    try {
+      const params = new URLSearchParams({
+        location: location.trim(),
+        radius: radius.toString(),
+        limit: '50'
+      });
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/hospitals/search?${params}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to search hospitals');
+      }
+
+      return {
+        success: true,
+        ...data.data,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Hospital search error:', error);
+      return {
+        success: false,
+        error: error.message,
+        hospitals: [],
+        totalFound: 0
+      };
+    }
+  },
+  
+  formatDistance(distance) {
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m`;
+    } else if (distance < 10) {
+      return `${distance.toFixed(1)}km`;
+    } else {
+      return `${Math.round(distance)}km`;
+    }
+  }
+};
+
 // Utility function to calculate distance between two coordinates using Haversine formula
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
   const R = 6371; // Earth's radius in kilometers
@@ -94,24 +144,28 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
   const initializeMap = useCallback(() => {
     if (!mapRef.current) return;
 
-    const mapInstance = new window.google.maps.Map(mapRef.current, {
-      center: { lat: 20.5937, lng: 78.9629 }, // Center of India
-      zoom: 5,
-      styles: [
-        {
-          elementType: "geometry",
-          featureType: "water",
-          stylers: [{ color: "#e9e9e9" }, { lightness: 17 }]
-        },
-        {
-          elementType: "geometry",
-          featureType: "landscape",
-          stylers: [{ color: "#f5f5f5" }, { lightness: 20 }]
-        }
-      ]
-    });
+    try {
+      const mapInstance = new window.google.maps.Map(mapRef.current, {
+        center: { lat: 20.5937, lng: 78.9629 }, // Center of India
+        zoom: 5,
+        styles: [
+          {
+            elementType: "geometry",
+            featureType: "water",
+            stylers: [{ color: "#e9e9e9" }, { lightness: 17 }]
+          },
+          {
+            elementType: "geometry",
+            featureType: "landscape",
+            stylers: [{ color: "#f5f5f5" }, { lightness: 20 }]
+          }
+        ]
+      });
 
-    setMap(mapInstance);
+      setMap(mapInstance);
+    } catch (error) {
+      console.error('Error initializing Google Maps:', error);
+    }
   }, []);
 
 
@@ -147,6 +201,8 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
   useEffect(() => {
     if (!map || !hospitals.length) return;
 
+    console.log('Updating markers, hospital count:', hospitals.length); // Debug log
+
     // Clear existing markers
     markersRef.current.forEach(marker => marker.setMap(null));
 
@@ -165,29 +221,36 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
     }
 
     const newMarkers = filteredHospitals.map(hospital => {
+      // Create marker with proper configuration
       const marker = new window.google.maps.Marker({
-        icon: {
-          anchor: new window.google.maps.Point(16, 32),
-          scaledSize: new window.google.maps.Size(32, 32),
-          url: svgIcon
-        },
-        map: map,
         position: hospital.coordinates,
-        title: hospital.name
+        map: map,
+        title: hospital.name,
+        icon: {
+          url: svgIcon,
+          scaledSize: new window.google.maps.Size(32, 32),
+          anchor: new window.google.maps.Point(16, 32)
+        },
+        clickable: true,
+        optimized: false // This helps with custom icons and click events
       });
 
+      // Create info window
       const infoWindow = new window.google.maps.InfoWindow({
         content: `
-          <div class="p-3 max-w-xs">
-            <h3 class="font-bold text-lg text-gray-800 mb-2">${hospital.name}</h3>
-            <p class="text-sm text-gray-600 mb-2">${hospital.address}</p>
-            <div class="flex items-center gap-2 mb-3">
-              <span class="text-xs text-gray-500">✉️</span>
-              <span class="text-sm text-gray-700">${hospital.email}</span>
+          <div style="padding: 12px; max-width: 300px;">
+            <h3 style=" font-size: 18px; color: #1f2937; margin-bottom: 8px;">${hospital.name}</h3>
+            <p style="font-size: 14px; color: #000000; margin-bottom: 8px;">${hospital.address}</p>
+            ${hospital.distance ? `<p style="font-size: 12px; color: #f97316; margin-bottom: 8px;">📍 ${hospitalService.formatDistance(hospital.distance)} away</p>` : ''}
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <span style="font-size: 12px;">Email ID:</span>
+              <span style="font-size: 14px; color: #000000;">${hospital.email || 'Contact info not available'}</span>
             </div>
             <button 
               onclick="window.open('https://maps.google.com/maps?daddr=${hospital.coordinates.lat},${hospital.coordinates.lng}', '_blank')"
-              class="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition-colors"
+              style="background-color: #f97316; color: white; padding: 8px 12px; border-radius: 24px; font-size: 14px; border: none; cursor: pointer;"
+              onmouseover="this.style.backgroundColor='#ea580c'"
+              onmouseout="this.style.backgroundColor='#f97316'"
             >
               Get Directions
             </button>
@@ -195,12 +258,28 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
         `
       });
 
-      marker.addListener('click', () => {
-        infoWindow.open(map, marker);
-        if (onHospitalSelectRef.current) {
-          onHospitalSelectRef.current(hospital);
-        }
-      });
+      // Add click event listener with error handling
+      try {
+        marker.addListener('click', (event) => {
+          console.log('Marker clicked:', hospital.name);
+          
+          // Close any open info windows first
+          if (window.currentInfoWindow) {
+            window.currentInfoWindow.close();
+          }
+          
+          // Open new info window
+          infoWindow.open(map, marker);
+          window.currentInfoWindow = infoWindow;
+          
+          // Call parent callback
+          if (onHospitalSelectRef.current) {
+            onHospitalSelectRef.current(hospital);
+          }
+        });
+      } catch (error) {
+        console.error('Error adding click listener to marker:', error);
+      }
 
       return marker;
     });
@@ -231,7 +310,7 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
       fillOpacity: 0.1,
       map: map,
       center: radiusCenter,
-      radius: radiusKm * 1000 // Convert km to meters
+      radius: radiusKm * 1000, // Convert km to meters
     });
 
     radiusCircleRef.current = circle;
@@ -286,6 +365,11 @@ const HospitalList = ({ hospitals, onHospitalSelect, selectedHospital }) => {
                   <span className="px-2 py-1 bg-gray-100 rounded">
                     {hospital.type}
                   </span>
+                  {hospital.distance && (
+                    <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded">
+                      📍 {hospitalService.formatDistance(hospital.distance)}
+                    </span>
+                  )}
                 </div>
               </div>
               
@@ -748,6 +832,13 @@ const PartneredHospitals = () => {
   const [radiusKm, setRadiusKm] = useState(1500);
   const [radiusCenter, setRadiusCenter] = useState({ lat: 20.5937, lng: 78.9629 }); // Center of India initially
   const [radiusFilteredHospitals, setRadiusFilteredHospitals] = useState([]);
+  
+  // Location search functionality
+  const [locationSearch, setLocationSearch] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [apiHospitals, setApiHospitals] = useState([]);
+  const [useApiData, setUseApiData] = useState(false);
 
   // Initialize radius filtered hospitals on mount
   useEffect(() => {
@@ -785,9 +876,74 @@ const PartneredHospitals = () => {
     setRadiusFilteredHospitals(hospitals);
   };
 
-  // Filter hospitals based on search and filters (applied to radius-filtered hospitals)
+  // Handle location search
+  const handleLocationSearch = async () => {
+    if (!locationSearch.trim()) {
+      setSearchError('Please enter a location');
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError('');
+
+    try {
+      const results = await hospitalService.searchByLocation(locationSearch, radiusKm);
+      
+      if (results.success && results.hospitals.length > 0) {
+        // Convert API hospital format to match existing format
+        const convertedHospitals = results.hospitals.map(hospital => ({
+          id: hospital.id,
+          name: hospital.name,
+          address: hospital.address,
+          city: hospital.city,
+          state: hospital.state,
+          coordinates: { 
+            lat: parseFloat(hospital.latitude), 
+            lng: parseFloat(hospital.longitude) 
+          },
+          phone: hospital.phone || '',
+          email: hospital.email || '',
+          website: hospital.website || '',
+          type: hospital.type || 'Private',
+          distance: hospital.distance
+        }));
+
+        setApiHospitals(convertedHospitals);
+        setUseApiData(true);
+        
+        // Update radius center to search location
+        if (results.searchLocation) {
+          setRadiusCenter({
+            lat: results.searchLocation.latitude,
+            lng: results.searchLocation.longitude
+          });
+        }
+        
+        setSearchError('');
+      } else {
+        setSearchError(results.message || `No hospitals found within ${radiusKm}km of ${locationSearch}. Try expanding your search radius or searching for a different location.`);
+        setUseApiData(false);
+      }
+    } catch (error) {
+      setSearchError('Failed to search hospitals. Please try again.');
+      setUseApiData(false);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle clear search
+  const handleClearSearch = () => {
+    setLocationSearch('');
+    setSearchError('');
+    setUseApiData(false);
+    setApiHospitals([]);
+    setRadiusCenter({ lat: 20.5937, lng: 78.9629 });
+  };
+
+  // Filter hospitals based on search and filters (applied to radius-filtered hospitals or API data)
   useEffect(() => {
-    let filtered = radiusFilteredHospitals;
+    let filtered = useApiData ? apiHospitals : radiusFilteredHospitals;
 
     if (searchTerm) {
       filtered = filtered.filter(hospital =>
@@ -806,7 +962,7 @@ const PartneredHospitals = () => {
     }
 
     setFilteredHospitals(filtered);
-  }, [radiusFilteredHospitals, searchTerm, selectedState, selectedType]);
+  }, [radiusFilteredHospitals, apiHospitals, useApiData, searchTerm, selectedState, selectedType]);
 
   const render = (status) => {
     if (status === 'LOADING') {
@@ -858,6 +1014,89 @@ const PartneredHospitals = () => {
           selectedHospital={selectedHospital}
           onResetRadius={handleResetRadius}
         />
+
+        {/* Location Search Panel */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            🔍 Search by Location & Radius
+          </h3>
+          <div className="flex flex-wrap gap-4 items-end">
+            <div className="flex-1 min-w-64">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Location (City, Address, or Area)
+              </label>
+              <input
+                type="text"
+                value={locationSearch}
+                onChange={(e) => setLocationSearch(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleLocationSearch()}
+                placeholder="e.g., Mumbai, Andheri, Thane..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                disabled={isSearching}
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Radius
+              </label>
+              <select
+                value={radiusKm}
+                onChange={(e) => setRadiusKm(parseInt(e.target.value))}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                disabled={isSearching}
+              >
+                <option value={10}>10 km</option>
+                <option value={20}>20 km</option>
+                <option value={50}>50 km</option>
+                <option value={100}>100 km</option>
+                <option value={200}>200 km</option>
+                <option value={500}>500 km</option>
+              </select>
+            </div>
+            
+            <button
+              onClick={handleLocationSearch}
+              disabled={isSearching || !locationSearch.trim()}
+              className="px-6 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+            >
+              {isSearching ? 'Searching...' : 'Search'}
+            </button>
+            
+            {useApiData && (
+              <button
+                onClick={handleClearSearch}
+                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          
+          {/* Search Results Info */}
+          {useApiData && apiHospitals.length > 0 && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-green-800 font-medium">
+                ✅ Found {apiHospitals.length} hospital{apiHospitals.length !== 1 ? 's' : ''} within {radiusKm}km of "{locationSearch}"
+              </p>
+              {apiHospitals.some(h => h.distance) && (
+                <p className="text-green-700 text-sm mt-1">
+                  Distances shown from your search location
+                </p>
+              )}
+            </div>
+          )}
+          
+          {/* Search Error */}
+          {searchError && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-800 font-medium">❌ {searchError}</p>
+              <p className="text-red-700 text-sm mt-1">
+                Try expanding your search radius or searching for a different location.
+              </p>
+            </div>
+          )}
+        </div>
         
         <FilterPanel
           hospitals={hospitals}

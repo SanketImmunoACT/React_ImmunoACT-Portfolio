@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { ChevronDown, Menu, X } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { ImmunoActLogo } from '@/assets'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState(null)
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -17,6 +19,25 @@ const Header = () => {
 
   const closeDropdown = () => {
     setActiveDropdown(null)
+  }
+
+  // Custom navigation handler for Science sections
+  const handleScienceNavigation = (hash) => {
+    setActiveDropdown(null) // Close dropdown
+    
+    if (location.pathname === '/science') {
+      // If already on science page, just scroll to section
+      const element = document.querySelector(hash)
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        })
+      }
+    } else {
+      // If on different page, navigate to science page with hash
+      navigate(`/science${hash}`)
+    }
   }
 
   // Close dropdown when clicking outside
@@ -75,19 +96,20 @@ const Header = () => {
               onMouseEnter={() => setActiveDropdown('about')}
               onMouseLeave={closeDropdown}
             >
-              <button
-                className="flex items-center text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors"
-                onClick={() => handleDropdownToggle('about')}
+              <Link
+                to="/about"
+                className="flex items-center text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors py-2"
+                onClick={() => setActiveDropdown(null)} // Close dropdown when clicking the main link
               >
                 <span>About</span>
                 <ChevronDown className="w-[18px] h-[18px] ml-[10px]" />
-              </button>
+              </Link>
               {activeDropdown === 'about' && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
-                  <Link to="/about" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                <div className="absolute top-full left-0 w-48 bg-white rounded-lg shadow-lg border z-50">
+                  <Link to="/about#who-we-are" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     Who we are
                   </Link>
-                  <Link to="/about" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  <Link to="/about#team" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     Team
                   </Link>
                 </div>
@@ -100,27 +122,34 @@ const Header = () => {
               onMouseEnter={() => setActiveDropdown('science')}
               onMouseLeave={closeDropdown}
             >
-              <button
-                className="flex items-center text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors"
-                onClick={() => handleDropdownToggle('science')}
+              <Link
+                to="/science"
+                className="flex items-center text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors py-2"
+                onClick={() => setActiveDropdown(null)} // Close dropdown when clicking the main link
               >
                 <span>Science</span>
                 <ChevronDown className="w-[18px] h-[18px] ml-[10px]" />
-              </button>
+              </Link>
               {activeDropdown === 'science' && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
-                  <Link to="/science" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                <div className="absolute top-full left-0 w-48 bg-white rounded-lg shadow-lg border z-50">
+                  <button 
+                    onClick={() => handleScienceNavigation('#research')}
+                    className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm"
+                  >
                     Research
-                  </Link>
-                  <Link to="/science" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
-                    Process
-                  </Link>
-                  <Link to="/science" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  </button>
+                  <button 
+                    onClick={() => handleScienceNavigation('#pipeline')}
+                    className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm"
+                  >
                     Pipeline
-                  </Link>
-                  <Link to="/publications" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  </button>
+                  <button 
+                    onClick={() => handleScienceNavigation('#publications')}
+                    className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm"
+                  >
                     Publications
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
@@ -131,19 +160,20 @@ const Header = () => {
               onMouseEnter={() => setActiveDropdown('nexcar19')}
               onMouseLeave={closeDropdown}
             >
-              <button
-                className="flex items-center text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors"
-                onClick={() => handleDropdownToggle('nexcar19')}
+              <Link
+                to="/nexcar19"
+                className="flex items-center text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors py-2"
+                onClick={() => setActiveDropdown(null)} // Close dropdown when clicking the main link
               >
                 <span>NexCAR19™</span>
                 <ChevronDown className="w-[18px] h-[18px] ml-[10px]" />
-              </button>
+              </Link>
               {activeDropdown === 'nexcar19' && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
-                  <Link to="/nexcar19" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                <div className="absolute top-full left-0 w-48 bg-white rounded-lg shadow-lg border z-50">
+                  <Link to="/nexcar19#for-patients" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     For Patients
                   </Link>
-                  <Link to="/nexcar19" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  <Link to="/nexcar19#for-hcp" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
                     For HCP
                   </Link>
                 </div>
@@ -187,8 +217,8 @@ const Header = () => {
               </button>
               {activeDropdown === 'mobile-about' && (
                 <div className="mt-2 ml-4 space-y-2">
-                  <Link to="/about" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Who we are</Link>
-                  <Link to="/about" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Team</Link>
+                  <Link to="/about#who-we-are" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Who we are</Link>
+                  <Link to="/about#team" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Team</Link>
                 </div>
               )}
             </div>
@@ -204,10 +234,24 @@ const Header = () => {
               </button>
               {activeDropdown === 'mobile-science' && (
                 <div className="mt-2 ml-4 space-y-2">
-                  <Link to="/science" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Research</Link>
-                  <Link to="/science" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Process</Link>
-                  <Link to="/science" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Pipeline</Link>
-                  <Link to="/publications" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">Publications</Link>
+                  <button 
+                    onClick={() => handleScienceNavigation('#research')}
+                    className="block w-full text-left text-gray-600 hover:text-gray-900 transition-colors text-sm"
+                  >
+                    Research
+                  </button>
+                  <button 
+                    onClick={() => handleScienceNavigation('#pipeline')}
+                    className="block w-full text-left text-gray-600 hover:text-gray-900 transition-colors text-sm"
+                  >
+                    Pipeline
+                  </button>
+                  <button 
+                    onClick={() => handleScienceNavigation('#publications')}
+                    className="block w-full text-left text-gray-600 hover:text-gray-900 transition-colors text-sm"
+                  >
+                    Publications
+                  </button>
                 </div>
               )}
             </div>
@@ -223,8 +267,8 @@ const Header = () => {
               </button>
               {activeDropdown === 'mobile-nexcar19' && (
                 <div className="mt-2 ml-4 space-y-2">
-                  <Link to="/nexcar19" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">For Patients</Link>
-                  <Link to="/nexcar19" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">For HCP</Link>
+                  <Link to="/nexcar19#for-patients" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">For Patients</Link>
+                  <Link to="/nexcar19#for-hcp" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">For HCP</Link>
                 </div>
               )}
             </div>

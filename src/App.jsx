@@ -11,6 +11,7 @@ import Philanthropy from '@/pages/Philanthropy'
 import Publications from '@/pages/Publications'
 import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import PartneredHospitals from '@/pages/PartneredHospitals'
+import TreatmentCenters from '@/pages/TreatmentCenters'
 
 // Main Pages
 import About from '@/pages/About'
