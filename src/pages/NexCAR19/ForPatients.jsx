@@ -2,6 +2,7 @@ import { PdfDownload } from "@/assets/svg/Icons"
 import PatientTestimonial from "@/components/PatientTestimonial"
 import StatCard from "@/components/StatCard"
 import TreatmentCenters from "@/components/TreatmentCenters"
+import CancerTypesSection from "@/components/CancerTypesSection"
 import { useState } from 'react'
 
 const ForPatients = () => {
@@ -78,68 +79,8 @@ const ForPatients = () => {
         </div>
       </section>
 
-      {/* Which cancers can NexCAR19 treat Section */}
-      <section className="py-8 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-start mb-10">
-            <h2 className="text-4xl font-normal text-[#47A178] font-futura mb-7">Which cancers can NexCAR19™ treat?</h2>
-            <p className="text-[22px] font-medium text-[#363636] leading-relaxed">
-              <span className="font-bold text-[#305595]">NexCAR19™</span> is for patients with challenging B-cell cancers, which are often inadequate to treat with chemoimmunotherapy.
-            </p>
-          </div>
-
-          {/* Cancer Types Grid */}
-          <div className="space-y-6">
-            {/* First Row - 4 Cards */}
-            <div className="flex flex-wrap justify-center gap-[25px]">
-              {/* Diffuse Large B-cell Lymphoma */}
-              <div className="bg-white rounded-2xl w-[280px] min-h-[160px] p-5 shadow-[0_8px_20px_rgba(241,196,15,0.3)] transition-all duration-300 ease-in-out flex flex-col justify-center items-center border border-[#f1c40f] text-center hover:transform hover:scale-105 hover:shadow-[0_12px_30px_rgba(241,196,15,0.4)]">
-                <h3 className="text-base font-bold text-[#222] mb-[10px]">Diffuse Large B-cell Lymphoma (DLBCL)</h3>
-                <p className="text-sm text-[#555555] leading-relaxed">Most common aggressive B-cell lymphoma type</p>
-              </div>
-
-              {/* Primary Mediastinal B-cell Lymphoma */}
-              <div className="bg-white rounded-2xl w-[280px] min-h-[160px] p-5 shadow-[0_8px_20px_rgba(241,196,15,0.3)] transition-all duration-300 ease-in-out flex flex-col justify-center items-center border border-[#f1c40f] text-center hover:transform hover:scale-105 hover:shadow-[0_12px_30px_rgba(241,196,15,0.4)]">
-                <h3 className="text-base font-bold text-[#222] mb-[10px]">Primary Mediastinal B-cell Lymphoma (PMBCL)</h3>
-                <p className="text-sm text-[#555555] leading-relaxed">A rare chest-based lymphoma in younger adults</p>
-              </div>
-
-              {/* Follicular Lymphoma */}
-              <div className="bg-white rounded-2xl w-[280px] min-h-[160px] p-5 shadow-[0_8px_20px_rgba(241,196,15,0.3)] transition-all duration-300 ease-in-out flex flex-col justify-center items-center border border-[#f1c40f] text-center hover:transform hover:scale-105 hover:shadow-[0_12px_30px_rgba(241,196,15,0.4)]">
-                <h3 className="text-base font-bold text-[#222] mb-[10px]">Follicular Lymphoma (FL)</h3>
-                <p className="text-sm text-[#555555] leading-relaxed">Slow-growing with potential to transform aggressively</p>
-              </div>
-
-              {/* Mantle Cell Lymphoma */}
-              <div className="bg-white rounded-2xl w-[280px] min-h-[160px] p-5 shadow-[0_8px_20px_rgba(241,196,15,0.3)] transition-all duration-300 ease-in-out flex flex-col justify-center items-center border border-[#f1c40f] text-center hover:transform hover:scale-105 hover:shadow-[0_12px_30px_rgba(241,196,15,0.4)]">
-                <h3 className="text-base font-bold text-[#222] mb-[10px]">Mantle Cell Lymphoma (MCL)</h3>
-                <p className="text-sm text-[#555555] leading-relaxed">Rare subtype often diagnosed late and challenging</p>
-              </div>
-            </div>
-
-            {/* Second Row - 3 Cards */}
-            <div className="flex flex-wrap justify-center gap-[25px]">
-              {/* Marginal Zone Lymphoma */}
-              <div className="bg-white rounded-2xl w-[280px] min-h-[160px] p-5 shadow-[0_8px_20px_rgba(241,196,15,0.3)] transition-all duration-300 ease-in-out flex flex-col justify-center items-center border border-[#f1c40f] text-center hover:transform hover:scale-105 hover:shadow-[0_12px_30px_rgba(241,196,15,0.4)]">
-                <h3 className="text-base font-bold text-[#222] mb-[10px]">Marginal Zone Lymphoma (MZL)</h3>
-                <p className="text-sm text-[#555555] leading-relaxed">Associated with inflammation or infection origins</p>
-              </div>
-
-              {/* High-Grade B-cell Lymphoma */}
-              <div className="bg-white rounded-2xl w-[280px] min-h-[160px] p-5 shadow-[0_8px_20px_rgba(241,196,15,0.3)] transition-all duration-300 ease-in-out flex flex-col justify-center items-center border border-[#f1c40f] text-center hover:transform hover:scale-105 hover:shadow-[0_12px_30px_rgba(241,196,15,0.4)]">
-                <h3 className="text-base font-bold text-[#222] mb-[10px]">High-Grade B-cell Lymphoma</h3>
-                <p className="text-sm text-[#555555] leading-relaxed">Rapid progression, requires functioning therapies</p>
-              </div>
-
-              {/* B-cell Acute Lymphoblastic Leukaemia */}
-              <div className="bg-white rounded-2xl w-[280px] min-h-[160px] p-5 shadow-[0_8px_20px_rgba(241,196,15,0.3)] transition-all duration-300 ease-in-out flex flex-col justify-center items-center border border-[#f1c40f] text-center hover:transform hover:scale-105 hover:shadow-[0_12px_30px_rgba(241,196,15,0.4)]">
-                <h3 className="text-base font-bold text-[#222] mb-[10px]">B-cell Acute Lymphoblastic Leukaemia (B-ALL)</h3>
-                <p className="text-sm text-[#555555] leading-relaxed">Aggressive leukaemia impacting bone marrow and blood</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Which cancers can NexCAR19 treat Section - Reusable Component */}
+      <CancerTypesSection isHCPView={false} />
 
       {/* Why NexCAR19 Section */}
       <section className="py-8 bg-white">
