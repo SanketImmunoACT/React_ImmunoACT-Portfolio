@@ -1,0 +1,138 @@
+const Sitemap = () => {
+    return (
+        <div className=" bg-white">
+            {/* Main Content */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+                <h1 className="text-[43px] font-medium text-[#363636] mb-6">Sitemap</h1>
+
+                <div className="">
+                    {/* About Section */}
+                    <div>
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">About</h2>
+                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
+                        <ul className="space-y-3 font-medium">
+                            <li>
+                                <a href="/about/who-we-are" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Who we are
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/about/team" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Team
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Science Section */}
+                    <div>
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">Science</h2>
+                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
+
+                        <ul className="space-y-3 font-medium">
+                            <li>
+                                <a href="/science/research" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Research
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/science/process" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Process
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/science/pipeline" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Pipeline
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/science/publications" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Publications
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/science/patents" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Patents
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* NexCAR19 Section */}
+                    <div>
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">NexCAR19</h2>
+                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
+
+                        <ul className="space-y-3 font-medium">
+                            <li>
+                                <a href="/nexcar19/patients" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Patients
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/nexcar19/healthcare-professionals" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Healthcare Professionals
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/nexcar19/treatment-process" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Treatment Process
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/nexcar19/partnered-treatment-centres" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Partnered Treatment Centres
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Media Section */}
+                    <div>
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">Media</h2>
+                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
+
+                        <ul className="space-y-3 font-medium">
+                            <li>
+                                <a href="/media/newsroom" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Newsroom
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Philanthropy Section */}
+                    <div>
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">Philanthropy</h2>
+                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
+
+                        <ul className="space-y-3 font-medium">
+                            <li>
+                                <a href="/philanthropy/immunoact-foundation" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    ImmunoACT Foundation
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Careers Section */}
+                    <div>
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">Careers</h2>
+                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
+
+                        <ul className="space-y-3 font-medium">
+                            <li>
+                                <a href="/careers/current-job-openings" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Current Job Openings
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    )
+}
+
+export default Sitemap

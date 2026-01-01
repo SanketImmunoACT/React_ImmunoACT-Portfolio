@@ -12,6 +12,7 @@ import Publications from '@/pages/Publications'
 import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import PartneredHospitals from '@/pages/PartneredHospitals'
 import TreatmentCenters from '@/pages/TreatmentCenters'
+import Sitemap from '@/pages/Sitemap'
 
 // Main Pages
 import About from '@/pages/About'
@@ -19,6 +20,13 @@ import Science from '@/pages/Science'
 import NexCAR19 from '@/pages/NexCAR19'
 import ForPatients from '@/pages/NexCAR19/ForPatients'
 import ForHCP from '@/pages/NexCAR19/ForHCP'
+
+// About sub-pages
+import WhoWeAre from '@/pages/About/WhoWeAre'
+import Team from '@/pages/About/Team'
+
+// Science sub-pages
+import Research from '@/pages/Science/Research'
 
 // Admin Components
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -85,17 +93,22 @@ function App() {
                   
                   {/* Main Page Routes */}
                   <Route path="/about" element={<About />} />
-                  <Route path="/about/who-we-are" element={<About />} />
-                  <Route path="/about/team" element={<About />} />
+                  <Route path="/about/who-we-are" element={<WhoWeAre />} />
+                  <Route path="/about/team" element={<Team />} />
                   
                   <Route path="/science" element={<Science />} />
-                  <Route path="/science/research" element={<Science />} />
+                  <Route path="/science/research" element={<Research />} />
                   <Route path="/science/process" element={<Science />} />
                   <Route path="/science/pipeline" element={<Science />} />
                   <Route path="/science/publications" element={<Science />} />
                   
                   <Route path="/nexcar19" element={<NexCAR19 />} />
+                  <Route path="/nexcar19/patients" element={<ForPatients />} />
+                  <Route path="/nexcar19/healthcare-professionals" element={<ForHCP />} />
+                  <Route path="/nexcar19/treatment-process" element={<NexCAR19 />} />
+                  <Route path="/nexcar19/partnered-treatment-centres" element={<PartneredHospitals />} />
                   <Route path="/nexcar19-hcp" element={<NexCAR19 />} />
+                  <Route path="/hcp" element={<ForHCP />} />
                   
                   {/* Media Routes */}
                   <Route path="/news-media" element={<NewsMedia />} />
@@ -104,12 +117,17 @@ function App() {
                   {/* Other Routes */}
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/media" element={<NewsMedia />} />
+                  <Route path="/media/newsroom" element={<NewsMedia />} />
                   <Route path="/philanthropy" element={<Philanthropy />} />
+                  <Route path="/philanthropy/immunoact-foundation" element={<Philanthropy />} />
                   <Route path="/careers" element={<Careers />} />
+                  <Route path="/careers/current-job-openings" element={<Careers />} />
                   <Route path="/publications" element={<Publications />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                   <Route path="/partnered-hospitals" element={<PartneredHospitals />} />
                   <Route path="/treatment-centres" element={<PartneredHospitals />} />
+                  <Route path="/collaborations" element={<Contact />} />
+                  <Route path="/sitemap" element={<Sitemap />} />
                 </Routes>
               </main>
               <Footer />
