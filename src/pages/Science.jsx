@@ -1,6 +1,7 @@
 import PageBanner from '@/components/PageBanner'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import RotatingSlider from '@/components/RotatingSlider'
 
 const Science = () => {
   const navigate = useNavigate()
@@ -894,6 +895,8 @@ const Science = () => {
           </div>
         </div>
       </section>
+
+      <RotatingSlider/>
     </div>
   )
 }

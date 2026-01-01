@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import KuldeepStoryImg from '@/assets/images/patients/Kuldeep_story.png'
 
-const PatientTestimonial = () => {
+const PatientTestimonial = ({ showDescription = true, headerMargin = "mb-9", bottomLine = true }) => {
   const [showVideo, setShowVideo] = useState(false)
 
   const handlePlayVideo = () => {
@@ -12,13 +12,15 @@ const PatientTestimonial = () => {
     <section className="">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
-        <div className="text-center">
+        <div className={`text-center ${!showDescription ? headerMargin : ''}`}>
           <h2 className="text-[38px] font-normal text-[#47A178] font-futura">
             Real Stories of Hope
           </h2>
-          <p className="text-lg text-[#363636] mt-4 mb-9 text-center">
-            At ImmunoACT, we believe that every patient story matters. Our CAR-T cell therapies are transforming lives—bringing hope where options were once limited. These powerful testimonials reflect not only the resilience of our patients but also the impact of cutting-edge, gene-modified cell therapy. As we work alongside leading healthcare institutions, academic collaborators, and strategic partners, our mission remains clear: to expand equitable access to advanced immunotherapies and redefine cancer care in India and beyond.
-          </p>
+          {showDescription && (
+            <p className="text-lg text-[#363636] mt-4 mb-9 text-center">
+              At ImmunoACT, we believe that every patient story matters. Our CAR-T cell therapies are transforming lives—bringing hope where options were once limited. These powerful testimonials reflect not only the resilience of our patients but also the impact of cutting-edge, gene-modified cell therapy. As we work alongside leading healthcare institutions, academic collaborators, and strategic partners, our mission remains clear: to expand equitable access to advanced immunotherapies and redefine cancer care in India and beyond.
+            </p>
+          )}
         </div>
 
         {/* Video Banner Section */}
@@ -44,7 +46,7 @@ const PatientTestimonial = () => {
                 <div className="relative">
                   {/* Pulsing ring effect */}
                   <div className="absolute inset-0 bg-yellow-400/30 rounded-full animate-ping group-hover:animate-none"></div>
-                  
+
                   {/* Main play button */}
                   <div className="relative bg-yellow-400 hover:bg-yellow-500 w-20 h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:shadow-3xl">
                     <svg
@@ -78,9 +80,11 @@ const PatientTestimonial = () => {
         </div>
 
         {/* Bottom Divider Line */}
-        <div className="mt-20 flex justify-center">
-          <div className="w-full max-w-[650px] h-[1px] bg-[#FFBF00] mx-4"></div>
-        </div>
+        {bottomLine && (
+          <div className="mt-20 flex justify-center">
+            <div className="w-full max-w-[650px] h-[1px] bg-[#FFBF00] mx-4"></div>
+          </div>
+        )}
       </div>
     </section>
   )

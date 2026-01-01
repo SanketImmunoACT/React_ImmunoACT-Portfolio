@@ -17,6 +17,8 @@ import TreatmentCenters from '@/pages/TreatmentCenters'
 import About from '@/pages/About'
 import Science from '@/pages/Science'
 import NexCAR19 from '@/pages/NexCAR19'
+import ForPatients from '@/pages/NexCAR19/ForPatients'
+import ForHCP from '@/pages/NexCAR19/ForHCP'
 
 // Admin Components
 import { AuthProvider } from '@/contexts/AuthContext'

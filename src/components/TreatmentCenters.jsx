@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import DottedIndiaMapImg from '@/assets/images/locations/dotted-india-map.png'
 
-const TreatmentCenters = () => {
+const TreatmentCenters = ({ bottomLine = true }) => {
   return (
     <>
       <style>
@@ -52,9 +52,11 @@ const TreatmentCenters = () => {
           </div>
 
           {/* Bottom Divider Line */}
-          <div className="mt-20 flex justify-center">
-            <div className="w-full max-w-[650px] h-[1px] bg-[#FFBF00] mx-4"></div>
-          </div>
+          {bottomLine && (
+            <div className="mt-20 flex justify-center">
+              <div className="w-full max-w-[650px] h-[1px] bg-[#FFBF00] mx-4"></div>
+            </div>
+          )}
         </div>
       </section>
     </>

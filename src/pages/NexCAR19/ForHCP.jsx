@@ -1,5 +1,3 @@
-import PageBanner from '@/components/PageBanner'
-
 const ForHCP = () => {
   const clinicalData = [
     {
@@ -46,29 +44,9 @@ const ForHCP = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 font-futura">
-      {/* Hero Section */}
-      <PageBanner 
-        title="NexCAR19™ for Healthcare Professionals" 
-        subtitle="Comprehensive clinical data, protocols, and resources for healthcare professionals treating patients with NexCAR19™ CAR-T cell therapy."
-      />
-      
-      {/* Action Buttons Section */}
-      <section className="py-8 bg-white">
-        <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-yellow-400 hover:bg-yellow-500 text-black px-8 py-3 rounded-full font-bold transition-colors">
-              Download Clinical Data
-            </button>
-            <button className="border-2 border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white px-8 py-3 rounded-full font-bold transition-colors">
-              Request Training
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Clinical Efficacy */}
-      <section className="py-16">
+    <>
+      {/* Clinical Efficacy - For HCP */}
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-800 mb-6">Clinical Efficacy Data</h2>
@@ -80,7 +58,7 @@ const ForHCP = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {clinicalData.map((data, index) => (
-              <div key={index} className="bg-gradient-to-br from-blue-50 to-teal-50 p-8 rounded-xl">
+              <div key={index} className="bg-white p-8 rounded-xl shadow-sm">
                 <h3 className="text-2xl font-bold text-blue-600 mb-4">{data.indication}</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
@@ -102,8 +80,8 @@ const ForHCP = () => {
         </div>
       </section>
 
-      {/* Product Specifications */}
-      <section className="py-16 bg-gray-50">
+      {/* Product Specifications - For HCP */}
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-800 mb-6">Product Specifications</h2>
@@ -114,7 +92,7 @@ const ForHCP = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {specifications.map((spec, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-lg text-center">
+              <div key={index} className="bg-gray-50 p-6 rounded-xl text-center">
                 <h3 className="text-lg font-bold text-gray-800 mb-2">{spec.parameter}</h3>
                 <div className="text-3xl font-bold text-teal-600 mb-2">{spec.value}</div>
                 <p className="text-sm text-gray-600">{spec.description}</p>
@@ -124,8 +102,8 @@ const ForHCP = () => {
         </div>
       </section>
 
-      {/* Safety Profile */}
-      <section className="py-16">
+      {/* Safety Profile - For HCP */}
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-800 mb-6">Safety Profile</h2>
@@ -171,18 +149,18 @@ const ForHCP = () => {
         </div>
       </section>
 
-      {/* Resources */}
-      <section className="py-16 bg-gradient-to-r from-gray-800 to-gray-900">
+      {/* Resources - For HCP */}
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-white mb-6">Resources for HCPs</h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold text-gray-800 mb-6">Resources for HCPs</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Access comprehensive resources to support your patients throughout their NexCAR19™ journey.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-xl text-center">
+            <div className="bg-gray-50 p-6 rounded-xl text-center">
               <div className="text-4xl mb-4">📋</div>
               <h3 className="text-xl font-bold text-gray-800 mb-3">Clinical Protocols</h3>
               <p className="text-gray-600 mb-4">Detailed treatment protocols and guidelines</p>
@@ -190,7 +168,7 @@ const ForHCP = () => {
                 Download
               </button>
             </div>
-            <div className="bg-white p-6 rounded-xl text-center">
+            <div className="bg-gray-50 p-6 rounded-xl text-center">
               <div className="text-4xl mb-4">🎓</div>
               <h3 className="text-xl font-bold text-gray-800 mb-3">Training Materials</h3>
               <p className="text-gray-600 mb-4">Educational resources and training modules</p>
@@ -198,7 +176,7 @@ const ForHCP = () => {
                 Access
               </button>
             </div>
-            <div className="bg-white p-6 rounded-xl text-center">
+            <div className="bg-gray-50 p-6 rounded-xl text-center">
               <div className="text-4xl mb-4">📞</div>
               <h3 className="text-xl font-bold text-gray-800 mb-3">Medical Support</h3>
               <p className="text-gray-600 mb-4">24/7 medical support hotline</p>
@@ -209,7 +187,7 @@ const ForHCP = () => {
           </div>
         </div>
       </section>
-    </div>
+    </>
   )
 }
 
