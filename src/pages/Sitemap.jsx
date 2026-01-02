@@ -8,8 +8,7 @@ const Sitemap = () => {
                 <div className="">
                     {/* About Section */}
                     <div>
-                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">About</h2>
-                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">About</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
                                 <a href="/about/who-we-are" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
@@ -26,9 +25,7 @@ const Sitemap = () => {
 
                     {/* Science Section */}
                     <div>
-                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">Science</h2>
-                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
-
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">Science</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
                                 <a href="/science/research" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
@@ -60,9 +57,7 @@ const Sitemap = () => {
 
                     {/* NexCAR19 Section */}
                     <div>
-                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">NexCAR19</h2>
-                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
-
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">NexCAR19</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
                                 <a href="/nexcar19/patients" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
@@ -89,9 +84,7 @@ const Sitemap = () => {
 
                     {/* Media Section */}
                     <div>
-                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">Media</h2>
-                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
-
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">Media</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
                                 <a href="/media/newsroom" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
@@ -103,9 +96,7 @@ const Sitemap = () => {
 
                     {/* Philanthropy Section */}
                     <div>
-                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">Philanthropy</h2>
-                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
-
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">Philanthropy</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
                                 <a href="/philanthropy/immunoact-foundation" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
@@ -117,9 +108,7 @@ const Sitemap = () => {
 
                     {/* Careers Section */}
                     <div>
-                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12">Careers</h2>
-                        <div className="max-w-7xl w-full h-[0.2px] bg-[#DDDEDF] mb-6"></div>
-
+                        <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">Careers</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
                                 <a href="/careers/current-job-openings" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
