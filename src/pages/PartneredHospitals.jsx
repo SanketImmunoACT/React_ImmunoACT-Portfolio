@@ -1002,7 +1002,7 @@ const PartneredHospitals = () => {
       {/* Hero Section */}
       <PageBanner 
         title="Partnered Hospitals" 
-        subtitle={`Our strong association with ${hospitals.length} leading hospitals across India has contributed to our customers' access to advanced cancer treatments.`}
+        // subtitle={`Our strong association with ${hospitals.length} leading hospitals across India has contributed to our customers' access to advanced cancer treatments.`}
       />
 
       {/* Main Content */}
