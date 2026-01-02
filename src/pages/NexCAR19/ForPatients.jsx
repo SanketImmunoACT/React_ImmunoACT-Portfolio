@@ -226,7 +226,7 @@ const ForPatients = () => {
       </section>
 
       {/* Treatment Process Slider Section */}
-      <section className="py-8 bg-white">
+      <section id="treatment-process" className="py-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-normal text-[#47A178] font-futura mb-8">Treatment Process</h2>
           <p className="text-[22px] font-medium text-[#363636] max-w-7xl mx-auto mb-6">

@@ -274,7 +274,7 @@ const Science = () => {
       </section>
 
       {/* Plasmid DNA Platform Section */}
-      <section className="py-8">
+      <section id='plasmid' className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-normal text-[#47A178] font-futura mb-8">
             The Backbone of Breakthroughs: Our Plasmid DNA Platform

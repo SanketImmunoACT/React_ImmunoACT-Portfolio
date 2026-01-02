@@ -11,12 +11,12 @@ const Sitemap = () => {
                         <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">About</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
-                                <a href="/about/who-we-are" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/about#who-we-are" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Who we are
                                 </a>
                             </li>
                             <li>
-                                <a href="/about/team" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/about#team" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Team
                                 </a>
                             </li>
@@ -28,28 +28,28 @@ const Sitemap = () => {
                         <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">Science</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
-                                <a href="/science/research" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/science#research" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Research
                                 </a>
                             </li>
                             <li>
-                                <a href="/science/process" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/science" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Process
                                 </a>
                             </li>
                             <li>
-                                <a href="/science/pipeline" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/science#pipeline" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Pipeline
                                 </a>
                             </li>
                             <li>
-                                <a href="/science/publications" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/science#publications" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Publications
                                 </a>
                             </li>
                             <li>
-                                <a href="/science/patents" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
-                                    Patents
+                                <a href="/science#plasmid" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                    Plasmids
                                 </a>
                             </li>
                         </ul>
@@ -60,22 +60,22 @@ const Sitemap = () => {
                         <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">NexCAR19</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
-                                <a href="/nexcar19/patients" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/nexcar19" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Patients
                                 </a>
                             </li>
                             <li>
-                                <a href="/nexcar19/healthcare-professionals" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/nexcar19-hcp" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Healthcare Professionals
                                 </a>
                             </li>
                             <li>
-                                <a href="/nexcar19/treatment-process" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/nexcar19#treatment-process" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Treatment Process
                                 </a>
                             </li>
                             <li>
-                                <a href="/nexcar19/partnered-treatment-centres" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/treatment-centres" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Partnered Treatment Centres
                                 </a>
                             </li>
@@ -87,7 +87,7 @@ const Sitemap = () => {
                         <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">Media</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
-                                <a href="/media/newsroom" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/media" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Newsroom
                                 </a>
                             </li>
@@ -99,7 +99,7 @@ const Sitemap = () => {
                         <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">Philanthropy</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
-                                <a href="/philanthropy/immunoact-foundation" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/philanthropy" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     ImmunoACT Foundation
                                 </a>
                             </li>
@@ -111,7 +111,7 @@ const Sitemap = () => {
                         <h2 className="text-4xl font-medium text-[#4F4F4F] mb-3 mt-12 border-b border-[#DDDEDF] pb-3">Careers</h2>
                         <ul className="space-y-3 font-medium">
                             <li>
-                                <a href="/careers/current-job-openings" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
+                                <a href="/careers" className="text-[#47A178] text-lg mb-3 hover:text-teal-700 transition-colors">
                                     Current Job Openings
                                 </a>
                             </li>
