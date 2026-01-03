@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Wrapper } from '@googlemaps/react-wrapper';
 import { AlertCircle, MapPin, Navigation, Loader2 } from 'lucide-react';
 import PageBanner from '@/components/PageBanner';
+import LocationSearch from '@/components/LocationSearch';
+import HospitalResults from '@/components/HospitalResults';
 
 // Import existing hospital data as fallback
 import hospitalData from '@/data/allHospitalsData.js';
@@ -188,6 +190,38 @@ const Map = ({
 };
 
 const TreatmentCenters = () => {
+  const [searchResults, setSearchResults] = useState(null);
+  const [selectedHospital, setSelectedHospital] = useState(null);
+  const [searchLocation, setSearchLocation] = useState(null);
+  const [radiusKm, setRadiusKm] = useState(50);
+  const [isMapView, setIsMapView] = useState(false);
+
+  // Handle search results from LocationSearch component
+  const handleSearchResults = (results) => {
+    setSearchResults(results);
+    if (results.searchLocation) {
+      setSearchLocation(results.searchLocation);
+    }
+  };
+
+  // Handle location change
+  const handleLocationChange = (location) => {
+    // This can be used for real-time updates if needed
+  };
+
+  // Handle radius change
+  const handleRadiusChange = (radius) => {
+    setRadiusKm(radius);
+  };
+
+  // Handle hospital selection
+  const handleHospitalSelect = (hospital) => {
+    setSelectedHospital(hospital);
+  };
+
+  // Get Google Maps API key from environment
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -198,13 +232,100 @@ const TreatmentCenters = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-          <h3 className="text-lg font-medium text-gray-800 mb-2">
-            Location Search Feature
-          </h3>
-          <p className="text-gray-600">
-            The location-based hospital search is being loaded...
-          </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Sidebar - Search */}
+          <div className="lg:col-span-1">
+            <LocationSearch
+              onSearchResults={handleSearchResults}
+              onLocationChange={handleLocationChange}
+              onRadiusChange={handleRadiusChange}
+              initialRadius={radiusKm}
+            />
+
+            {/* View Toggle */}
+            {searchResults && searchResults.hospitals && searchResults.hospitals.length > 0 && (
+              <div className="mt-6 bg-white rounded-lg shadow-lg p-4">
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setIsMapView(false)}
+                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                      !isMapView 
+                        ? 'bg-orange-500 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    List View
+                  </button>
+                  <button
+                    onClick={() => setIsMapView(true)}
+                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                      isMapView 
+                        ? 'bg-orange-500 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Map View
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Content - Results */}
+          <div className="lg:col-span-2">
+            {!searchResults ? (
+              <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+                <MapPin className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-800 mb-2">
+                  Search for Treatment Centers
+                </h3>
+                <p className="text-gray-600">
+                  Enter a location in the search box to find CAR-T cell therapy centers near you.
+                </p>
+              </div>
+            ) : (
+              <>
+                {isMapView && googleMapsApiKey ? (
+                  <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div className="h-96 lg:h-[600px]">
+                      <Wrapper apiKey={googleMapsApiKey}>
+                        <Map
+                          hospitals={searchResults.hospitals || []}
+                          onHospitalSelect={handleHospitalSelect}
+                          selectedHospital={selectedHospital}
+                          searchLocation={searchLocation}
+                          radiusKm={radiusKm}
+                        />
+                      </Wrapper>
+                    </div>
+                  </div>
+                ) : isMapView && !googleMapsApiKey ? (
+                  <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+                    <MapPin className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-800 mb-2">
+                      Map View Unavailable
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Google Maps API key is not configured. Please use the list view or contact support.
+                    </p>
+                    <button
+                      onClick={() => setIsMapView(false)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg"
+                    >
+                      Switch to List View
+                    </button>
+                  </div>
+                ) : (
+                  <HospitalResults
+                    hospitals={searchResults.hospitals || []}
+                    searchLocation={searchLocation}
+                    onHospitalSelect={handleHospitalSelect}
+                    selectedHospital={selectedHospital}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

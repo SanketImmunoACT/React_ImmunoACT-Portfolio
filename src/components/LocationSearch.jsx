@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, MapPin, AlertCircle, Loader2, Navigation } from 'lucide-react';
 import hospitalService from '../services/hospitalService';
 
@@ -19,9 +19,27 @@ const LocationSearch = ({
   
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
+  const debounceRef = useRef(null);
 
   // Popular locations for suggestions
   const popularLocations = hospitalService.getPopularLocations();
+
+  // Debounced validation to avoid excessive calls while typing
+  const debouncedValidation = useCallback((value) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
+    debounceRef.current = setTimeout(() => {
+      // Only validate if the user has stopped typing and the field has content
+      if (value.trim().length >= 2) {
+        const validation = hospitalService.validateLocation(value);
+        if (!validation.isValid) {
+          setError(validation.error);
+        }
+      }
+    }, 500); // Wait 500ms after user stops typing
+  }, []);
 
   // Radius options
   const radiusOptions = [
@@ -49,8 +67,11 @@ const LocationSearch = ({
   // Handle location input change
   const handleLocationChange = (value) => {
     setLocation(value);
-    setError('');
+    setError(''); // Clear previous errors while typing
     setShowSuggestions(true);
+    
+    // Trigger debounced validation
+    debouncedValidation(value);
     
     if (onLocationChange) {
       onLocationChange(value);
@@ -132,6 +153,15 @@ const LocationSearch = ({
     e.preventDefault();
     handleSearch();
   };
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   // Handle click outside to close suggestions
   useEffect(() => {

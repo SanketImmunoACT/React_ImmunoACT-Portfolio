@@ -80,7 +80,6 @@ function App() {
                 <UserManagement />
               </ProtectedRoute>
             } />
-            {/* Additional admin routes will be added here */}
           </Route>
 
           {/* Public Routes */}

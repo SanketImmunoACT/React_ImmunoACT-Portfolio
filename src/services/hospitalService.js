@@ -14,7 +14,8 @@ class HospitalService {
       const params = new URLSearchParams({
         location: location.trim(),
         radius: radius.toString(),
-        limit: limit.toString()
+        limit: limit.toString(),
+        _t: Date.now().toString() // Cache busting parameter
       });
 
       // Add services if provided
@@ -26,6 +27,7 @@ class HospitalService {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
         }
       });
 
@@ -248,8 +250,8 @@ class HospitalService {
       };
     }
 
-    // Basic validation for valid characters
-    const validPattern = /^[a-zA-Z0-9\s\-.,()]+$/;
+    // More permissive validation for location names - allow unicode characters, spaces, and common punctuation
+    const validPattern = /^[\w\s\-.,()'/&]+$/u;
     if (!validPattern.test(trimmed)) {
       return {
         isValid: false,
@@ -285,10 +287,10 @@ class HospitalService {
       };
     }
 
-    if (numRadius > 500) {
+    if (numRadius > 1500) {
       return {
         isValid: false,
-        error: 'Radius cannot exceed 500 km'
+        error: 'Radius cannot exceed 1500 km'
       };
     }
 

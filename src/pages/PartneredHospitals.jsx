@@ -13,13 +13,13 @@ const collaborationSchema = yup.object({
     .string()
     .required('First name is required')
     .max(50, 'First name must not exceed 50 characters')
-    .matches(/^[a-zA-Z\s'-]+$/, 'First name can only contain letters, spaces, hyphens, and apostrophes'),
+    .matches(/^[\w\s'-]+$/u, 'First name can only contain letters, spaces, hyphens, and apostrophes'),
   
   lastName: yup
     .string()
     .required('Last name is required')
     .max(50, 'Last name must not exceed 50 characters')
-    .matches(/^[a-zA-Z\s'-]+$/, 'Last name can only contain letters, spaces, hyphens, and apostrophes'),
+    .matches(/^[\w\s'-]+$/u, 'Last name can only contain letters, spaces, hyphens, and apostrophes'),
   
   email: yup
     .string()
@@ -36,7 +36,7 @@ const collaborationSchema = yup.object({
   institution: yup
     .string()
     .max(200, 'Institution name must not exceed 200 characters')
-    .matches(/^[a-zA-Z0-9\s\-.,&()]*$/, 'Institution name contains invalid characters')
+    .matches(/^[\w\s\-.,&()]*$/u, 'Institution name contains invalid characters')
     .nullable()
     .transform((value) => value === '' ? null : value),
   
@@ -59,7 +59,7 @@ const collaborationSchema = yup.object({
     .required('Message is required')
     .min(10, 'Message must be at least 10 characters long')
     .max(2000, 'Message must not exceed 2000 characters')
-    .matches(/^[a-zA-Z0-9\s\-.,!?()'"@#$%&*+=\n\r]+$/, 'Message contains invalid characters'),
+    .matches(/^[\w\s\-.,!?()'"@#$%&*+=\n\r]+$/u, 'Message contains invalid characters'),
   
   consentGiven: yup
     .boolean()
@@ -500,325 +500,325 @@ const FilterPanel = ({
 };
 
 // Collaborate Section Component
-const CollaborateSection = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
+// const CollaborateSection = () => {
+//   const [isSubmitting, setIsSubmitting] = useState(false);
+//   const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
 
-  const onSubmit = async (data) => {
-    setIsSubmitting(true);
-    setSubmitStatus(null);
+//   const onSubmit = async (data) => {
+//     setIsSubmitting(true);
+//     setSubmitStatus(null);
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/contact/submit`, {
-        body: JSON.stringify({
-          ...data,
-          formType: 'collaboration' // Add form type to distinguish from contact form
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-      });
+//     try {
+//       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/contact/submit`, {
+//         body: JSON.stringify({
+//           ...data,
+//           formType: 'collaboration' // Add form type to distinguish from contact form
+//         }),
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         method: 'POST',
+//       });
 
-      const responseData = await response.json();
+//       const responseData = await response.json();
 
-      if (response.ok) {
-        setSubmitStatus('success');
-        reset();
-      } else {
-        setSubmitStatus('error');
-        console.error('Submission error:', responseData);
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
-      setSubmitStatus('error');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+//       if (response.ok) {
+//         setSubmitStatus('success');
+//         reset();
+//       } else {
+//         setSubmitStatus('error');
+//         console.error('Submission error:', responseData);
+//       }
+//     } catch (error) {
+//       console.error('Form submission error:', error);
+//       setSubmitStatus('error');
+//     } finally {
+//       setIsSubmitting(false);
+//     }
+//   };
 
-  // Initialize React Hook Form
-  const {
-    formState: { errors, isValid },
-    handleSubmit,
-    register,
-    reset,
-    watch
-  } = useForm({
-    defaultValues: {
-      consentGiven: false,
-      email: '',
-      firstName: '',
-      institution: '',
-      lastName: '',
-      message: '',
-      partneringCategory: '',
-      phone: '',
-      website: '' // Honeypot field
-    },
-    mode: 'onChange',
-    resolver: yupResolver(collaborationSchema)
-  });
+//   // Initialize React Hook Form
+//   const {
+//     formState: { errors, isValid },
+//     handleSubmit,
+//     register,
+//     reset,
+//     watch
+//   } = useForm({
+//     defaultValues: {
+//       consentGiven: false,
+//       email: '',
+//       firstName: '',
+//       institution: '',
+//       lastName: '',
+//       message: '',
+//       partneringCategory: '',
+//       phone: '',
+//       website: '' // Honeypot field
+//     },
+//     mode: 'onChange',
+//     resolver: yupResolver(collaborationSchema)
+//   });
 
-  // Watch message field for character counter
-  const messageValue = watch('message', '');
+//   // Watch message field for character counter
+//   const messageValue = watch('message', '');
 
-  null
+//   null
 
-  const partneringCategories = [
-    'Clinical Collaboration',
-    'Research Partnership',
-    'Technology Licensing',
-    'Manufacturing Partnership',
-    'Distribution Partnership',
-    'Investment Opportunity',
-    'Hospital Partnership',
-    'Other'
-  ];
+//   const partneringCategories = [
+//     'Clinical Collaboration',
+//     'Research Partnership',
+//     'Technology Licensing',
+//     'Manufacturing Partnership',
+//     'Distribution Partnership',
+//     'Investment Opportunity',
+//     'Hospital Partnership',
+//     'Other'
+//   ];
 
-  return (
-    <div className="bg-gray-50 py-16">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Collaborate with Us</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              To co-develop the next generation of our cellular therapies or to broaden access to your territories.
-            </p>
-          </div>
+//   return (
+//     <div className="bg-gray-50 py-16">
+//       <div className="container mx-auto px-4">
+//         <div className="max-w-6xl mx-auto">
+//           <div className="text-center mb-12">
+//             <h2 className="text-3xl font-bold text-gray-800 mb-4">Collaborate with Us</h2>
+//             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+//               To co-develop the next generation of our cellular therapies or to broaden access to your territories.
+//             </p>
+//           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            {/* Left Side - Information */}
-            <div>
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">For Healthcare Providers</h3>
-                  <ul className="space-y-3 text-gray-600">
-                    <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
-                      Research & Development of innovative cellular therapies
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
-                      Expanding Patient Access to advanced cancer treatments
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
-                      Developing solutions to advance global health equity
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
-                      Exploring opportunities to advance therapeutic solutions
-                    </li>
-                  </ul>
-                </div>
+//           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+//             {/* Left Side - Information */}
+//             <div>
+//               <div className="space-y-8">
+//                 <div>
+//                   <h3 className="text-xl font-semibold text-gray-800 mb-4">For Healthcare Providers</h3>
+//                   <ul className="space-y-3 text-gray-600">
+//                     <li className="flex items-start">
+//                       <span className="text-orange-500 mr-2">•</span>
+//                       Research & Development of innovative cellular therapies
+//                     </li>
+//                     <li className="flex items-start">
+//                       <span className="text-orange-500 mr-2">•</span>
+//                       Expanding Patient Access to advanced cancer treatments
+//                     </li>
+//                     <li className="flex items-start">
+//                       <span className="text-orange-500 mr-2">•</span>
+//                       Developing solutions to advance global health equity
+//                     </li>
+//                     <li className="flex items-start">
+//                       <span className="text-orange-500 mr-2">•</span>
+//                       Exploring opportunities to advance therapeutic solutions
+//                     </li>
+//                   </ul>
+//                 </div>
                 
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Partnership Benefits</h3>
-                  <ul className="space-y-3 text-gray-600">
-                    <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
-                      Access to cutting-edge CAR-T cell therapy
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
-                      Comprehensive training and support
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
-                      Clinical research collaboration opportunities
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
-                      Enhanced patient care capabilities
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+//                 <div>
+//                   <h3 className="text-xl font-semibold text-gray-800 mb-4">Partnership Benefits</h3>
+//                   <ul className="space-y-3 text-gray-600">
+//                     <li className="flex items-start">
+//                       <span className="text-orange-500 mr-2">•</span>
+//                       Access to cutting-edge CAR-T cell therapy
+//                     </li>
+//                     <li className="flex items-start">
+//                       <span className="text-orange-500 mr-2">•</span>
+//                       Comprehensive training and support
+//                     </li>
+//                     <li className="flex items-start">
+//                       <span className="text-orange-500 mr-2">•</span>
+//                       Clinical research collaboration opportunities
+//                     </li>
+//                     <li className="flex items-start">
+//                       <span className="text-orange-500 mr-2">•</span>
+//                       Enhanced patient care capabilities
+//                     </li>
+//                   </ul>
+//                 </div>
+//               </div>
+//             </div>
 
-            {/* Right Side - Form */}
-            <div>
-              <div className="bg-white rounded-lg shadow-lg p-8">
-                {submitStatus === 'success' && (
-                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <div>
-                      <p className="text-green-800 font-medium">Thank you for your submission!</p>
-                      <p className="text-green-700 text-sm">We will contact you within 2-3 business days.</p>
-                    </div>
-                  </div>
-                )}
+//             {/* Right Side - Form */}
+//             <div>
+//               <div className="bg-white rounded-lg shadow-lg p-8">
+//                 {submitStatus === 'success' && (
+//                   <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
+//                     <CheckCircle className="w-5 h-5 text-green-600" />
+//                     <div>
+//                       <p className="text-green-800 font-medium">Thank you for your submission!</p>
+//                       <p className="text-green-700 text-sm">We will contact you within 2-3 business days.</p>
+//                     </div>
+//                   </div>
+//                 )}
 
-                {submitStatus === 'error' && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
-                    <AlertCircle className="w-5 h-5 text-red-600" />
-                    <div>
-                      <p className="text-red-800 font-medium">There was an error submitting your form</p>
-                      <p className="text-red-700 text-sm">Please check the fields below and try again.</p>
-                    </div>
-                  </div>
-                )}
+//                 {submitStatus === 'error' && (
+//                   <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
+//                     <AlertCircle className="w-5 h-5 text-red-600" />
+//                     <div>
+//                       <p className="text-red-800 font-medium">There was an error submitting your form</p>
+//                       <p className="text-red-700 text-sm">Please check the fields below and try again.</p>
+//                     </div>
+//                   </div>
+//                 )}
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Honeypot field */}
-                  <input
-                    type="text"
-                    {...register('website')}
-                    style={{ display: 'none' }}
-                    tabIndex="-1"
-                    autoComplete="off"
-                  />
+//                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+//                   {/* Honeypot field */}
+//                   <input
+//                     type="text"
+//                     {...register('website')}
+//                     style={{ display: 'none' }}
+//                     tabIndex="-1"
+//                     autoComplete="off"
+//                   />
 
-                  {/* Name Fields */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <input
-                        type="text"
-                        {...register('firstName')}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                          errors.firstName ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="First Name *"
-                      />
-                      {errors.firstName && (
-                        <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
-                      )}
-                    </div>
+//                   {/* Name Fields */}
+//                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                     <div>
+//                       <input
+//                         type="text"
+//                         {...register('firstName')}
+//                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+//                           errors.firstName ? 'border-red-500' : 'border-gray-300'
+//                         }`}
+//                         placeholder="First Name *"
+//                       />
+//                       {errors.firstName && (
+//                         <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+//                       )}
+//                     </div>
 
-                    <div>
-                      <input
-                        type="text"
-                        {...register('lastName')}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                          errors.lastName ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="Last Name *"
-                      />
-                      {errors.lastName && (
-                        <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
-                      )}
-                    </div>
-                  </div>
+//                     <div>
+//                       <input
+//                         type="text"
+//                         {...register('lastName')}
+//                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+//                           errors.lastName ? 'border-red-500' : 'border-gray-300'
+//                         }`}
+//                         placeholder="Last Name *"
+//                       />
+//                       {errors.lastName && (
+//                         <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
+//                       )}
+//                     </div>
+//                   </div>
 
-                  {/* Institution */}
-                  <div>
-                    <input
-                      type="text"
-                      {...register('institution')}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                        errors.institution ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Institution"
-                    />
-                    {errors.institution && (
-                      <p className="mt-1 text-sm text-red-600">{errors.institution.message}</p>
-                    )}
-                  </div>
+//                   {/* Institution */}
+//                   <div>
+//                     <input
+//                       type="text"
+//                       {...register('institution')}
+//                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+//                         errors.institution ? 'border-red-500' : 'border-gray-300'
+//                       }`}
+//                       placeholder="Institution"
+//                     />
+//                     {errors.institution && (
+//                       <p className="mt-1 text-sm text-red-600">{errors.institution.message}</p>
+//                     )}
+//                   </div>
 
-                  {/* Partnering Category */}
-                  <div>
-                    <select
-                      {...register('partneringCategory')}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                        errors.partneringCategory ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    >
-                      <option value="">- Select - Partnering Category *</option>
-                      {partneringCategories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.partneringCategory && (
-                      <p className="mt-1 text-sm text-red-600">{errors.partneringCategory.message}</p>
-                    )}
-                  </div>
+//                   {/* Partnering Category */}
+//                   <div>
+//                     <select
+//                       {...register('partneringCategory')}
+//                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+//                         errors.partneringCategory ? 'border-red-500' : 'border-gray-300'
+//                       }`}
+//                     >
+//                       <option value="">- Select - Partnering Category *</option>
+//                       {partneringCategories.map((category) => (
+//                         <option key={category} value={category}>
+//                           {category}
+//                         </option>
+//                       ))}
+//                     </select>
+//                     {errors.partneringCategory && (
+//                       <p className="mt-1 text-sm text-red-600">{errors.partneringCategory.message}</p>
+//                     )}
+//                   </div>
 
-                  {/* Contact Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <input
-                        type="tel"
-                        {...register('phone')}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                          errors.phone ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="Phone No."
-                      />
-                      {errors.phone && (
-                        <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-                      )}
-                    </div>
+//                   {/* Contact Information */}
+//                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                     <div>
+//                       <input
+//                         type="tel"
+//                         {...register('phone')}
+//                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+//                           errors.phone ? 'border-red-500' : 'border-gray-300'
+//                         }`}
+//                         placeholder="Phone No."
+//                       />
+//                       {errors.phone && (
+//                         <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+//                       )}
+//                     </div>
 
-                    <div>
-                      <input
-                        type="email"
-                        {...register('email')}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                          errors.email ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="Email Address *"
-                      />
-                      {errors.email && (
-                        <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-                      )}
-                    </div>
-                  </div>
+//                     <div>
+//                       <input
+//                         type="email"
+//                         {...register('email')}
+//                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+//                           errors.email ? 'border-red-500' : 'border-gray-300'
+//                         }`}
+//                         placeholder="Email Address *"
+//                       />
+//                       {errors.email && (
+//                         <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+//                       )}
+//                     </div>
+//                   </div>
 
-                  {/* Message */}
-                  <div>
-                    <div className="relative">
-                      <textarea
-                        rows={4}
-                        {...register('message')}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                          errors.message ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="Message *"
-                      />
-                      <span className={`absolute bottom-2 right-2 text-xs ${messageValue.length > 2000 ? 'text-red-600' : 'text-gray-500'}`}>
-                        {messageValue.length}/2000
-                      </span>
-                    </div>
-                    {errors.message && (
-                      <p className="mt-1 text-sm text-red-600">{errors.message.message}</p>
-                    )}
-                  </div>
+//                   {/* Message */}
+//                   <div>
+//                     <div className="relative">
+//                       <textarea
+//                         rows={4}
+//                         {...register('message')}
+//                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+//                           errors.message ? 'border-red-500' : 'border-gray-300'
+//                         }`}
+//                         placeholder="Message *"
+//                       />
+//                       <span className={`absolute bottom-2 right-2 text-xs ${messageValue.length > 2000 ? 'text-red-600' : 'text-gray-500'}`}>
+//                         {messageValue.length}/2000
+//                       </span>
+//                     </div>
+//                     {errors.message && (
+//                       <p className="mt-1 text-sm text-red-600">{errors.message.message}</p>
+//                     )}
+//                   </div>
 
-                  {/* Consent Checkbox */}
-                  <div className="flex items-start space-x-3">
-                    <input
-                      type="checkbox"
-                      {...register('consentGiven')}
-                      className="mt-1 w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                    />
-                    <label className="text-sm text-gray-700">
-                      I consent to the processing of my personal data for the purpose of responding to my inquiry. *
-                    </label>
-                  </div>
-                  {errors.consentGiven && (
-                    <p className="text-sm text-red-600">{errors.consentGiven.message}</p>
-                  )}
+//                   {/* Consent Checkbox */}
+//                   <div className="flex items-start space-x-3">
+//                     <input
+//                       type="checkbox"
+//                       {...register('consentGiven')}
+//                       className="mt-1 w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+//                     />
+//                     <label className="text-sm text-gray-700">
+//                       I consent to the processing of my personal data for the purpose of responding to my inquiry. *
+//                     </label>
+//                   </div>
+//                   {errors.consentGiven && (
+//                     <p className="text-sm text-red-600">{errors.consentGiven.message}</p>
+//                   )}
 
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !isValid}
-                    className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black font-medium py-3 px-6 rounded-lg transition-colors"
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit Form'}
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+//                   {/* Submit Button */}
+//                   <button
+//                     type="submit"
+//                     disabled={isSubmitting || !isValid}
+//                     className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black font-medium py-3 px-6 rounded-lg transition-colors"
+//                   >
+//                     {isSubmitting ? 'Submitting...' : 'Submit Form'}
+//                   </button>
+//                 </form>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 const PartneredHospitals = () => {
   const [hospitals] = useState(hospitalData);
@@ -863,6 +863,19 @@ const PartneredHospitals = () => {
   // Handle radius change
   const handleRadiusChange = (newRadius) => {
     setRadiusKm(newRadius);
+    
+    // Clear any existing search errors when radius changes
+    if (searchError) {
+      setSearchError('');
+    }
+    
+    // If there's an active location search, automatically re-search with new radius
+    if (useApiData && locationSearch.trim()) {
+      // Delay the search slightly to allow state to update
+      setTimeout(() => {
+        handleLocationSearch();
+      }, 100);
+    }
   };
 
   // Handle radius reset to center of India
@@ -884,12 +897,18 @@ const PartneredHospitals = () => {
     }
 
     setIsSearching(true);
-    setSearchError('');
+    setSearchError(''); // Clear error immediately when starting search
+    
+    // Clear previous results immediately to prevent showing stale data
+    setApiHospitals([]);
+    setUseApiData(false);
 
     try {
       const results = await hospitalService.searchByLocation(locationSearch, radiusKm);
       
-      if (results.success && results.hospitals.length > 0) {
+      console.log('Search results:', results); // Debug log
+      
+      if (results.success && results.hospitals && results.hospitals.length > 0) {
         // Convert API hospital format to match existing format
         const convertedHospitals = results.hospitals.map(hospital => ({
           id: hospital.id,
@@ -919,14 +938,20 @@ const PartneredHospitals = () => {
           });
         }
         
+        // Explicitly clear error on success
         setSearchError('');
+        console.log('Search successful, error cleared'); // Debug log
       } else {
+        console.log('No results found:', results); // Debug log
         setSearchError(results.message || `No hospitals found within ${radiusKm}km of ${locationSearch}. Try expanding your search radius or searching for a different location.`);
         setUseApiData(false);
+        setApiHospitals([]);
       }
     } catch (error) {
+      console.error('Search error:', error); // Debug log
       setSearchError('Failed to search hospitals. Please try again.');
       setUseApiData(false);
+      setApiHospitals([]);
     } finally {
       setIsSearching(false);
     }
@@ -1018,7 +1043,7 @@ const PartneredHospitals = () => {
         {/* Location Search Panel */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            🔍 Search by Location & Radius
+            🔍 Search by Location
           </h3>
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-64">
@@ -1036,23 +1061,10 @@ const PartneredHospitals = () => {
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Radius
-              </label>
-              <select
-                value={radiusKm}
-                onChange={(e) => setRadiusKm(parseInt(e.target.value))}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                disabled={isSearching}
-              >
-                <option value={10}>10 km</option>
-                <option value={20}>20 km</option>
-                <option value={50}>50 km</option>
-                <option value={100}>100 km</option>
-                <option value={200}>200 km</option>
-                <option value={500}>500 km</option>
-              </select>
+            <div className="text-sm text-gray-600 px-4 py-2 bg-gray-50 rounded-lg">
+              Will search within <strong>{radiusKm}km</strong> radius
+              <br />
+              <span className="text-xs">Change radius using the control above</span>
             </div>
             
             <button
@@ -1081,18 +1093,18 @@ const PartneredHospitals = () => {
               </p>
               {apiHospitals.some(h => h.distance) && (
                 <p className="text-green-700 text-sm mt-1">
-                  Distances shown from your search location
+                  Distances shown from your search location. Change the radius above to search in a different area.
                 </p>
               )}
             </div>
           )}
           
-          {/* Search Error */}
-          {searchError && (
+          {/* Search Error - Only show if there's an error AND no results */}
+          {searchError && (!useApiData || apiHospitals.length === 0) && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-800 font-medium">❌ {searchError}</p>
               <p className="text-red-700 text-sm mt-1">
-                Try expanding your search radius or searching for a different location.
+                Try increasing the search radius above or searching for a different location.
               </p>
             </div>
           )}
@@ -1142,8 +1154,136 @@ const PartneredHospitals = () => {
         </div>
       </div>
 
-      {/* Collaborate Section */}
-      <CollaborateSection />
+      {/* Collaborate with Us Section */}
+      <section id='collaborateUs' className="py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Left Column - Content */}
+            <div>
+              <h2 className="text-4xl font-normal text-[#47A178] font-futura mb-8">
+                Collaborate with Us
+              </h2>
+
+              <p className="text-2xl font-medium text-[#363636] mb-7">
+                To co-develop the next generation of our cellular therapies or to broaden access in your territories.
+              </p>
+
+              <ul className="space-y-3 text-[#363636] text-lg">
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-[#47A178] rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Research & Development of innovative cellular therapies.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-[#47A178] rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Expanding Product Access to underserved regions.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-[#47A178] rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Philanthropic initiatives to support global health equity.</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="w-2 h-2 bg-[#47A178] rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span>Investment opportunities to advance therapeutic solutions.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Right Column - Form */}
+            <div className="bg-white p-8 rounded-xl border border-gray-200 text-lg">
+              <form className="space-y-6">
+                {/* First Name and Last Name */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <input
+                      type="text"
+                      name="firstName"
+                      placeholder="First Name"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#47A178] focus:border-transparent outline-none transition-colors"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      name="lastName"
+                      placeholder="Last Name"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#47A178] focus:border-transparent outline-none transition-colors"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Institution */}
+                <div>
+                  <input
+                    type="text"
+                    name="institution"
+                    placeholder="Institution"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#47A178] focus:border-transparent outline-none transition-colors"
+                    required
+                  />
+                </div>
+
+                {/* Partnering Category */}
+                <div>
+                  <select
+                    name="partneringCategory"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#47A178] focus:border-transparent outline-none transition-colors text-gray-700 cursor-pointer"
+                    required
+                  >
+                    <option value="">- Select - Partnering Category</option>
+                    <option value="research-development">Research & Development</option>
+                    <option value="product-access">Product Access</option>
+                    <option value="philanthropic">Philanthropic Initiatives</option>
+                    <option value="investment">Investment Opportunities</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    placeholder="Phone No."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#47A178] focus:border-transparent outline-none transition-colors"
+                    required
+                  />
+                </div>
+
+                {/* Email Address */}
+                <div>
+                  <input
+                    type="email"
+                    name="emailAddress"
+                    placeholder="Email Address"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#47A178] focus:border-transparent outline-none transition-colors"
+                    required
+                  />
+                </div>
+
+                {/* Message */}
+                <div>
+                  <textarea
+                    name="message"
+                    placeholder="Message *"
+                    rows="4"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#47A178] focus:border-transparent outline-none transition-colors resize-none"
+                    required
+                  ></textarea>
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex justify-center">
+                  <button className='bg-[#FFBF00] hover:bg-[#E6AC00] text-[#363636] text-lg font-medium px-4 py-3 rounded-full transition-colors duration-300 w-full max-w-[150px] mt-8'>
+                    Submit Form
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
