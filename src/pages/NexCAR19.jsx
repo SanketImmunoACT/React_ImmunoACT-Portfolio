@@ -1,5 +1,5 @@
 import PageBanner from '@/components/PageBanner'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import ForPatients from './NexCAR19/ForPatients'
 import ForHCP from './NexCAR19/ForHCP'
@@ -8,21 +8,14 @@ const NexCAR19 = () => {
   const location = useLocation()
   const navigate = useNavigate()
 
-  // Determine initial view based on URL
-  const [isHCPView, setIsHCPView] = useState(location.pathname === '/nexcar19-hcp')
+  // Determine view based on URL (no state needed)
+  const isHCPView = location.pathname === '/nexcar19-hcp'
 
-  // Update URL when toggle changes
-  useEffect(() => {
-    const newPath = isHCPView ? '/nexcar19-hcp' : '/nexcar19'
-    if (location.pathname !== newPath) {
-      navigate(newPath, { replace: true })
-    }
-  }, [isHCPView, location.pathname, navigate])
-
-  // Update state when URL changes (browser back/forward)
-  useEffect(() => {
-    setIsHCPView(location.pathname === '/nexcar19-hcp')
-  }, [location.pathname])
+  // Handle toggle button clicks
+  const handleToggle = (viewType) => {
+    const newPath = viewType === 'hcp' ? '/nexcar19-hcp' : '/nexcar19'
+    navigate(newPath, { replace: true })
+  }
 
   // Smooth scrolling functionality
   useEffect(() => {
@@ -53,24 +46,28 @@ const NexCAR19 = () => {
 
       {/* Toggle Section */}
       <section className="py-6 bg-white border-b">
-        <div className="flex items-center justify-end  px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-end px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center">
             <div className="bg-gray-100 p-1 rounded-full flex">
               <button
-                onClick={() => setIsHCPView(false)}
+                onClick={() => handleToggle('patients')}
                 className={`px-6 py-2 rounded-full font-bold transition-all ${!isHCPView
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-800'
                   }`}
+                aria-pressed={!isHCPView}
+                aria-label="Switch to patient view"
               >
                 For Patients
               </button>
               <button
-                onClick={() => setIsHCPView(true)}
+                onClick={() => handleToggle('hcp')}
                 className={`px-6 py-2 rounded-full font-bold transition-all ${isHCPView
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-800'
                   }`}
+                aria-pressed={isHCPView}
+                aria-label="Switch to healthcare professional view"
               >
                 For Healthcare Professionals
               </button>

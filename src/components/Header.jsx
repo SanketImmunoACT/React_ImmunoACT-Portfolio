@@ -40,6 +40,17 @@ const Header = () => {
     }
   }
 
+  // Custom navigation handler for NexCAR19 sections
+  const handleNexCAR19Navigation = (type) => {
+    setActiveDropdown(null) // Close dropdown
+    
+    if (type === 'patients') {
+      navigate('/nexcar19')
+    } else if (type === 'hcp') {
+      navigate('/nexcar19-hcp')
+    }
+  }
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -170,12 +181,18 @@ const Header = () => {
               </Link>
               {activeDropdown === 'nexcar19' && (
                 <div className="absolute top-full left-0 w-48 bg-white rounded-lg shadow-lg border z-50">
-                  <Link to="/nexcar19#for-patients" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  <button 
+                    onClick={() => handleNexCAR19Navigation('patients')}
+                    className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm"
+                  >
                     For Patients
-                  </Link>
-                  <Link to="/nexcar19#for-hcp" className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm">
+                  </button>
+                  <button 
+                    onClick={() => handleNexCAR19Navigation('hcp')}
+                    className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm"
+                  >
                     For HCP
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
@@ -267,8 +284,18 @@ const Header = () => {
               </button>
               {activeDropdown === 'mobile-nexcar19' && (
                 <div className="mt-2 ml-4 space-y-2">
-                  <Link to="/nexcar19#for-patients" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">For Patients</Link>
-                  <Link to="/nexcar19#for-hcp" className="block text-gray-600 hover:text-gray-900 transition-colors text-sm">For HCP</Link>
+                  <button 
+                    onClick={() => handleNexCAR19Navigation('patients')}
+                    className="block w-full text-left text-gray-600 hover:text-gray-900 transition-colors text-sm"
+                  >
+                    For Patients
+                  </button>
+                  <button 
+                    onClick={() => handleNexCAR19Navigation('hcp')}
+                    className="block w-full text-left text-gray-600 hover:text-gray-900 transition-colors text-sm"
+                  >
+                    For HCP
+                  </button>
                 </div>
               )}
             </div>
