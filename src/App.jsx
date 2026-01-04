@@ -38,6 +38,7 @@ import PublicationsManagement from '@/pages/admin/PublicationsManagement'
 import CareersManagement from '@/pages/admin/CareersManagement'
 import ContactManagement from '@/pages/admin/ContactManagement'
 import UserManagement from '@/pages/admin/UserManagement'
+import AdminHospitals from '@/pages/admin/AdminHospitals'
 import ProtectedRoute from '@/components/admin/ProtectedRoute'
 
 import '@/App.css'
@@ -78,6 +79,11 @@ function App() {
             <Route path="users" element={
               <ProtectedRoute requiredRoles={['super_admin']}>
                 <UserManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="hospitals" element={
+              <ProtectedRoute requiredRoles={['super_admin', 'office_executive']}>
+                <AdminHospitals />
               </ProtectedRoute>
             } />
           </Route>

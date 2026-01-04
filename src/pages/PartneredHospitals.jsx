@@ -69,8 +69,8 @@ const collaborationSchema = yup.object({
   website: yup.string().max(0, 'Bot detected') // Honeypot field
 });
 
-// Import real hospital data
-import hospitalData from '../data/allHospitalsData.js';
+// Import real hospital data - will be replaced by API call
+// import hospitalData from '../data/allHospitalsData.js';
 
 // Hospital Service for API calls
 const hospitalService = {
@@ -809,11 +809,12 @@ const FilterPanel = ({
 // };
 
 const PartneredHospitals = () => {
-  const [hospitals] = useState(hospitalData);
-  const [filteredHospitals, setFilteredHospitals] = useState(hospitalData);
+  const [hospitals, setHospitals] = useState([]);
+  const [filteredHospitals, setFilteredHospitals] = useState([]);
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [selectedState, setSelectedState] = useState('');
   const [selectedType, setSelectedType] = useState('');
+  const [isLoadingHospitals, setIsLoadingHospitals] = useState(true);
   
   // Radius functionality
   const [radiusKm, setRadiusKm] = useState(1500);
@@ -827,18 +828,71 @@ const PartneredHospitals = () => {
   const [useApiData, setUseApiData] = useState(false);
   const [currentSearchQuery, setCurrentSearchQuery] = useState('');
 
+  // Fetch hospitals from API on component mount
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        setIsLoadingHospitals(true);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/hospitals?limit=100`);
+        const data = await response.json();
+        
+        if (data.success && data.data.hospitals) {
+          // Convert API format to match existing format
+          const convertedHospitals = data.data.hospitals.map(hospital => ({
+            id: hospital.id,
+            name: hospital.name,
+            address: hospital.address,
+            city: hospital.city,
+            state: hospital.state,
+            coordinates: { 
+              lat: parseFloat(hospital.latitude), 
+              lng: parseFloat(hospital.longitude) 
+            },
+            phone: hospital.phone || '',
+            email: hospital.email || '',
+            website: hospital.website || '',
+            type: hospital.type || 'Private'
+          }));
+          
+          setHospitals(convertedHospitals);
+        } else {
+          console.error('Failed to fetch hospitals:', data.message);
+          // Fallback to static data if API fails
+          const { default: fallbackData } = await import('../data/allHospitalsData.js');
+          setHospitals(fallbackData);
+        }
+      } catch (error) {
+        console.error('Error fetching hospitals:', error);
+        // Fallback to static data if API fails
+        try {
+          const { default: fallbackData } = await import('../data/allHospitalsData.js');
+          setHospitals(fallbackData);
+        } catch (fallbackError) {
+          console.error('Error loading fallback data:', fallbackError);
+          setHospitals([]);
+        }
+      } finally {
+        setIsLoadingHospitals(false);
+      }
+    };
+
+    fetchHospitals();
+  }, []);
+
   // Initialize radius filtered hospitals on mount
   useEffect(() => {
-    const filtered = hospitals.filter(hospital => {
-      const distance = calculateDistance(
-        radiusCenter.lat,
-        radiusCenter.lng,
-        hospital.coordinates.lat,
-        hospital.coordinates.lng
-      );
-      return distance <= radiusKm;
-    });
-    setRadiusFilteredHospitals(filtered);
+    if (hospitals.length > 0) {
+      const filtered = hospitals.filter(hospital => {
+        const distance = calculateDistance(
+          radiusCenter.lat,
+          radiusCenter.lng,
+          hospital.coordinates.lat,
+          hospital.coordinates.lng
+        );
+        return distance <= radiusKm;
+      });
+      setRadiusFilteredHospitals(filtered);
+    }
   }, [hospitals, radiusCenter, radiusKm]);
 
   // Handle hospital selection and radius center change
@@ -1010,97 +1064,108 @@ const PartneredHospitals = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <RadiusControl
-          radiusKm={radiusKm}
-          onRadiusChange={handleRadiusChange}
-          radiusCenter={radiusCenter}
-          selectedHospital={selectedHospital}
-          onResetRadius={handleResetRadius}
-        />
-
-        {/* Unified Smart Search */}
-        <UnifiedSearch
-          onLocationSearch={handleLocationSearch}
-          onHospitalFilter={handleHospitalFilter}
-          onClear={handleClearSearch}
-          radiusKm={radiusKm}
-          isSearching={isSearching}
-          searchError={searchError}
-          searchResults={searchResults}
-          hospitals={hospitals}
-        />
-        
-        <FilterPanel
-          hospitals={hospitals}
-          filteredHospitals={filteredHospitals}
-          selectedState={selectedState}
-          onStateChange={setSelectedState}
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Hospital List */}
-          <div className="lg:col-span-1 order-2 lg:order-1">
-            <div className="h-[400px] lg:h-[600px]">
-              <HospitalList
-                hospitals={filteredHospitals}
-                onHospitalSelect={handleHospitalSelect}
-                selectedHospital={selectedHospital}
-              />
+        {isLoadingHospitals ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading hospitals...</p>
             </div>
           </div>
+        ) : (
+          <>
+            <RadiusControl
+              radiusKm={radiusKm}
+              onRadiusChange={handleRadiusChange}
+              radiusCenter={radiusCenter}
+              selectedHospital={selectedHospital}
+              onResetRadius={handleResetRadius}
+            />
 
-          {/* Map */}
-          <div className="lg:col-span-2 order-1 lg:order-2">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[400px] lg:h-[600px] w-full relative">
-              {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
-                <Wrapper 
-                  apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} 
-                  render={(status) => {
-                    if (status === 'LOADING') {
-                      return (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-                            <p className="text-gray-600">Loading map...</p>
-                          </div>
-                        </div>
-                      );
-                    }
-                    if (status === 'FAILURE') {
-                      return (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center text-red-500">
-                            <p className="text-lg font-semibold mb-2">Error loading map</p>
-                            <p className="text-sm">Please check your internet connection and try again.</p>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return (
-                      <Map 
-                        hospitals={searchResults.length > 0 ? searchResults : hospitals}
-                        selectedHospital={selectedHospital}
-                        onHospitalSelect={handleHospitalSelect}
-                        radiusCenter={radiusCenter}
-                        radiusKm={radiusKm}
-                        onRadiusChange={handleRadiusFilteredHospitals}
-                      />
-                    );
-                  }}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full bg-gray-100">
-                  <div className="text-center text-gray-600">
-                    <p className="text-lg font-semibold mb-2">Map Configuration Required</p>
-                    <p className="text-sm">Please configure Google Maps API key to view the map.</p>
-                  </div>
+            {/* Unified Smart Search */}
+            <UnifiedSearch
+              onLocationSearch={handleLocationSearch}
+              onHospitalFilter={handleHospitalFilter}
+              onClear={handleClearSearch}
+              radiusKm={radiusKm}
+              isSearching={isSearching}
+              searchError={searchError}
+              searchResults={searchResults}
+              hospitals={hospitals}
+            />
+            
+            <FilterPanel
+              hospitals={hospitals}
+              filteredHospitals={filteredHospitals}
+              selectedState={selectedState}
+              onStateChange={setSelectedState}
+              selectedType={selectedType}
+              onTypeChange={setSelectedType}
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Hospital List */}
+              <div className="lg:col-span-1 order-2 lg:order-1">
+                <div className="h-[400px] lg:h-[600px]">
+                  <HospitalList
+                    hospitals={filteredHospitals}
+                    onHospitalSelect={handleHospitalSelect}
+                    selectedHospital={selectedHospital}
+                  />
                 </div>
-              )}
+              </div>
+
+              {/* Map */}
+              <div className="lg:col-span-2 order-1 lg:order-2">
+                <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[400px] lg:h-[600px] w-full relative">
+                  {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
+                    <Wrapper 
+                      apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} 
+                      render={(status) => {
+                        if (status === 'LOADING') {
+                          return (
+                            <div className="flex items-center justify-center h-full">
+                              <div className="text-center">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                                <p className="text-gray-600">Loading map...</p>
+                              </div>
+                            </div>
+                          );
+                        }
+                        if (status === 'FAILURE') {
+                          return (
+                            <div className="flex items-center justify-center h-full">
+                              <div className="text-center text-red-500">
+                                <p className="text-lg font-semibold mb-2">Error loading map</p>
+                                <p className="text-sm">Please check your internet connection and try again.</p>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return (
+                          <Map 
+                            hospitals={searchResults.length > 0 ? searchResults : hospitals}
+                            selectedHospital={selectedHospital}
+                            onHospitalSelect={handleHospitalSelect}
+                            radiusCenter={radiusCenter}
+                            radiusKm={radiusKm}
+                            onRadiusChange={handleRadiusFilteredHospitals}
+                          />
+                        );
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full bg-gray-100">
+                      <div className="text-center text-gray-600">
+                        <p className="text-lg font-semibold mb-2">Map Configuration Required</p>
+                        <p className="text-sm">Please configure Google Maps API key to view the map.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Collaborate with Us Section */}
