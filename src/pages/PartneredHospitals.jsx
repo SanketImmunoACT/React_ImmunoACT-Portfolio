@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import PageBanner from '@/components/PageBanner';
+import UnifiedSearch from '@/components/UnifiedSearch';
 import { LocationPin } from '@/assets/svg/Icons';
 
 // Validation schema for collaboration form
@@ -435,15 +436,12 @@ const RadiusControl = ({ radiusKm, onRadiusChange, radiusCenter, selectedHospita
   );
 };
 
-// Filter component
+// Filter component (simplified - search moved to UnifiedSearch)
 const FilterPanel = ({ 
   filteredHospitals, 
   hospitals, 
-  onFilterChange, 
-  onSearchChange, 
   onStateChange,
   onTypeChange,
-  searchTerm,
   selectedState,
   selectedType 
 }) => {
@@ -453,18 +451,8 @@ const FilterPanel = ({
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
       <div className="flex flex-wrap gap-4 items-center">
-        {/* Search */}
-        <div className="flex-1 min-w-64">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <input
-              type="text"
-              placeholder="Search hospitals..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-          </div>
+        <div className="text-sm font-medium text-gray-700">
+          Filter Results:
         </div>
 
         {/* State Filter */}
@@ -491,9 +479,9 @@ const FilterPanel = ({
           ))}
         </select>
 
-        {/* <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 ml-auto">
           Showing {filteredHospitals.length} of {hospitals.length} hospitals
-        </div> */}
+        </div>
       </div>
     </div>
   );
@@ -824,7 +812,6 @@ const PartneredHospitals = () => {
   const [hospitals] = useState(hospitalData);
   const [filteredHospitals, setFilteredHospitals] = useState(hospitalData);
   const [selectedHospital, setSelectedHospital] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedState, setSelectedState] = useState('');
   const [selectedType, setSelectedType] = useState('');
   
@@ -833,12 +820,12 @@ const PartneredHospitals = () => {
   const [radiusCenter, setRadiusCenter] = useState({ lat: 20.5937, lng: 78.9629 }); // Center of India initially
   const [radiusFilteredHospitals, setRadiusFilteredHospitals] = useState([]);
   
-  // Location search functionality
-  const [locationSearch, setLocationSearch] = useState('');
+  // Unified search functionality
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
-  const [apiHospitals, setApiHospitals] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [useApiData, setUseApiData] = useState(false);
+  const [currentSearchQuery, setCurrentSearchQuery] = useState('');
 
   // Initialize radius filtered hospitals on mount
   useEffect(() => {
@@ -870,10 +857,10 @@ const PartneredHospitals = () => {
     }
     
     // If there's an active location search, automatically re-search with new radius
-    if (useApiData && locationSearch.trim()) {
+    if (useApiData && currentSearchQuery.trim()) {
       // Delay the search slightly to allow state to update
       setTimeout(() => {
-        handleLocationSearch();
+        handleLocationSearch(currentSearchQuery);
       }, 100);
     }
   };
@@ -889,24 +876,23 @@ const PartneredHospitals = () => {
     setRadiusFilteredHospitals(hospitals);
   };
 
-  // Handle location search
-  const handleLocationSearch = async () => {
-    if (!locationSearch.trim()) {
+  // Handle location search (from unified search)
+  const handleLocationSearch = async (location) => {
+    if (!location.trim()) {
       setSearchError('Please enter a location');
       return;
     }
 
     setIsSearching(true);
-    setSearchError(''); // Clear error immediately when starting search
+    setSearchError('');
+    setCurrentSearchQuery(location);
     
     // Clear previous results immediately to prevent showing stale data
-    setApiHospitals([]);
+    setSearchResults([]);
     setUseApiData(false);
 
     try {
-      const results = await hospitalService.searchByLocation(locationSearch, radiusKm);
-      
-      console.log('Search results:', results); // Debug log
+      const results = await hospitalService.searchByLocation(location, radiusKm);
       
       if (results.success && results.hospitals && results.hospitals.length > 0) {
         // Convert API hospital format to match existing format
@@ -927,7 +913,7 @@ const PartneredHospitals = () => {
           distance: hospital.distance
         }));
 
-        setApiHospitals(convertedHospitals);
+        setSearchResults(convertedHospitals);
         setUseApiData(true);
         
         // Update radius center to search location
@@ -938,45 +924,70 @@ const PartneredHospitals = () => {
           });
         }
         
-        // Explicitly clear error on success
         setSearchError('');
-        console.log('Search successful, error cleared'); // Debug log
       } else {
-        console.log('No results found:', results); // Debug log
-        setSearchError(results.message || `No hospitals found within ${radiusKm}km of ${locationSearch}. Try expanding your search radius or searching for a different location.`);
+        setSearchError(results.message || `No hospitals found within ${radiusKm}km of ${location}. Try expanding your search radius or searching for a different location.`);
         setUseApiData(false);
-        setApiHospitals([]);
+        setSearchResults([]);
       }
     } catch (error) {
-      console.error('Search error:', error); // Debug log
+      console.error('Search error:', error);
       setSearchError('Failed to search hospitals. Please try again.');
       setUseApiData(false);
-      setApiHospitals([]);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
   };
 
-  // Handle clear search
+  // Handle hospital name filtering (from unified search)
+  const handleHospitalFilter = (hospitalName) => {
+    setCurrentSearchQuery(hospitalName);
+    setUseApiData(false);
+    setSearchResults([]);
+    setSearchError('');
+    
+    // Filter hospitals by name from the current dataset
+    const baseHospitals = radiusFilteredHospitals;
+    const filtered = baseHospitals.filter(hospital =>
+      hospital.name.toLowerCase().includes(hospitalName.toLowerCase()) ||
+      hospital.city.toLowerCase().includes(hospitalName.toLowerCase()) ||
+      hospital.address.toLowerCase().includes(hospitalName.toLowerCase())
+    );
+    
+    if (filtered.length > 0) {
+      setSearchResults(filtered);
+    } else {
+      setSearchError(`No hospitals found matching "${hospitalName}". Try a different search term.`);
+      setSearchResults([]);
+    }
+  };
+
+  // Handle clear search (from unified search)
   const handleClearSearch = () => {
-    setLocationSearch('');
+    setCurrentSearchQuery('');
     setSearchError('');
     setUseApiData(false);
-    setApiHospitals([]);
+    setSearchResults([]);
     setRadiusCenter({ lat: 20.5937, lng: 78.9629 });
   };
 
-  // Filter hospitals based on search and filters (applied to radius-filtered hospitals or API data)
+  // Filter hospitals based on filters (applied to search results or radius-filtered hospitals)
   useEffect(() => {
-    let filtered = useApiData ? apiHospitals : radiusFilteredHospitals;
-
-    if (searchTerm) {
-      filtered = filtered.filter(hospital =>
-        hospital.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        hospital.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        hospital.address.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    let baseHospitals = [];
+    
+    if (searchResults.length > 0) {
+      // Use search results as base
+      baseHospitals = searchResults;
+    } else if (useApiData) {
+      // If we have API data but no results, use empty array
+      baseHospitals = [];
+    } else {
+      // Use radius-filtered hospitals as base
+      baseHospitals = radiusFilteredHospitals;
     }
+
+    let filtered = [...baseHospitals];
 
     if (selectedState) {
       filtered = filtered.filter(hospital => hospital.state === selectedState);
@@ -987,7 +998,7 @@ const PartneredHospitals = () => {
     }
 
     setFilteredHospitals(filtered);
-  }, [radiusFilteredHospitals, apiHospitals, useApiData, searchTerm, selectedState, selectedType]);
+  }, [radiusFilteredHospitals, searchResults, useApiData, selectedState, selectedType]);
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
@@ -1007,81 +1018,21 @@ const PartneredHospitals = () => {
           onResetRadius={handleResetRadius}
         />
 
-        {/* Location Search Panel */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            🔍 Search by Location
-          </h3>
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="flex-1 min-w-64">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location (City, Address, or Area)
-              </label>
-              <input
-                type="text"
-                value={locationSearch}
-                onChange={(e) => setLocationSearch(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLocationSearch()}
-                placeholder="e.g., Mumbai, Andheri, Thane..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                disabled={isSearching}
-              />
-            </div>
-            
-            <div className="text-sm text-gray-600 px-4 py-2 bg-gray-50 rounded-lg">
-              Will search within <strong>{radiusKm}km</strong> radius
-              <br />
-              <span className="text-xs">Change radius using the control above</span>
-            </div>
-            
-            <button
-              onClick={handleLocationSearch}
-              disabled={isSearching || !locationSearch.trim()}
-              className="px-6 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
-            >
-              {isSearching ? 'Searching...' : 'Search'}
-            </button>
-            
-            {useApiData && (
-              <button
-                onClick={handleClearSearch}
-                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          
-          {/* Search Results Info */}
-          {useApiData && apiHospitals.length > 0 && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 font-medium">
-                ✅ Found {apiHospitals.length} hospital{apiHospitals.length !== 1 ? 's' : ''} within {radiusKm}km of "{locationSearch}"
-              </p>
-              {apiHospitals.some(h => h.distance) && (
-                <p className="text-green-700 text-sm mt-1">
-                  Distances shown from your search location. Change the radius above to search in a different area.
-                </p>
-              )}
-            </div>
-          )}
-          
-          {/* Search Error - Only show if there's an error AND no results */}
-          {searchError && (!useApiData || apiHospitals.length === 0) && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 font-medium">❌ {searchError}</p>
-              <p className="text-red-700 text-sm mt-1">
-                Try increasing the search radius above or searching for a different location.
-              </p>
-            </div>
-          )}
-        </div>
+        {/* Unified Smart Search */}
+        <UnifiedSearch
+          onLocationSearch={handleLocationSearch}
+          onHospitalFilter={handleHospitalFilter}
+          onClear={handleClearSearch}
+          radiusKm={radiusKm}
+          isSearching={isSearching}
+          searchError={searchError}
+          searchResults={searchResults}
+          hospitals={hospitals}
+        />
         
         <FilterPanel
           hospitals={hospitals}
           filteredHospitals={filteredHospitals}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
           selectedState={selectedState}
           onStateChange={setSelectedState}
           selectedType={selectedType}
@@ -1129,7 +1080,7 @@ const PartneredHospitals = () => {
                     }
                     return (
                       <Map 
-                        hospitals={useApiData ? apiHospitals : hospitals}
+                        hospitals={searchResults.length > 0 ? searchResults : hospitals}
                         selectedHospital={selectedHospital}
                         onHospitalSelect={handleHospitalSelect}
                         radiusCenter={radiusCenter}
