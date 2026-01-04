@@ -73,12 +73,12 @@ import hospitalData from '../data/allHospitalsData.js';
 
 // Hospital Service for API calls
 const hospitalService = {
-  async searchByLocation(location, radius = 50) {
+  async searchByLocation(location, radius = 50, limit = 100) {
     try {
       const params = new URLSearchParams({
         location: location.trim(),
         radius: radius.toString(),
-        limit: '50'
+        limit: limit.toString()
       });
 
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/hospitals/search?${params}`, {
@@ -989,39 +989,6 @@ const PartneredHospitals = () => {
     setFilteredHospitals(filtered);
   }, [radiusFilteredHospitals, apiHospitals, useApiData, searchTerm, selectedState, selectedType]);
 
-  const render = (status) => {
-    if (status === 'LOADING') {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading map...</p>
-          </div>
-        </div>
-      );
-    }
-    if (status === 'FAILURE') {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center text-red-500">
-            <p className="text-lg font-semibold mb-2">Error loading map</p>
-            <p className="text-sm">Please check your internet connection and try again.</p>
-          </div>
-        </div>
-      );
-    }
-    return (
-      <Map 
-        hospitals={hospitals}
-        selectedHospital={selectedHospital}
-        onHospitalSelect={handleHospitalSelect}
-        radiusCenter={radiusCenter}
-        radiusKm={radiusKm}
-        onRadiusChange={handleRadiusFilteredHospitals}
-      />
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Hero Section */}
@@ -1139,7 +1106,38 @@ const PartneredHospitals = () => {
               {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
                 <Wrapper 
                   apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} 
-                  render={render}
+                  render={(status) => {
+                    if (status === 'LOADING') {
+                      return (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading map...</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (status === 'FAILURE') {
+                      return (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center text-red-500">
+                            <p className="text-lg font-semibold mb-2">Error loading map</p>
+                            <p className="text-sm">Please check your internet connection and try again.</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <Map 
+                        hospitals={useApiData ? apiHospitals : hospitals}
+                        selectedHospital={selectedHospital}
+                        onHospitalSelect={handleHospitalSelect}
+                        radiusCenter={radiusCenter}
+                        radiusKm={radiusKm}
+                        onRadiusChange={handleRadiusFilteredHospitals}
+                      />
+                    );
+                  }}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full bg-gray-100">
