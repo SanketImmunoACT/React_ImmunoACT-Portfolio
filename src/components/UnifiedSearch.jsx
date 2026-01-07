@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, Building2, X, Loader2 } from 'lucide-react';
 
-const UnifiedSearch = ({ 
-  onLocationSearch, 
-  onHospitalFilter, 
-  onClear, 
-  radiusKm, 
-  isSearching, 
-  searchError, 
+const UnifiedSearch = ({
+  onLocationSearch,
+  onHospitalFilter,
+  onClear,
+  radiusKm,
+  onRadiusChange,
+  isSearching,
+  searchError,
   searchResults,
-  hospitals 
+  hospitals
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('auto'); // 'auto', 'location', 'hospital'
@@ -34,53 +35,53 @@ const UnifiedSearch = ({
   // Detect search type based on query
   const detectSearchType = (query) => {
     const lowerQuery = query.toLowerCase();
-    
+
     // Check if it matches hospital names
-    const matchesHospital = hospitalNames.some(name => 
+    const matchesHospital = hospitalNames.some(name =>
       name.toLowerCase().includes(lowerQuery)
     );
-    
+
     // Check if it matches common locations
-    const matchesLocation = commonLocations.some(location => 
+    const matchesLocation = commonLocations.some(location =>
       location.toLowerCase().includes(lowerQuery)
     );
-    
+
     // If it matches both, prioritize based on length and exactness
     if (matchesHospital && matchesLocation) {
-      const exactHospitalMatch = hospitalNames.some(name => 
+      const exactHospitalMatch = hospitalNames.some(name =>
         name.toLowerCase() === lowerQuery
       );
-      const exactLocationMatch = commonLocations.some(location => 
+      const exactLocationMatch = commonLocations.some(location =>
         location.toLowerCase() === lowerQuery
       );
-      
+
       if (exactHospitalMatch) return 'hospital';
       if (exactLocationMatch) return 'location';
-      
+
       // If query is longer, likely a hospital name
       return query.length > 10 ? 'hospital' : 'location';
     }
-    
+
     if (matchesHospital) return 'hospital';
     if (matchesLocation) return 'location';
-    
+
     // Default heuristics
-    if (lowerQuery.includes('hospital') || lowerQuery.includes('medical') || 
-        lowerQuery.includes('apollo') || lowerQuery.includes('fortis') || 
-        lowerQuery.includes('max') || lowerQuery.includes('tata')) {
+    if (lowerQuery.includes('hospital') || lowerQuery.includes('medical') ||
+      lowerQuery.includes('apollo') || lowerQuery.includes('fortis') ||
+      lowerQuery.includes('max') || lowerQuery.includes('tata')) {
       return 'hospital';
     }
-    
+
     return 'location'; // Default to location search
   };
 
   // Generate suggestions based on query
   const generateSuggestions = (query) => {
     if (!query || query.length < 2) return [];
-    
+
     const lowerQuery = query.toLowerCase();
     const suggestions = [];
-    
+
     // Location suggestions
     const locationMatches = commonLocations
       .filter(location => location.toLowerCase().includes(lowerQuery))
@@ -91,7 +92,7 @@ const UnifiedSearch = ({
         icon: MapPin,
         description: `Search hospitals near ${location}`
       }));
-    
+
     // Hospital name suggestions
     const hospitalMatches = hospitalNames
       .filter(name => name.toLowerCase().includes(lowerQuery))
@@ -102,10 +103,10 @@ const UnifiedSearch = ({
         icon: Building2,
         description: 'Hospital'
       }));
-    
+
     // Combine and prioritize
     suggestions.push(...locationMatches, ...hospitalMatches);
-    
+
     return suggestions.slice(0, 8); // Limit to 8 suggestions
   };
 
@@ -113,7 +114,7 @@ const UnifiedSearch = ({
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-    
+
     if (value.trim()) {
       const newSuggestions = generateSuggestions(value);
       setSuggestions(newSuggestions);
@@ -124,16 +125,16 @@ const UnifiedSearch = ({
       setShowSuggestions(false);
       setSearchType('auto');
     }
-    
+
     setSelectedSuggestion(-1);
   };
 
   // Handle search execution
   const handleSearch = (query = searchQuery, type = searchType) => {
     if (!query.trim()) return;
-    
+
     setShowSuggestions(false);
-    
+
     if (type === 'location') {
       onLocationSearch(query.trim());
     } else if (type === 'hospital') {
@@ -169,7 +170,7 @@ const UnifiedSearch = ({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedSuggestion(prev => 
+        setSelectedSuggestion(prev =>
           prev < suggestions.length - 1 ? prev + 1 : prev
         );
         break;
@@ -231,30 +232,24 @@ const UnifiedSearch = ({
   const TypeIcon = typeIndicator.icon;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-4" ref={searchRef}>
-      {/* Compact Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="flex items-center justify-center w-8 h-8 bg-orange-500 rounded-lg">
-          <Search className="text-white" size={16} />
-        </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-800">
-            Smart Search
-          </h3>
-          <p className="text-sm text-gray-500">Find hospitals by location or name</p>
-        </div>
-        <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-          searchType === 'location' ? 'bg-blue-100 text-blue-700' :
-          searchType === 'hospital' ? 'bg-green-100 text-green-700' :
-          'bg-gray-100 text-gray-600'
-        }`}>
-          <TypeIcon size={12} />
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4" ref={searchRef}>
+      {/* Simplified Header */}
+      <div className="flex items-center gap-2 mb-3">
+        <h3 className="text-lg font-medium text-gray-700">
+          Smart Search
+        </h3>
+        <p className="text-sm text-gray-500">(Find hospitals by location or name)</p>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ml-auto ${searchType === 'location' ? 'bg-blue-50 text-blue-600' :
+          searchType === 'hospital' ? 'bg-green-50 text-green-600' :
+            'bg-gray-50 text-gray-600'
+          }`}>
+          <TypeIcon size={10} />
           <span>{typeIndicator.text}</span>
         </div>
       </div>
 
       <div className="relative">
-        <div className="flex gap-3">
+        <div className="flex gap-2 items-center">
           <div className="flex-1 relative">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
@@ -264,7 +259,7 @@ const UnifiedSearch = ({
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Search by location (Mumbai, Andheri) or hospital name (Apollo, Fortis)..."
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                 disabled={isSearching}
               />
               {searchQuery && (
@@ -279,7 +274,7 @@ const UnifiedSearch = ({
 
             {/* Compact Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div 
+              <div
                 ref={suggestionsRef}
                 className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
               >
@@ -289,13 +284,12 @@ const UnifiedSearch = ({
                     <button
                       key={`${suggestion.type}-${suggestion.text}`}
                       onClick={() => handleSuggestionClick(suggestion)}
-                      className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-b-0 ${
-                        index === selectedSuggestion ? 'bg-orange-50 border-orange-200' : ''
-                      }`}
+                      className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-b-0 ${index === selectedSuggestion ? 'bg-orange-50 border-orange-200' : ''
+                        }`}
                     >
-                      <SuggestionIcon 
-                        size={16} 
-                        className={suggestion.type === 'location' ? 'text-blue-500' : 'text-green-500'} 
+                      <SuggestionIcon
+                        size={16}
+                        className={suggestion.type === 'location' ? 'text-blue-500' : 'text-green-500'}
                       />
                       <div className="flex-1">
                         <div className="font-medium text-gray-800">{suggestion.text}</div>
@@ -308,16 +302,26 @@ const UnifiedSearch = ({
             )}
           </div>
 
-          {/* Compact radius display */}
-          <div className="text-sm text-gray-600 px-4 py-2 bg-gray-50 rounded-lg whitespace-nowrap">
-            Within <strong>{radiusKm}km</strong> radius
-          </div>
+          {/* Search radius dropdown */}
+          <select
+            value={radiusKm}
+            onChange={(e) => onRadiusChange && onRadiusChange(parseInt(e.target.value))}
+            className="px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-white min-w-[100px]"
+          >
+            <option value={10}>10 km</option>
+            <option value={20}>20 km</option>
+            <option value={50}>50 km</option>
+            <option value={100}>100 km</option>
+            <option value={500}>500 km</option>
+            <option value={1000}>1000 km</option>
+            <option value={1500}>1500 km</option>
+          </select>
 
-          {/* Compact search button */}
+          {/* Search button */}
           <button
             onClick={() => handleSearch()}
             disabled={isSearching || !searchQuery.trim()}
-            className="px-6 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+            className="bg-[#FFBF00] hover:bg-[#E6AC00] disabled:bg-gray-300 disabled:cursor-not-allowed text-[#363636] text-sm px-6 py-2.5 font-medium rounded-full transition-colors duration-300 flex items-center gap-2 whitespace-nowrap"
           >
             {isSearching ? (
               <>
@@ -349,7 +353,7 @@ const UnifiedSearch = ({
                 {searchResults.length} hospitals
               </span>
             </div>
-            
+
             {searchResults.some(h => h.distance) && (
               <div className="flex items-center gap-2 text-green-700 text-sm">
                 <MapPin className="w-4 h-4 text-green-600" />
@@ -360,7 +364,6 @@ const UnifiedSearch = ({
               </div>
             )}
 
-            {/* Simple stats */}
             {searchResults.some(h => h.distance) && (
               <div className="mt-2 flex items-center gap-4 text-xs text-green-600">
                 <span>Nearest: {Math.min(...searchResults.filter(h => h.distance).map(h => h.distance)).toFixed(1)}km</span>
@@ -380,7 +383,7 @@ const UnifiedSearch = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              
+
               <div className="flex-1">
                 <div className="text-red-800 font-medium mb-1">
                   No results found
@@ -388,11 +391,11 @@ const UnifiedSearch = ({
                 <div className="text-red-700 text-sm mb-3">
                   {searchError}
                 </div>
-                
+
                 {/* Simple suggestions */}
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-red-700">Try:</span>
-                  <button 
+                  <button
                     onClick={() => {
                       setSearchQuery('Mumbai');
                       handleSearch('Mumbai', 'location');
@@ -402,7 +405,7 @@ const UnifiedSearch = ({
                     Mumbai
                   </button>
                   <span className="text-red-400">•</span>
-                  <button 
+                  <button
                     onClick={() => {
                       setSearchQuery('Apollo');
                       handleSearch('Apollo', 'hospital');
@@ -412,7 +415,7 @@ const UnifiedSearch = ({
                     Apollo
                   </button>
                   <span className="text-red-400">•</span>
-                  <button 
+                  <button
                     onClick={handleClear}
                     className="text-red-600 hover:text-red-800 underline"
                   >

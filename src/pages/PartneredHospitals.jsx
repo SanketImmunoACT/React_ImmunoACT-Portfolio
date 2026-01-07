@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Wrapper } from '@googlemaps/react-wrapper';
-import { AlertCircle, CheckCircle, Diameter, Filter, Mail, MapPin, Navigation, Phone, Search, Shield } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import PageBanner from '@/components/PageBanner';
 import UnifiedSearch from '@/components/UnifiedSearch';
-import { LocationPin } from '@/assets/svg/Icons';
 
 // Validation schema for collaboration form
 const collaborationSchema = yup.object({
@@ -15,32 +14,32 @@ const collaborationSchema = yup.object({
     .required('First name is required')
     .max(50, 'First name must not exceed 50 characters')
     .matches(/^[\w\s'-]+$/u, 'First name can only contain letters, spaces, hyphens, and apostrophes'),
-  
+
   lastName: yup
     .string()
     .required('Last name is required')
     .max(50, 'Last name must not exceed 50 characters')
     .matches(/^[\w\s'-]+$/u, 'Last name can only contain letters, spaces, hyphens, and apostrophes'),
-  
+
   email: yup
     .string()
     .required('Email is required')
     .email('Please enter a valid email address')
     .max(100, 'Email must not exceed 100 characters'),
-  
+
   phone: yup
     .string()
     .matches(/^[\+]?[1-9][\d]{0,15}$/, 'Please provide a valid phone number')
     .nullable()
     .transform((value) => value === '' ? null : value),
-  
+
   institution: yup
     .string()
     .max(200, 'Institution name must not exceed 200 characters')
     .matches(/^[\w\s\-.,&()]*$/u, 'Institution name contains invalid characters')
     .nullable()
     .transform((value) => value === '' ? null : value),
-  
+
   partneringCategory: yup
     .string()
     .required('Please select a partnering category')
@@ -54,18 +53,18 @@ const collaborationSchema = yup.object({
       'Hospital Partnership',
       'Other'
     ], 'Please select a valid partnering category'),
-  
+
   message: yup
     .string()
     .required('Message is required')
     .min(10, 'Message must be at least 10 characters long')
     .max(2000, 'Message must not exceed 2000 characters')
     .matches(/^[\w\s\-.,!?()'"@#$%&*+=\n\r]+$/u, 'Message contains invalid characters'),
-  
+
   consentGiven: yup
     .boolean()
     .oneOf([true], 'You must consent to data processing to submit this form'),
-  
+
   website: yup.string().max(0, 'Bot detected') // Honeypot field
 });
 
@@ -110,7 +109,7 @@ const hospitalService = {
       };
     }
   },
-  
+
   formatDistance(distance) {
     if (distance < 1) {
       return `${Math.round(distance * 1000)}m`;
@@ -127,11 +126,11 @@ const calculateDistance = (lat1, lng1, lat2, lng2) => {
   const R = 6371; // Earth's radius in kilometers
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; // Distance in kilometers
 };
 
@@ -191,7 +190,7 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
   // Store callback refs to avoid dependency issues
   const onHospitalSelectRef = React.useRef(onHospitalSelect);
   const onRadiusChangeRef = React.useRef(onRadiusChange);
-  
+
   // Update refs when props change
   React.useEffect(() => {
     onHospitalSelectRef.current = onHospitalSelect;
@@ -263,16 +262,16 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
       try {
         marker.addListener('click', (event) => {
           console.log('Marker clicked:', hospital.name);
-          
+
           // Close any open info windows first
           if (window.currentInfoWindow) {
             window.currentInfoWindow.close();
           }
-          
+
           // Open new info window
           infoWindow.open(map, marker);
           window.currentInfoWindow = infoWindow;
-          
+
           // Call parent callback
           if (onHospitalSelectRef.current) {
             onHospitalSelectRef.current(hospital);
@@ -341,27 +340,26 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
 // Hospital list component
 const HospitalList = ({ hospitals, onHospitalSelect, selectedHospital }) => {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4 h-full overflow-y-auto">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-full overflow-y-auto">
       <h3 className="text-lg text-gray-800 mb-4">
         Partnered Treatment Centers ({hospitals.length})
       </h3>
-      
+
       <div className="space-y-3">
         {hospitals.map(hospital => (
           <div
             key={hospital.id}
-            className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
-              selectedHospital?.id === hospital.id 
-                ? 'border-orange-500 bg-orange-50' 
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
+            className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-md ${selectedHospital?.id === hospital.id
+              ? 'border-orange-500 bg-orange-50'
+              : 'border-gray-200 hover:border-gray-300'
+              }`}
             onClick={() => onHospitalSelect(hospital)}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h4 className="font-semibold text-gray-800 mb-1">{hospital.name}</h4>
                 <p className="text-sm text-gray-600 mb-2">{hospital.address}</p>
-                
+
                 <div className="flex items-center gap-4 text-xs text-gray-500">
                   <span className="px-2 py-1 bg-gray-100 rounded">
                     {hospital.type}
@@ -373,12 +371,11 @@ const HospitalList = ({ hospitals, onHospitalSelect, selectedHospital }) => {
                   )}
                 </div>
               </div>
-              
-              <MapPin 
-                size={20} 
-                className={`${
-                  selectedHospital?.id === hospital.id ? 'text-orange-500' : 'text-gray-400'
-                }`} 
+
+              <MapPin
+                size={20}
+                className={`${selectedHospital?.id === hospital.id ? 'text-orange-500' : 'text-gray-400'
+                  }`}
               />
             </div>
           </div>
@@ -388,68 +385,20 @@ const HospitalList = ({ hospitals, onHospitalSelect, selectedHospital }) => {
   );
 };
 
-// Radius Control Component
-const RadiusControl = ({ radiusKm, onRadiusChange, radiusCenter, selectedHospital, onResetRadius }) => {
-  const radiusOptions = [
-    { value: 10, label: '10 km' },
-    { value: 20, label: '20 km' },
-    { value: 50, label: '50 km' },
-    { value: 100, label: '100 km' },
-    { value: 500, label: '500 km' },
-    { value: 1000, label: '1000 km' },
-    { value: 1500, label: '1500 km' }
-  ];
-
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h3 className="text-lg text-gray-800">Search Radius</h3>
-          <select
-            value={radiusKm}
-            onChange={(e) => onRadiusChange(parseInt(e.target.value))}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          >
-            {radiusOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {selectedHospital && (
-            <button
-              onClick={onResetRadius}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
-            >
-              Reset to Center
-            </button>
-          )}
-        </div>
-        <div className="text-sm text-gray-600">
-          {selectedHospital ? 
-            `Showing hospitals within ${radiusKm}km of ${selectedHospital.name}` :
-            `Showing hospitals within ${radiusKm}km of India center`
-          }
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // Filter component (simplified - search moved to UnifiedSearch)
-const FilterPanel = ({ 
-  filteredHospitals, 
-  hospitals, 
+const FilterPanel = ({
+  filteredHospitals,
+  hospitals,
   onStateChange,
   onTypeChange,
   selectedState,
-  selectedType 
+  selectedType
 }) => {
   const states = [...new Set(hospitals.map(h => h.state))];
   const types = [...new Set(hospitals.map(h => h.type))];
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
       <div className="flex flex-wrap gap-4 items-center">
         <div className="text-sm font-medium text-gray-700">
           Filter Results:
@@ -487,327 +436,6 @@ const FilterPanel = ({
   );
 };
 
-// Collaborate Section Component
-// const CollaborateSection = () => {
-//   const [isSubmitting, setIsSubmitting] = useState(false);
-//   const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
-
-//   const onSubmit = async (data) => {
-//     setIsSubmitting(true);
-//     setSubmitStatus(null);
-
-//     try {
-//       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/contact/submit`, {
-//         body: JSON.stringify({
-//           ...data,
-//           formType: 'collaboration' // Add form type to distinguish from contact form
-//         }),
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         method: 'POST',
-//       });
-
-//       const responseData = await response.json();
-
-//       if (response.ok) {
-//         setSubmitStatus('success');
-//         reset();
-//       } else {
-//         setSubmitStatus('error');
-//         console.error('Submission error:', responseData);
-//       }
-//     } catch (error) {
-//       console.error('Form submission error:', error);
-//       setSubmitStatus('error');
-//     } finally {
-//       setIsSubmitting(false);
-//     }
-//   };
-
-//   // Initialize React Hook Form
-//   const {
-//     formState: { errors, isValid },
-//     handleSubmit,
-//     register,
-//     reset,
-//     watch
-//   } = useForm({
-//     defaultValues: {
-//       consentGiven: false,
-//       email: '',
-//       firstName: '',
-//       institution: '',
-//       lastName: '',
-//       message: '',
-//       partneringCategory: '',
-//       phone: '',
-//       website: '' // Honeypot field
-//     },
-//     mode: 'onChange',
-//     resolver: yupResolver(collaborationSchema)
-//   });
-
-//   // Watch message field for character counter
-//   const messageValue = watch('message', '');
-
-//   null
-
-//   const partneringCategories = [
-//     'Clinical Collaboration',
-//     'Research Partnership',
-//     'Technology Licensing',
-//     'Manufacturing Partnership',
-//     'Distribution Partnership',
-//     'Investment Opportunity',
-//     'Hospital Partnership',
-//     'Other'
-//   ];
-
-//   return (
-//     <div className="bg-gray-50 py-16">
-//       <div className="container mx-auto px-4">
-//         <div className="max-w-6xl mx-auto">
-//           <div className="text-center mb-12">
-//             <h2 className="text-3xl font-bold text-gray-800 mb-4">Collaborate with Us</h2>
-//             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-//               To co-develop the next generation of our cellular therapies or to broaden access to your territories.
-//             </p>
-//           </div>
-
-//           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-//             {/* Left Side - Information */}
-//             <div>
-//               <div className="space-y-8">
-//                 <div>
-//                   <h3 className="text-xl font-semibold text-gray-800 mb-4">For Healthcare Providers</h3>
-//                   <ul className="space-y-3 text-gray-600">
-//                     <li className="flex items-start">
-//                       <span className="text-orange-500 mr-2">•</span>
-//                       Research & Development of innovative cellular therapies
-//                     </li>
-//                     <li className="flex items-start">
-//                       <span className="text-orange-500 mr-2">•</span>
-//                       Expanding Patient Access to advanced cancer treatments
-//                     </li>
-//                     <li className="flex items-start">
-//                       <span className="text-orange-500 mr-2">•</span>
-//                       Developing solutions to advance global health equity
-//                     </li>
-//                     <li className="flex items-start">
-//                       <span className="text-orange-500 mr-2">•</span>
-//                       Exploring opportunities to advance therapeutic solutions
-//                     </li>
-//                   </ul>
-//                 </div>
-                
-//                 <div>
-//                   <h3 className="text-xl font-semibold text-gray-800 mb-4">Partnership Benefits</h3>
-//                   <ul className="space-y-3 text-gray-600">
-//                     <li className="flex items-start">
-//                       <span className="text-orange-500 mr-2">•</span>
-//                       Access to cutting-edge CAR-T cell therapy
-//                     </li>
-//                     <li className="flex items-start">
-//                       <span className="text-orange-500 mr-2">•</span>
-//                       Comprehensive training and support
-//                     </li>
-//                     <li className="flex items-start">
-//                       <span className="text-orange-500 mr-2">•</span>
-//                       Clinical research collaboration opportunities
-//                     </li>
-//                     <li className="flex items-start">
-//                       <span className="text-orange-500 mr-2">•</span>
-//                       Enhanced patient care capabilities
-//                     </li>
-//                   </ul>
-//                 </div>
-//               </div>
-//             </div>
-
-//             {/* Right Side - Form */}
-//             <div>
-//               <div className="bg-white rounded-lg shadow-lg p-8">
-//                 {submitStatus === 'success' && (
-//                   <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
-//                     <CheckCircle className="w-5 h-5 text-green-600" />
-//                     <div>
-//                       <p className="text-green-800 font-medium">Thank you for your submission!</p>
-//                       <p className="text-green-700 text-sm">We will contact you within 2-3 business days.</p>
-//                     </div>
-//                   </div>
-//                 )}
-
-//                 {submitStatus === 'error' && (
-//                   <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
-//                     <AlertCircle className="w-5 h-5 text-red-600" />
-//                     <div>
-//                       <p className="text-red-800 font-medium">There was an error submitting your form</p>
-//                       <p className="text-red-700 text-sm">Please check the fields below and try again.</p>
-//                     </div>
-//                   </div>
-//                 )}
-
-//                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-//                   {/* Honeypot field */}
-//                   <input
-//                     type="text"
-//                     {...register('website')}
-//                     style={{ display: 'none' }}
-//                     tabIndex="-1"
-//                     autoComplete="off"
-//                   />
-
-//                   {/* Name Fields */}
-//                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                     <div>
-//                       <input
-//                         type="text"
-//                         {...register('firstName')}
-//                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-//                           errors.firstName ? 'border-red-500' : 'border-gray-300'
-//                         }`}
-//                         placeholder="First Name *"
-//                       />
-//                       {errors.firstName && (
-//                         <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
-//                       )}
-//                     </div>
-
-//                     <div>
-//                       <input
-//                         type="text"
-//                         {...register('lastName')}
-//                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-//                           errors.lastName ? 'border-red-500' : 'border-gray-300'
-//                         }`}
-//                         placeholder="Last Name *"
-//                       />
-//                       {errors.lastName && (
-//                         <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
-//                       )}
-//                     </div>
-//                   </div>
-
-//                   {/* Institution */}
-//                   <div>
-//                     <input
-//                       type="text"
-//                       {...register('institution')}
-//                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-//                         errors.institution ? 'border-red-500' : 'border-gray-300'
-//                       }`}
-//                       placeholder="Institution"
-//                     />
-//                     {errors.institution && (
-//                       <p className="mt-1 text-sm text-red-600">{errors.institution.message}</p>
-//                     )}
-//                   </div>
-
-//                   {/* Partnering Category */}
-//                   <div>
-//                     <select
-//                       {...register('partneringCategory')}
-//                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-//                         errors.partneringCategory ? 'border-red-500' : 'border-gray-300'
-//                       }`}
-//                     >
-//                       <option value="">- Select - Partnering Category *</option>
-//                       {partneringCategories.map((category) => (
-//                         <option key={category} value={category}>
-//                           {category}
-//                         </option>
-//                       ))}
-//                     </select>
-//                     {errors.partneringCategory && (
-//                       <p className="mt-1 text-sm text-red-600">{errors.partneringCategory.message}</p>
-//                     )}
-//                   </div>
-
-//                   {/* Contact Information */}
-//                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                     <div>
-//                       <input
-//                         type="tel"
-//                         {...register('phone')}
-//                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-//                           errors.phone ? 'border-red-500' : 'border-gray-300'
-//                         }`}
-//                         placeholder="Phone No."
-//                       />
-//                       {errors.phone && (
-//                         <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-//                       )}
-//                     </div>
-
-//                     <div>
-//                       <input
-//                         type="email"
-//                         {...register('email')}
-//                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-//                           errors.email ? 'border-red-500' : 'border-gray-300'
-//                         }`}
-//                         placeholder="Email Address *"
-//                       />
-//                       {errors.email && (
-//                         <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-//                       )}
-//                     </div>
-//                   </div>
-
-//                   {/* Message */}
-//                   <div>
-//                     <div className="relative">
-//                       <textarea
-//                         rows={4}
-//                         {...register('message')}
-//                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-//                           errors.message ? 'border-red-500' : 'border-gray-300'
-//                         }`}
-//                         placeholder="Message *"
-//                       />
-//                       <span className={`absolute bottom-2 right-2 text-xs ${messageValue.length > 2000 ? 'text-red-600' : 'text-gray-500'}`}>
-//                         {messageValue.length}/2000
-//                       </span>
-//                     </div>
-//                     {errors.message && (
-//                       <p className="mt-1 text-sm text-red-600">{errors.message.message}</p>
-//                     )}
-//                   </div>
-
-//                   {/* Consent Checkbox */}
-//                   <div className="flex items-start space-x-3">
-//                     <input
-//                       type="checkbox"
-//                       {...register('consentGiven')}
-//                       className="mt-1 w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-//                     />
-//                     <label className="text-sm text-gray-700">
-//                       I consent to the processing of my personal data for the purpose of responding to my inquiry. *
-//                     </label>
-//                   </div>
-//                   {errors.consentGiven && (
-//                     <p className="text-sm text-red-600">{errors.consentGiven.message}</p>
-//                   )}
-
-//                   {/* Submit Button */}
-//                   <button
-//                     type="submit"
-//                     disabled={isSubmitting || !isValid}
-//                     className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black font-medium py-3 px-6 rounded-lg transition-colors"
-//                   >
-//                     {isSubmitting ? 'Submitting...' : 'Submit Form'}
-//                   </button>
-//                 </form>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
 const PartneredHospitals = () => {
   const [hospitals, setHospitals] = useState([]);
   const [filteredHospitals, setFilteredHospitals] = useState([]);
@@ -815,12 +443,12 @@ const PartneredHospitals = () => {
   const [selectedState, setSelectedState] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [isLoadingHospitals, setIsLoadingHospitals] = useState(true);
-  
+
   // Radius functionality
   const [radiusKm, setRadiusKm] = useState(1500);
   const [radiusCenter, setRadiusCenter] = useState({ lat: 20.5937, lng: 78.9629 }); // Center of India initially
   const [radiusFilteredHospitals, setRadiusFilteredHospitals] = useState([]);
-  
+
   // Unified search functionality
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
@@ -835,7 +463,7 @@ const PartneredHospitals = () => {
         setIsLoadingHospitals(true);
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/hospitals?limit=100`);
         const data = await response.json();
-        
+
         if (data.success && data.data.hospitals) {
           // Convert API format to match existing format
           const convertedHospitals = data.data.hospitals.map(hospital => ({
@@ -844,16 +472,16 @@ const PartneredHospitals = () => {
             address: hospital.address,
             city: hospital.city,
             state: hospital.state,
-            coordinates: { 
-              lat: parseFloat(hospital.latitude), 
-              lng: parseFloat(hospital.longitude) 
+            coordinates: {
+              lat: parseFloat(hospital.latitude),
+              lng: parseFloat(hospital.longitude)
             },
             phone: hospital.phone || '',
             email: hospital.email || '',
             website: hospital.website || '',
             type: hospital.type || 'Private'
           }));
-          
+
           setHospitals(convertedHospitals);
         } else {
           console.error('Failed to fetch hospitals:', data.message);
@@ -904,12 +532,12 @@ const PartneredHospitals = () => {
   // Handle radius change
   const handleRadiusChange = (newRadius) => {
     setRadiusKm(newRadius);
-    
+
     // Clear any existing search errors when radius changes
     if (searchError) {
       setSearchError('');
     }
-    
+
     // If there's an active location search, automatically re-search with new radius
     if (useApiData && currentSearchQuery.trim()) {
       // Delay the search slightly to allow state to update
@@ -940,14 +568,14 @@ const PartneredHospitals = () => {
     setIsSearching(true);
     setSearchError('');
     setCurrentSearchQuery(location);
-    
+
     // Clear previous results immediately to prevent showing stale data
     setSearchResults([]);
     setUseApiData(false);
 
     try {
       const results = await hospitalService.searchByLocation(location, radiusKm);
-      
+
       if (results.success && results.hospitals && results.hospitals.length > 0) {
         // Convert API hospital format to match existing format
         const convertedHospitals = results.hospitals.map(hospital => ({
@@ -956,9 +584,9 @@ const PartneredHospitals = () => {
           address: hospital.address,
           city: hospital.city,
           state: hospital.state,
-          coordinates: { 
-            lat: parseFloat(hospital.latitude), 
-            lng: parseFloat(hospital.longitude) 
+          coordinates: {
+            lat: parseFloat(hospital.latitude),
+            lng: parseFloat(hospital.longitude)
           },
           phone: hospital.phone || '',
           email: hospital.email || '',
@@ -969,7 +597,7 @@ const PartneredHospitals = () => {
 
         setSearchResults(convertedHospitals);
         setUseApiData(true);
-        
+
         // Update radius center to search location
         if (results.searchLocation) {
           setRadiusCenter({
@@ -977,7 +605,7 @@ const PartneredHospitals = () => {
             lng: results.searchLocation.longitude
           });
         }
-        
+
         setSearchError('');
       } else {
         setSearchError(results.message || `No hospitals found within ${radiusKm}km of ${location}. Try expanding your search radius or searching for a different location.`);
@@ -1000,7 +628,7 @@ const PartneredHospitals = () => {
     setUseApiData(false);
     setSearchResults([]);
     setSearchError('');
-    
+
     // Filter hospitals by name from the current dataset
     const baseHospitals = radiusFilteredHospitals;
     const filtered = baseHospitals.filter(hospital =>
@@ -1008,7 +636,7 @@ const PartneredHospitals = () => {
       hospital.city.toLowerCase().includes(hospitalName.toLowerCase()) ||
       hospital.address.toLowerCase().includes(hospitalName.toLowerCase())
     );
-    
+
     if (filtered.length > 0) {
       setSearchResults(filtered);
     } else {
@@ -1029,7 +657,7 @@ const PartneredHospitals = () => {
   // Filter hospitals based on filters (applied to search results or radius-filtered hospitals)
   useEffect(() => {
     let baseHospitals = [];
-    
+
     if (searchResults.length > 0) {
       // Use search results as base
       baseHospitals = searchResults;
@@ -1057,9 +685,9 @@ const PartneredHospitals = () => {
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Hero Section */}
-      <PageBanner 
-        title="Partnered Hospitals" 
-        // subtitle={`Our strong association with ${hospitals.length} leading hospitals across India has contributed to our customers' access to advanced cancer treatments.`}
+      <PageBanner
+        title="Partnered Hospitals"
+      // subtitle={`Our strong association with ${hospitals.length} leading hospitals across India has contributed to our customers' access to advanced cancer treatments.`}
       />
 
       {/* Main Content */}
@@ -1073,26 +701,19 @@ const PartneredHospitals = () => {
           </div>
         ) : (
           <>
-            <RadiusControl
-              radiusKm={radiusKm}
-              onRadiusChange={handleRadiusChange}
-              radiusCenter={radiusCenter}
-              selectedHospital={selectedHospital}
-              onResetRadius={handleResetRadius}
-            />
-
             {/* Unified Smart Search */}
             <UnifiedSearch
               onLocationSearch={handleLocationSearch}
               onHospitalFilter={handleHospitalFilter}
               onClear={handleClearSearch}
               radiusKm={radiusKm}
+              onRadiusChange={handleRadiusChange}
               isSearching={isSearching}
               searchError={searchError}
               searchResults={searchResults}
               hospitals={hospitals}
             />
-            
+
             <FilterPanel
               hospitals={hospitals}
               filteredHospitals={filteredHospitals}
@@ -1118,8 +739,8 @@ const PartneredHospitals = () => {
               <div className="lg:col-span-2 order-1 lg:order-2">
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[400px] lg:h-[600px] w-full relative">
                   {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
-                    <Wrapper 
-                      apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} 
+                    <Wrapper
+                      apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
                       render={(status) => {
                         if (status === 'LOADING') {
                           return (
@@ -1142,7 +763,7 @@ const PartneredHospitals = () => {
                           );
                         }
                         return (
-                          <Map 
+                          <Map
                             hospitals={searchResults.length > 0 ? searchResults : hospitals}
                             selectedHospital={selectedHospital}
                             onHospitalSelect={handleHospitalSelect}
