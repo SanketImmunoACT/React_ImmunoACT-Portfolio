@@ -170,11 +170,21 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
 
 
 
-  // Memoize the SVG icon to prevent recreation
+  // Memoize the SVG icons to prevent recreation
   const svgIcon = React.useMemo(() => {
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
         <path d="M12 1.5C7.85953 1.5 4.5 4.52391 4.5 8.25C4.5 14.25 12 22.5 12 22.5C12 22.5 19.5 14.25 19.5 8.25C19.5 4.52391 16.1405 1.5 12 1.5ZM12 12C11.4067 12 10.8266 11.8241 10.3333 11.4944C9.83994 11.1648 9.45542 10.6962 9.22836 10.1481C9.0013 9.59987 8.94189 8.99667 9.05764 8.41473C9.1734 7.83279 9.45912 7.29824 9.87868 6.87868C10.2982 6.45912 10.8328 6.1734 11.4147 6.05764C11.9967 5.94189 12.5999 6.0013 13.148 6.22836C13.6962 6.45542 14.1648 6.83994 14.4944 7.33329C14.8241 7.82664 15 8.40666 15 9C14.9991 9.79538 14.6828 10.5579 14.1204 11.1204C13.5579 11.6828 12.7954 11.9991 12 12Z" fill="#f97316" stroke="#ffffff" stroke-width="1"/>
+      </svg>
+    `)}`;
+  }, []);
+
+  // Selected hospital icon (highlighted)
+  const selectedSvgIcon = React.useMemo(() => {
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="11" fill="#ffffff" stroke="#f97316" stroke-width="2" opacity="0.9"/>
+        <path d="M12 1.5C7.85953 1.5 4.5 4.52391 4.5 8.25C4.5 14.25 12 22.5 12 22.5C12 22.5 19.5 14.25 19.5 8.25C19.5 4.52391 16.1405 1.5 12 1.5ZM12 12C11.4067 12 10.8266 11.8241 10.3333 11.4944C9.83994 11.1648 9.45542 10.6962 9.22836 10.1481C9.0013 9.59987 8.94189 8.99667 9.05764 8.41473C9.1734 7.83279 9.45912 7.29824 9.87868 6.87868C10.2982 6.45912 10.8328 6.1734 11.4147 6.05764C11.9967 5.94189 12.5999 6.0013 13.148 6.22836C13.6962 6.45542 14.1648 6.83994 14.4944 7.33329C14.8241 7.82664 15 8.40666 15 9C14.9991 9.79538 14.6828 10.5579 14.1204 11.1204C13.5579 11.6828 12.7954 11.9991 12 12Z" fill="#dc2626" stroke="#ffffff" stroke-width="1"/>
       </svg>
     `)}`;
   }, []);
@@ -221,36 +231,40 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
     }
 
     const newMarkers = filteredHospitals.map(hospital => {
+      // Determine if this hospital is selected
+      const isSelected = selectedHospital && selectedHospital.id === hospital.id;
+
       // Create marker with proper configuration
       const marker = new window.google.maps.Marker({
         position: hospital.coordinates,
         map: map,
         title: hospital.name,
         icon: {
-          url: svgIcon,
-          scaledSize: new window.google.maps.Size(32, 32),
-          anchor: new window.google.maps.Point(16, 32)
+          url: isSelected ? selectedSvgIcon : svgIcon,
+          scaledSize: new window.google.maps.Size(isSelected ? 40 : 32, isSelected ? 40 : 32),
+          anchor: new window.google.maps.Point(isSelected ? 20 : 16, isSelected ? 40 : 32)
         },
         clickable: true,
-        optimized: false // This helps with custom icons and click events
+        optimized: false, // This helps with custom icons and click events
+        zIndex: isSelected ? 1000 : 1 // Selected marker appears on top
       });
 
-      // Create info window
+      // Create info window with enhanced content for selected hospital
       const infoWindow = new window.google.maps.InfoWindow({
         content: `
-          <div style="padding: 12px; max-width: 300px;">
-            <h3 style=" font-size: 18px; color: #1f2937; margin-bottom: 8px;">${hospital.name}</h3>
-            <p style="font-size: 14px; color: #000000; margin-bottom: 8px;">${hospital.address}</p>
-            ${hospital.distance ? `<p style="font-size: 12px; color: #f97316; margin-bottom: 8px;">📍 ${hospitalService.formatDistance(hospital.distance)} away</p>` : ''}
+          <div style="padding: 0px 12px 12px; max-width: 300px;">
+            <h3 style="font-size: 18px; color: #1f2937; margin-bottom: 12px; ${isSelected ? 'color: #363636; font-weight: bold;' : ''}">${hospital.name}</h3>
+            <p style="font-size: 14px; font-weight: normal; color: #363636; margin-bottom: 12px;">${hospital.address}</p>
+            ${hospital.distance ? `<p style="font-size: 12px; color: #000000; margin-bottom: 8px;">📍 ${hospitalService.formatDistance(hospital.distance)} away</p>` : ''}
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
             <span style="font-size: 12px;">Email ID:</span>
               <span style="font-size: 14px; color: #000000;">${hospital.email || 'Contact info not available'}</span>
             </div>
             <button 
               onclick="window.open('https://maps.google.com/maps?daddr=${hospital.coordinates.lat},${hospital.coordinates.lng}', '_blank')"
-              style="background-color: #f97316; color: white; padding: 8px 12px; border-radius: 24px; font-size: 14px; border: none; cursor: pointer;"
-              onmouseover="this.style.backgroundColor='#ea580c'"
-              onmouseout="this.style.backgroundColor='#f97316'"
+              style="background-color: #FFBF00; color: #363636; padding: 8px 12px; border-radius: 24px; font-size: 14px; border: none; cursor: pointer; font-weight: 500; transition: all 0.2s ease;"
+              onmouseover="this.style.backgroundColor='#E6AC00'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(255, 191, 0, 0.3)';"
+              onmouseout="this.style.backgroundColor='#FFBF00'; this.style.transform='translateY(0)'; this.style.boxShadow='none';"
             >
               Get Directions
             </button>
@@ -258,10 +272,21 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
         `
       });
 
-      // Add click event listener with error handling
+      // Add hover event listener to open info window
+      let hoverTimeout = null;
+      let isHovering = false;
+
       try {
-        marker.addListener('click', (event) => {
-          console.log('Marker clicked:', hospital.name);
+        marker.addListener('mouseover', (event) => {
+          console.log('Marker hovered:', hospital.name);
+
+          // Clear any pending close timeout
+          if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
+          }
+
+          isHovering = true;
 
           // Close any open info windows first
           if (window.currentInfoWindow) {
@@ -271,14 +296,95 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
           // Open new info window
           infoWindow.open(map, marker);
           window.currentInfoWindow = infoWindow;
+          window.currentInfoWindowHospitalId = hospital.id;
+        });
+
+        // Add click event listener with error handling
+        marker.addListener('click', (event) => {
+          console.log('Marker clicked:', hospital.name);
+
+          // Clear any pending close timeout
+          if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
+          }
+
+          // Close any open info windows first
+          if (window.currentInfoWindow) {
+            window.currentInfoWindow.close();
+          }
+
+          // Open new info window
+          infoWindow.open(map, marker);
+          window.currentInfoWindow = infoWindow;
+          window.currentInfoWindowHospitalId = hospital.id;
 
           // Call parent callback
           if (onHospitalSelectRef.current) {
             onHospitalSelectRef.current(hospital);
           }
         });
+
+        // Close info window when mouse leaves (with improved logic)
+        marker.addListener('mouseout', () => {
+          isHovering = false;
+
+          // Clear any existing timeout
+          if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+          }
+
+          // Set a timeout to close the info window
+          hoverTimeout = setTimeout(() => {
+            // Only close if:
+            // 1. We're not hovering anymore
+            // 2. This is the current info window
+            // 3. Either no hospital is selected OR this isn't the selected hospital's info window
+            if (!isHovering &&
+              window.currentInfoWindow &&
+              window.currentInfoWindowHospitalId === hospital.id &&
+              (!selectedHospital || selectedHospital.id !== hospital.id)) {
+              window.currentInfoWindow.close();
+              window.currentInfoWindow = null;
+              window.currentInfoWindowHospitalId = null;
+            }
+          }, 800); // Reduced delay for better responsiveness
+        });
+
+        // Also listen for mouseover on the info window itself to prevent closing
+        infoWindow.addListener('domready', () => {
+          const infoWindowElement = document.querySelector('.gm-style-iw');
+          if (infoWindowElement) {
+            infoWindowElement.addEventListener('mouseover', () => {
+              if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+              }
+              isHovering = true;
+            });
+
+            infoWindowElement.addEventListener('mouseout', () => {
+              isHovering = false;
+              if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+              }
+
+              hoverTimeout = setTimeout(() => {
+                if (!isHovering &&
+                  window.currentInfoWindow &&
+                  window.currentInfoWindowHospitalId === hospital.id &&
+                  (!selectedHospital || selectedHospital.id !== hospital.id)) {
+                  window.currentInfoWindow.close();
+                  window.currentInfoWindow = null;
+                  window.currentInfoWindowHospitalId = null;
+                }
+              }, 800);
+            });
+          }
+        });
+
       } catch (error) {
-        console.error('Error adding click listener to marker:', error);
+        console.error('Error adding event listeners to marker:', error);
       }
 
       return marker;
@@ -290,7 +396,7 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
     if (onRadiusChangeRef.current) {
       onRadiusChangeRef.current(filteredHospitals);
     }
-  }, [map, hospitals, radiusCenter, radiusKm, svgIcon]);
+  }, [map, hospitals, radiusCenter, radiusKm, svgIcon, selectedSvgIcon, selectedHospital]);
 
   // Handle radius circle updates
   useEffect(() => {
@@ -331,6 +437,12 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
       if (radiusCircleRef.current) {
         radiusCircleRef.current.setMap(null);
       }
+      // Clear any pending info window timeouts
+      if (window.currentInfoWindow) {
+        window.currentInfoWindow.close();
+        window.currentInfoWindow = null;
+        window.currentInfoWindowHospitalId = null;
+      }
     };
   }, []);
 
@@ -339,25 +451,52 @@ const Map = ({ hospitals, onHospitalSelect, selectedHospital, radiusCenter, radi
 
 // Hospital list component
 const HospitalList = ({ hospitals, onHospitalSelect, selectedHospital }) => {
+  const selectedHospitalRef = React.useRef(null);
+
+  // Scroll selected hospital into view
+  React.useEffect(() => {
+    if (selectedHospital && selectedHospitalRef.current) {
+      selectedHospitalRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }, [selectedHospital]);
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-full overflow-y-auto">
       <h3 className="text-lg text-gray-800 mb-4">
         Partnered Treatment Centers ({hospitals.length})
+        {selectedHospital && (
+          <span className="ml-2 text-sm text-red-600 font-normal">
+            • {selectedHospital.name} selected
+          </span>
+        )}
       </h3>
 
       <div className="space-y-3">
         {hospitals.map(hospital => (
           <div
             key={hospital.id}
-            className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-md ${selectedHospital?.id === hospital.id
-              ? 'border-orange-500 bg-orange-50'
+            ref={selectedHospital?.id === hospital.id ? selectedHospitalRef : null}
+            className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md transform hover:scale-[1.02] ${selectedHospital?.id === hospital.id
+              ? 'border-red-500 bg-red-50 shadow-md'
               : 'border-gray-200 hover:border-gray-300'
               }`}
             onClick={() => onHospitalSelect(hospital)}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h4 className="font-semibold text-gray-800 mb-1">{hospital.name}</h4>
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className={`font-semibold ${selectedHospital?.id === hospital.id ? 'text-red-700' : 'text-gray-800'}`}>
+                    {hospital.name}
+                  </h4>
+                  {selectedHospital?.id === hospital.id && (
+                    <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full font-medium animate-pulse">
+                      Selected
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-600 mb-2">{hospital.address}</p>
 
                 <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -374,7 +513,7 @@ const HospitalList = ({ hospitals, onHospitalSelect, selectedHospital }) => {
 
               <MapPin
                 size={20}
-                className={`${selectedHospital?.id === hospital.id ? 'text-orange-500' : 'text-gray-400'
+                className={`transition-colors duration-200 ${selectedHospital?.id === hospital.id ? 'text-red-500' : 'text-gray-400'
                   }`}
               />
             </div>

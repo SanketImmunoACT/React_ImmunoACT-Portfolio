@@ -24,7 +24,7 @@ const Header = () => {
   // Custom navigation handler for Science sections
   const handleScienceNavigation = (hash) => {
     setActiveDropdown(null) // Close dropdown
-    
+
     if (location.pathname === '/science') {
       // If already on science page, just scroll to section
       const element = document.querySelector(hash)
@@ -43,7 +43,7 @@ const Header = () => {
   // Custom navigation handler for NexCAR19 sections
   const handleNexCAR19Navigation = (type) => {
     setActiveDropdown(null) // Close dropdown
-    
+
     if (type === 'patients') {
       navigate('/nexcar19')
     } else if (type === 'hcp') {
@@ -143,19 +143,19 @@ const Header = () => {
               </Link>
               {activeDropdown === 'science' && (
                 <div className="absolute top-full left-0 w-48 bg-white rounded-lg shadow-lg border z-50">
-                  <button 
+                  <button
                     onClick={() => handleScienceNavigation('#research')}
                     className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm"
                   >
                     Research
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleScienceNavigation('#pipeline')}
                     className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm"
                   >
                     Pipeline
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleScienceNavigation('#publications')}
                     className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm"
                   >
@@ -181,13 +181,13 @@ const Header = () => {
               </Link>
               {activeDropdown === 'nexcar19' && (
                 <div className="absolute top-full left-0 w-48 bg-white rounded-lg shadow-lg border z-50">
-                  <button 
+                  <button
                     onClick={() => handleNexCAR19Navigation('patients')}
                     className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm"
                   >
                     For Patients
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleNexCAR19Navigation('hcp')}
                     className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm"
                   >
@@ -251,19 +251,19 @@ const Header = () => {
               </button>
               {activeDropdown === 'mobile-science' && (
                 <div className="mt-2 ml-4 space-y-2">
-                  <button 
+                  <button
                     onClick={() => handleScienceNavigation('#research')}
                     className="block w-full text-left text-gray-600 hover:text-gray-900 transition-colors text-sm"
                   >
                     Research
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleScienceNavigation('#pipeline')}
                     className="block w-full text-left text-gray-600 hover:text-gray-900 transition-colors text-sm"
                   >
                     Pipeline
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleScienceNavigation('#publications')}
                     className="block w-full text-left text-gray-600 hover:text-gray-900 transition-colors text-sm"
                   >
@@ -284,13 +284,13 @@ const Header = () => {
               </button>
               {activeDropdown === 'mobile-nexcar19' && (
                 <div className="mt-2 ml-4 space-y-2">
-                  <button 
+                  <button
                     onClick={() => handleNexCAR19Navigation('patients')}
                     className="block w-full text-left text-gray-600 hover:text-gray-900 transition-colors text-sm"
                   >
                     For Patients
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleNexCAR19Navigation('hcp')}
                     className="block w-full text-left text-gray-600 hover:text-gray-900 transition-colors text-sm"
                   >
@@ -305,7 +305,7 @@ const Header = () => {
             <Link to="/careers" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">Careers</Link>
             <Link
               to="/contact"
-              className="bg-yellow-400 hover:bg-yellow-500 text-black font-medium px-6 py-2 rounded-full transition-colors w-fit"
+              className="bg-[#FFBF00] hover:bg-[#FFBF00] text-black font-medium px-6 py-2 rounded-full transition-colors w-fit"
             >
               Contact us
             </Link>
