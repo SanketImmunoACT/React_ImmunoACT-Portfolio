@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
@@ -47,6 +48,42 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <Toaster
+          toastOptions={{
+            // Default options for all toasts
+            duration: 4000,
+            style: {
+              background: '#fff',
+              color: '#363636',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              fontSize: '14px',
+              fontWeight: '500',
+            },
+            // Success toast styling
+            success: {
+              iconTheme: {
+                primary: '#10b981',
+                secondary: '#fff',
+              },
+            },
+            // Error toast styling
+            error: {
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+            // Loading toast styling
+            loading: {
+              iconTheme: {
+                primary: '#f97316',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
         <Routes>
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -55,6 +92,7 @@ function App() {
               <AdminLayout />
             </ProtectedRoute>
           }>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="media" element={
               <ProtectedRoute requiredRoles={['super_admin', 'office_executive']}>
@@ -86,6 +124,7 @@ function App() {
                 <AdminHospitals />
               </ProtectedRoute>
             } />
+            <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
           </Route>
 
           {/* Public Routes */}

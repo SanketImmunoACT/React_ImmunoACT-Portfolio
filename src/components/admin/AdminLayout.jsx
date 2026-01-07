@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import toast from 'react-hot-toast';
 import GlobalSearch from './GlobalSearch';
 
 const AdminLayout = () => {
@@ -12,7 +13,11 @@ const AdminLayout = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/admin/login');
+    toast.success('Successfully logged out', {
+      duration: 2000,
+      position: 'top-center',
+    });
+    navigate('/admin/login', { replace: true, state: null });
   };
 
   const navigation = [

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { ImmunoActLogo } from '@/assets'
 import { FooterInstagram, FooterLinkedIn, FooterMeta, FooterTwitter, FooterYouTube } from '@/assets/svg/Icons.jsx'
 
@@ -9,11 +10,13 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
           {/* Logo and Description */}
           <div className="lg:col-span-2">
-            <img
-              src={ImmunoActLogo}
-              alt="ImmunoACT"
-              className="w-[200px] h-auto"
-            />
+            <Link to="/" className="inline-block">
+              <img
+                src={ImmunoActLogo}
+                alt="ImmunoACT"
+                className="w-[200px] h-auto cursor-pointer hover:opacity-80 transition-opacity"
+              />
+            </Link>
             <p className="text-[#363636] mt-8 text-sm mb-8 max-w-sm">
               Expert Cancer Treatment with Personal Care, Wherever You Are
             </p>
