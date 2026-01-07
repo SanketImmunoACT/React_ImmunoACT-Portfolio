@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
 const FAQ = () => {
@@ -61,9 +62,12 @@ const FAQ = () => {
         <div className="text-center bg-gray-50 p-12 rounded-xl">
           <h3 className="text-3xl font-bold text-gray-800 mb-4">Harnessing Your Immune System to Fight Cancer Safely</h3>
           <p className="text-lg text-gray-600 mb-8">Begin Your Personalized Cancer Treatment Journey</p>
-          <button className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+          <Link 
+            to="/contact#contact-form"
+            className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors inline-block"
+          >
             Discuss Treatment Options
-          </button>
+          </Link>
         </div>
       </div>
     </section>

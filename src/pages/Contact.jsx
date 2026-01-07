@@ -260,7 +260,7 @@ const Contact = () => {
             </div>
 
             {/* Right Column - Contact Information */}
-            <div className="bg-white p-6 md:p-8 rounded-xl border border-gray-200 text-base md:text-lg order-2 lg:order-1">
+            <div id="contact-form" className="bg-white p-6 md:p-8 rounded-xl border border-gray-200 text-base md:text-lg order-2 lg:order-1 scroll-mt-24">
               {submitStatus === 'success' && (
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start space-x-3">
                   <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />

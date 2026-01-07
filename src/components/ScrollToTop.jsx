@@ -5,10 +5,29 @@ const ScrollToTop = () => {
   const [isVisible, setIsVisible] = useState(false)
   const location = useLocation()
 
-  // Automatically scroll to top when route changes
+  // Automatically scroll to top when route changes, or to hash element if present
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [location.pathname])
+    if (location.hash) {
+      // If there's a hash, scroll to that element after a short delay
+      setTimeout(() => {
+        const element = document.getElementById(location.hash.substring(1))
+        if (element) {
+          // Get the element's position
+          const elementPosition = element.getBoundingClientRect().top + window.pageYOffset
+          // Account for fixed header (approximately 80px) and add some padding
+          const offsetPosition = elementPosition - 100
+          
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          })
+        }
+      }, 200) // Increased delay to ensure page is fully loaded
+    } else {
+      // No hash, scroll to top
+      window.scrollTo(0, 0)
+    }
+  }, [location.pathname, location.hash])
 
   // Show button when page is scrolled down
   useEffect(() => {

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import WorldMapImg from '@/assets/images/locations/world-map.png'
 
 const FinalCTA = () => {
@@ -23,9 +24,12 @@ const FinalCTA = () => {
             <p className="text-lg mt-4 mb-8 text-white font-futura">
               Begin Your Personalized Cancer Treatment Journey
             </p>
-            <button className="bg-[#FFBF00] hover:bg-yellow-500 text-[#363636] font-medium px-[18px] py-[9px] rounded-full transition-colors text-[18px]">
+            <Link 
+              to="/contact#contact-form"
+              className="bg-[#FFBF00] hover:bg-yellow-500 text-[#363636] font-medium px-[18px] py-[9px] rounded-full transition-colors text-[18px] inline-block"
+            >
               Discuss Treatment Options
-            </button>
+            </Link>
           </div>
         </div>
       </div>
