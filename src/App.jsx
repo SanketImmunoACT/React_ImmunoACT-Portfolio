@@ -3,6 +3,9 @@ import { Toaster } from 'react-hot-toast'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
+import CookieConsent from '@/components/CookieConsent'
+import AnalyticsTracker from '@/components/AnalyticsTracker'
+import { CookieProvider } from '@/contexts/CookieContext'
 import Home from '@/pages/Home'
 import Contact from '@/pages/Contact'
 import NewsMedia from '@/pages/NewsMedia'
@@ -14,6 +17,7 @@ import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import PartneredHospitals from '@/pages/PartneredHospitals'
 import TreatmentCenters from '@/pages/TreatmentCenters'
 import Sitemap from '@/pages/Sitemap'
+import CookieSettings from '@/pages/CookieSettings'
 
 // Main Pages
 import About from '@/pages/About'
@@ -45,45 +49,46 @@ import '@/App.css'
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Toaster
-          toastOptions={{
-            // Default options for all toasts
-            duration: 4000,
-            style: {
-              background: '#fff',
-              color: '#363636',
-              borderRadius: '12px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              fontSize: '14px',
-              fontWeight: '500',
-            },
-            // Success toast styling
-            success: {
-              iconTheme: {
-                primary: '#10b981',
-                secondary: '#fff',
+    <CookieProvider>
+      <AuthProvider>
+        <Router>
+          <Toaster
+            toastOptions={{
+              // Default options for all toasts
+              duration: 4000,
+              style: {
+                background: '#fff',
+                color: '#363636',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                fontSize: '14px',
+                fontWeight: '500',
               },
-            },
-            // Error toast styling
-            error: {
-              iconTheme: {
-                primary: '#ef4444',
-                secondary: '#fff',
+              // Success toast styling
+              success: {
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#fff',
+                },
               },
-            },
-            // Loading toast styling
-            loading: {
-              iconTheme: {
-                primary: '#f97316',
-                secondary: '#fff',
+              // Error toast styling
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#fff',
+                },
               },
-            },
-          }}
-        />
-        <Routes>
+              // Loading toast styling
+              loading: {
+                iconTheme: {
+                  primary: '#f97316',
+                  secondary: '#fff',
+                },
+              },
+            }}
+          />
+          <Routes>
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={
@@ -162,6 +167,7 @@ function App() {
                   <Route path="/careers/current-job-openings" element={<Careers />} />
                   <Route path="/publications" element={<Publications />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/cookie-settings" element={<CookieSettings />} />
                   <Route path="/partnered-hospitals" element={<PartneredHospitals />} />
                   <Route path="/treatment-centres" element={<PartneredHospitals />} />
                   <Route path="/collaborations" element={<Contact />} />
@@ -170,11 +176,14 @@ function App() {
               </main>
               <Footer />
               <ScrollToTop />
+              <CookieConsent />
+              <AnalyticsTracker />
             </div>
           } />
         </Routes>
-      </Router>
-    </AuthProvider>
+        </Router>
+      </AuthProvider>
+    </CookieProvider>
   )
 }
 
