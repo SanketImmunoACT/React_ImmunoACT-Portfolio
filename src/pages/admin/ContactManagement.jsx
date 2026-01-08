@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 const ContactManagement = () => {
   const { apiCall } = useAuth();
@@ -17,71 +18,159 @@ const ContactManagement = () => {
     totalItems: 0
   });
   const [selectedContact, setSelectedContact] = useState(null);
+  const [stats, setStats] = useState({
+    totalSubmissions: 0,
+    pendingCount: 0,
+    thisMonth: 0
+  });
 
   useEffect(() => {
     fetchContacts();
+    fetchStats();
   }, [filters, pagination.currentPage]);
 
   const fetchContacts = async () => {
     setLoading(true);
-    // Note: We'll need to create this endpoint
-    const queryParams = new URLSearchParams({
-      page: pagination.currentPage,
-      limit: 10,
-      ...filters
-    });
+    try {
+      const queryParams = new URLSearchParams({
+        page: pagination.currentPage,
+        limit: 10,
+        ...filters
+      });
 
-    // For now, using mock data since we don't have the contact management API
-    // In a real implementation, this would be: `/api/v1/contacts?${queryParams}`
-    
-    // Mock data for demonstration
-    setTimeout(() => {
-      setContacts([
-        {
-          id: 1,
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john.doe@example.com',
-          phone: '+91-9876543210',
-          institution: 'AIIMS Delhi',
-          partneringCategory: 'Clinical Collaboration',
-          message: 'Interested in CAR-T therapy collaboration...',
-          status: 'pending',
-          submissionDate: new Date().toISOString(),
-          consentGiven: true
-        },
-        {
-          id: 2,
-          firstName: 'Jane',
-          lastName: 'Smith',
-          email: 'jane.smith@hospital.com',
-          phone: '+91-9876543211',
-          institution: 'Tata Memorial Hospital',
-          partneringCategory: 'Research Partnership',
-          message: 'Looking for research collaboration opportunities...',
-          status: 'reviewed',
-          submissionDate: new Date(Date.now() - 86400000).toISOString(),
-          consentGiven: true
+      const result = await apiCall(`/api/v1/contact/admin/forms?${queryParams}`);
+      
+      if (result.success && result.data) {
+        setContacts(result.data.contacts || []);
+        
+        // Safely update pagination with fallback values
+        if (result.data.pagination) {
+          setPagination(prev => ({
+            ...prev,
+            ...result.data.pagination
+          }));
+        } else {
+          // Fallback pagination if API doesn't return pagination data
+          setPagination(prev => ({
+            ...prev,
+            totalPages: 1,
+            totalItems: result.data.contacts?.length || 0,
+            hasNext: false,
+            hasPrev: false
+          }));
         }
-      ]);
-      setPagination({
-        currentPage: 1,
+        setError('');
+      } else {
+        setError(result.error || 'Failed to load contacts');
+        toast.error('Failed to load contacts');
+        
+        // Set empty state
+        setContacts([]);
+        setPagination(prev => ({
+          ...prev,
+          totalPages: 1,
+          totalItems: 0,
+          hasNext: false,
+          hasPrev: false
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      setError('An error occurred while loading contacts');
+      toast.error('An error occurred while loading contacts');
+      
+      // Set empty state
+      setContacts([]);
+      setPagination(prev => ({
+        ...prev,
         totalPages: 1,
-        totalItems: 2,
+        totalItems: 0,
         hasNext: false,
         hasPrev: false
-      });
+      }));
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const result = await apiCall('/api/v1/contact/admin/stats');
+      if (result.success && result.data) {
+        setStats(result.data);
+      } else {
+        console.warn('Failed to load contact stats:', result.error);
+        // Set fallback stats
+        setStats({
+          totalSubmissions: 0,
+          pendingCount: 0,
+          reviewedCount: 0,
+          respondedCount: 0,
+          thisMonth: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching contact stats:', error);
+      // Set fallback stats
+      setStats({
+        totalSubmissions: 0,
+        pendingCount: 0,
+        reviewedCount: 0,
+        respondedCount: 0,
+        thisMonth: 0
+      });
+    }
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
   };
 
   const handleStatusUpdate = async (id, newStatus) => {
-    // Mock implementation - in real app, this would call the API
-    setContacts(prev => 
-      prev.map(contact => 
-        contact.id === id ? { ...contact, status: newStatus } : contact
-      )
-    );
+    const result = await apiCall(`/api/v1/contact/admin/forms/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: newStatus })
+    });
+
+    if (result.success) {
+      setContacts(prev => 
+        prev.map(contact => 
+          contact.id === id ? { ...contact, status: newStatus } : contact
+        )
+      );
+      toast.success('Status updated successfully');
+      fetchStats(); // Refresh stats
+    } else {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this contact? This action cannot be undone.')) {
+      return;
+    }
+
+    const result = await apiCall(`/api/v1/contact/admin/forms/${id}`, {
+      method: 'DELETE'
+    });
+
+    if (result.success) {
+      setContacts(prev => prev.filter(contact => contact.id !== id));
+      toast.success('Contact deleted successfully');
+      fetchStats(); // Refresh stats
+    } else {
+      toast.error('Failed to delete contact');
+    }
+  };
+
+  const handleViewDetails = async (contact) => {
+    const result = await apiCall(`/api/v1/contact/admin/forms/${contact.id}`);
+    if (result.success) {
+      setSelectedContact(result.data.contact);
+    } else {
+      toast.error('Failed to load contact details');
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -110,58 +199,79 @@ const ContactManagement = () => {
   if (loading && contacts.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        <div className="relative">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent absolute top-0 left-0"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 animate-fade-in">
+      {/* Header with Stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Contact Management</h1>
-          <p className="text-gray-600">Manage contact form submissions and inquiries</p>
+          <h1 className="text-3xl font-bold text-slate-900">Contact Management</h1>
+          <p className="text-slate-600 mt-1">Manage contact form submissions and inquiries</p>
+        </div>
+        <div className="flex items-center space-x-4 text-sm">
+          <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+            <span className="text-slate-500">Total:</span>
+            <span className="font-semibold text-slate-900 ml-1">{stats.totalSubmissions}</span>
+          </div>
+          <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+            <span className="text-slate-500">Pending:</span>
+            <span className="font-semibold text-orange-600 ml-1">{stats.pendingCount}</span>
+          </div>
+          <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+            <span className="text-slate-500">This Month:</span>
+            <span className="font-semibold text-green-600 ml-1">{stats.thisMonth}</span>
+          </div>
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-          {error}
+        <div className="bg-red-50/80 backdrop-blur-sm border border-red-200/60 text-red-700 px-4 py-3 rounded-xl animate-slide-down">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {error}
+          </div>
         </div>
       )}
 
-      {/* Note about implementation */}
-      <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md">
-        <p className="text-sm">
-          📝 <strong>Note:</strong> This is a demo interface. The contact management API endpoints need to be implemented 
-          to connect with the existing ContactForm model in the backend.
-        </p>
-      </div>
-
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow">
+      <div className="bg-white shadow-soft rounded-2xl p-6 border border-slate-200/60">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
               Search
             </label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-              placeholder="Search contacts..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                placeholder="Search contacts..."
+                className="w-full pl-10 pr-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200"
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
               Status
             </label>
             <select
               value={filters.status}
-              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200"
             >
               <option value="">All Status</option>
               <option value="pending">Pending</option>
@@ -171,28 +281,33 @@ const ContactManagement = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
               Category
             </label>
             <select
               value={filters.partneringCategory}
-              onChange={(e) => setFilters(prev => ({ ...prev, partneringCategory: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+              onChange={(e) => handleFilterChange('partneringCategory', e.target.value)}
+              className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200"
             >
               <option value="">All Categories</option>
               <option value="Clinical Collaboration">Clinical Collaboration</option>
               <option value="Research Partnership">Research Partnership</option>
               <option value="Technology Licensing">Technology Licensing</option>
               <option value="Manufacturing Partnership">Manufacturing Partnership</option>
+              <option value="Distribution Partnership">Distribution Partnership</option>
               <option value="Investment Opportunity">Investment Opportunity</option>
               <option value="Media Inquiry">Media Inquiry</option>
               <option value="General Inquiry">General Inquiry</option>
+              <option value="Other">Other</option>
             </select>
           </div>
           <div className="flex items-end">
             <button
-              onClick={() => setFilters({ status: '', search: '', partneringCategory: '' })}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              onClick={() => {
+                setFilters({ status: '', search: '', partneringCategory: '' });
+                setPagination(prev => ({ ...prev, currentPage: 1 }));
+              }}
+              className="px-4 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors font-medium"
             >
               Clear Filters
             </button>
@@ -201,50 +316,50 @@ const ContactManagement = () => {
       </div>
 
       {/* Contacts List */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white shadow-soft rounded-2xl overflow-hidden border border-slate-200/60">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-slate-200/60">
+            <thead className="bg-gradient-to-r from-slate-50 to-slate-100/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Contact
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Institution
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Submitted
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {contacts.map((contact) => (
-                <tr key={contact.id} className="hover:bg-gray-50">
+            <tbody className="bg-white divide-y divide-slate-200/60">
+              {contacts.map((contact, index) => (
+                <tr key={contact.id} className="hover:bg-slate-50/50 transition-colors animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
                   <td className="px-6 py-4">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-semibold text-slate-900">
                         {contact.firstName} {contact.lastName}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-slate-500">
                         {contact.email}
                       </div>
                       {contact.phone && (
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-slate-500">
                           {contact.phone}
                         </div>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm text-slate-900">
                     {contact.institution || 'Not specified'}
                   </td>
                   <td className="px-6 py-4">
@@ -256,7 +371,7 @@ const ContactManagement = () => {
                     <select
                       value={contact.status}
                       onChange={(e) => handleStatusUpdate(contact.id, e.target.value)}
-                      className={`text-xs font-medium rounded-full border-0 focus:ring-2 focus:ring-orange-500 ${getStatusBadge(contact.status)}`}
+                      className={`text-xs font-medium rounded-full border-0 focus:ring-2 focus:ring-orange-500 px-3 py-1 ${getStatusBadge(contact.status)}`}
                     >
                       <option value="pending">Pending</option>
                       <option value="reviewed">Reviewed</option>
@@ -264,105 +379,175 @@ const ContactManagement = () => {
                       <option value="archived">Archived</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm text-slate-900">
                     {new Date(contact.submissionDate).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 text-sm font-medium">
-                    <button
-                      onClick={() => setSelectedContact(contact)}
-                      className="text-orange-600 hover:text-orange-900"
-                    >
-                      View Details
-                    </button>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleViewDetails(contact)}
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-orange-700 bg-orange-100 hover:bg-orange-200 rounded-lg transition-colors"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        View
+                      </button>
+                      <button
+                        onClick={() => handleDelete(contact.id)}
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {pagination.totalPages > 1 && (
+          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-slate-200/60">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, currentPage: (prev?.currentPage || 1) - 1 }))}
+                disabled={!pagination?.hasPrev}
+                className="relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, currentPage: (prev?.currentPage || 1) + 1 }))}
+                disabled={!pagination?.hasNext}
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-slate-700">
+                  Showing page {pagination?.currentPage || 1} of {pagination?.totalPages || 1} ({pagination?.totalItems || 0} total)
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                  <button
+                    onClick={() => setPagination(prev => ({ ...prev, currentPage: (prev?.currentPage || 1) - 1 }))}
+                    disabled={!pagination?.hasPrev}
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setPagination(prev => ({ ...prev, currentPage: (prev?.currentPage || 1) + 1 }))}
+                    disabled={!pagination?.hasNext}
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Contact Details Modal */}
       {selectedContact && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-600/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto shadow-strong border border-slate-200/60">
             <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Contact Details</h3>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-slate-900">Contact Details</h3>
                 <button
                   onClick={() => setSelectedContact(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-lg"
                 >
-                  <span className="text-2xl">&times;</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <p className="text-sm text-gray-900">{selectedContact.firstName} {selectedContact.lastName}</p>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Name</label>
+                    <p className="text-sm text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">{selectedContact.firstName} {selectedContact.lastName}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="text-sm text-gray-900">{selectedContact.email}</p>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Email</label>
+                    <p className="text-sm text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">{selectedContact.email}</p>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <p className="text-sm text-gray-900">{selectedContact.phone || 'Not provided'}</p>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Phone</label>
+                    <p className="text-sm text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">{selectedContact.phone || 'Not provided'}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Institution</label>
-                    <p className="text-sm text-gray-900">{selectedContact.institution || 'Not provided'}</p>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Institution</label>
+                    <p className="text-sm text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">{selectedContact.institution || 'Not provided'}</p>
                   </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Partnership Category</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Partnership Category</label>
                   <span className={getCategoryBadge(selectedContact.partneringCategory)}>
                     {selectedContact.partneringCategory}
                   </span>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Message</label>
-                  <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                    <p className="text-sm text-gray-900">{selectedContact.message}</p>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Message</label>
+                  <div className="mt-1 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-sm text-slate-900 whitespace-pre-wrap">{selectedContact.message}</p>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Status</label>
                     <span className={getStatusBadge(selectedContact.status)}>
                       {selectedContact.status}
                     </span>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Submitted</label>
-                    <p className="text-sm text-gray-900">
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Submitted</label>
+                    <p className="text-sm text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">
                       {new Date(selectedContact.submissionDate).toLocaleString()}
                     </p>
                   </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Consent</label>
-                  <p className="text-sm text-gray-900">
-                    {selectedContact.consentGiven ? '✅ Consent given' : '❌ No consent'}
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Consent</label>
+                  <p className="text-sm text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">
+                    {selectedContact.consentGiven ? '✅ Consent given for data processing' : '❌ No consent provided'}
                   </p>
                 </div>
               </div>
               
-              <div className="mt-6 flex justify-end">
+              <div className="mt-8 flex justify-end space-x-3">
                 <button
                   onClick={() => setSelectedContact(null)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  className="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors font-medium"
                 >
                   Close
+                </button>
+                <button
+                  onClick={() => handleDelete(selectedContact.id)}
+                  className="px-6 py-2.5 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors font-medium"
+                >
+                  Delete Contact
                 </button>
               </div>
             </div>
@@ -371,6 +556,31 @@ const ContactManagement = () => {
       )}
     </div>
   );
+};
+
+const getStatusBadge = (status) => {
+  const colors = {
+    pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+    reviewed: 'bg-blue-100 text-blue-800 border border-blue-200',
+    responded: 'bg-green-100 text-green-800 border border-green-200',
+    archived: 'bg-slate-100 text-slate-800 border border-slate-200'
+  };
+  return `inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${colors[status]}`;
+};
+
+const getCategoryBadge = (category) => {
+  const colors = {
+    'Clinical Collaboration': 'bg-blue-100 text-blue-800 border border-blue-200',
+    'Research Partnership': 'bg-green-100 text-green-800 border border-green-200',
+    'Technology Licensing': 'bg-purple-100 text-purple-800 border border-purple-200',
+    'Manufacturing Partnership': 'bg-orange-100 text-orange-800 border border-orange-200',
+    'Distribution Partnership': 'bg-indigo-100 text-indigo-800 border border-indigo-200',
+    'Investment Opportunity': 'bg-red-100 text-red-800 border border-red-200',
+    'Media Inquiry': 'bg-pink-100 text-pink-800 border border-pink-200',
+    'General Inquiry': 'bg-slate-100 text-slate-800 border border-slate-200',
+    'Other': 'bg-slate-100 text-slate-800 border border-slate-200'
+  };
+  return `inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${colors[category] || 'bg-slate-100 text-slate-800 border border-slate-200'}`;
 };
 
 export default ContactManagement;

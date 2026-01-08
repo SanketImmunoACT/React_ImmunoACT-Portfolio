@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 const AdminDashboard = () => {
   const { user, apiCall, isSuperAdmin, isOfficeExecutive, isHRManager } = useAuth();
   const [stats, setStats] = useState({
-    users: { total: 0, active: 0 },
     contacts: { total: 0, pending: 0 },
     media: { total: 0, published: 0 },
     publications: { total: 0, published: 0 },
@@ -24,19 +23,21 @@ const AdminDashboard = () => {
     
     if (isSuperAdmin) {
       promises.push(
-        apiCall('/api/v1/users/stats'),
         apiCall('/api/v1/media/stats'),
         apiCall('/api/v1/publications/stats'),
-        apiCall('/api/v1/careers/stats')
+        apiCall('/api/v1/careers/stats'),
+        apiCall('/api/v1/contact/admin/stats')
       );
     } else if (isOfficeExecutive) {
       promises.push(
         apiCall('/api/v1/media/stats'),
-        apiCall('/api/v1/publications/stats')
+        apiCall('/api/v1/publications/stats'),
+        apiCall('/api/v1/contact/admin/stats')
       );
     } else if (isHRManager) {
       promises.push(
-        apiCall('/api/v1/careers/stats')
+        apiCall('/api/v1/careers/stats'),
+        apiCall('/api/v1/contact/admin/stats')
       );
     }
     
@@ -45,16 +46,16 @@ const AdminDashboard = () => {
       
       if (isSuperAdmin) {
         if (results[0]?.value?.success) {
-          setStats(prev => ({ ...prev, users: results[0].value.data }));
+          setStats(prev => ({ ...prev, media: results[0].value.data }));
         }
         if (results[1]?.value?.success) {
-          setStats(prev => ({ ...prev, media: results[1].value.data }));
+          setStats(prev => ({ ...prev, publications: results[1].value.data }));
         }
         if (results[2]?.value?.success) {
-          setStats(prev => ({ ...prev, publications: results[2].value.data }));
+          setStats(prev => ({ ...prev, careers: results[2].value.data }));
         }
         if (results[3]?.value?.success) {
-          setStats(prev => ({ ...prev, careers: results[3].value.data }));
+          setStats(prev => ({ ...prev, contacts: results[3].value.data }));
         }
       } else if (isOfficeExecutive) {
         if (results[0]?.value?.success) {
@@ -63,9 +64,15 @@ const AdminDashboard = () => {
         if (results[1]?.value?.success) {
           setStats(prev => ({ ...prev, publications: results[1].value.data }));
         }
+        if (results[2]?.value?.success) {
+          setStats(prev => ({ ...prev, contacts: results[2].value.data }));
+        }
       } else if (isHRManager) {
         if (results[0]?.value?.success) {
           setStats(prev => ({ ...prev, careers: results[0].value.data }));
+        }
+        if (results[1]?.value?.success) {
+          setStats(prev => ({ ...prev, contacts: results[1].value.data }));
         }
       }
     } catch (error) {
@@ -129,19 +136,7 @@ const AdminDashboard = () => {
     }
     
     if (isSuperAdmin) {
-      actions.push(
-        { 
-          name: 'Add User', 
-          href: '/admin/users/new', 
-          icon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-          ), 
-          gradient: 'from-orange-500 to-orange-600',
-          description: 'Manage system users'
-        }
-      );
+      // No additional actions for super admin beyond the common ones
     }
     
     actions.push(
@@ -211,37 +206,6 @@ const AdminDashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        {isSuperAdmin && (
-          <>
-            <StatCard
-              title="Total Users"
-              value={stats.users.totalUsers || 0}
-              subtitle={`${stats.users.activeUsers || 0} active`}
-              icon={(
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              )}
-              gradient="from-blue-500 to-blue-600"
-              trend="+12%"
-              trendUp={true}
-            />
-            <StatCard
-              title="User Roles"
-              value={stats.users.roleDistribution?.length || 3}
-              subtitle="Different roles"
-              icon={(
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              )}
-              gradient="from-emerald-500 to-emerald-600"
-              trend="Stable"
-              trendUp={true}
-            />
-          </>
-        )}
-        
         {(isOfficeExecutive || isSuperAdmin) && (
           <>
             <StatCard
@@ -291,15 +255,15 @@ const AdminDashboard = () => {
         
         <StatCard
           title="Contact Forms"
-          value={stats.contacts.total || 0}
-          subtitle={`${stats.contacts.pending || 0} pending`}
+          value={stats.contacts?.totalSubmissions || 0}
+          subtitle={`${stats.contacts?.pendingCount || 0} pending`}
           icon={(
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           )}
           gradient="from-rose-500 to-rose-600"
-          trend="+23%"
+          trend={`+${stats.contacts?.thisMonth || 0} this month`}
           trendUp={true}
         />
       </div>

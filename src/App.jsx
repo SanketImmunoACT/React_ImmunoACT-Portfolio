@@ -38,7 +38,6 @@ import MediaManagement from '@/pages/admin/MediaManagement'
 import PublicationsManagement from '@/pages/admin/PublicationsManagement'
 import CareersManagement from '@/pages/admin/CareersManagement'
 import ContactManagement from '@/pages/admin/ContactManagement'
-import UserManagement from '@/pages/admin/UserManagement'
 import AdminHospitals from '@/pages/admin/AdminHospitals'
 import ProtectedRoute from '@/components/admin/ProtectedRoute'
 
@@ -112,11 +111,6 @@ function App() {
             <Route path="contacts" element={
               <ProtectedRoute requiredRoles={['super_admin', 'office_executive', 'hr_manager']}>
                 <ContactManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="users" element={
-              <ProtectedRoute requiredRoles={['super_admin']}>
-                <UserManagement />
               </ProtectedRoute>
             } />
             <Route path="hospitals" element={

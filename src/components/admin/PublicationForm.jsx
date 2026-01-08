@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 const PublicationForm = ({ publication = null, onSave, onCancel }) => {
   const { apiCall } = useAuth();
@@ -97,34 +98,51 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
 
     if (result.success) {
       onSave(result.data.publication);
+      toast.success(publication ? 'Publication updated successfully' : 'Publication created successfully');
     } else {
       setErrors({ submit: result.error });
+      toast.error('Failed to save publication');
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
+    <div className="fixed inset-0 bg-slate-600/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-4xl w-full mx-4 max-h-screen overflow-y-auto shadow-strong border border-slate-200/60">
         <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-6">
-            {publication ? 'Edit Publication' : 'Add Publication'}
-          </h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold text-slate-900">
+              {publication ? 'Edit Publication' : 'Add Publication'}
+            </h3>
+            <button
+              onClick={onCancel}
+              className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-lg"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
           {errors.submit && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-              {errors.submit}
+            <div className="mb-6 bg-red-50/80 backdrop-blur-sm border border-red-200/60 text-red-700 px-4 py-3 rounded-xl animate-slide-down">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {errors.submit}
+              </div>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h4 className="text-md font-medium text-gray-900 border-b pb-2">Basic Information</h4>
+              <h4 className="text-md font-semibold text-slate-900 border-b border-slate-200 pb-2">Basic Information</h4>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Title *
                 </label>
                 <textarea
@@ -132,18 +150,18 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                   value={formData.title}
                   onChange={handleChange}
                   rows={2}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                    errors.title ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 ${
+                    errors.title ? 'border-red-300 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300/60'
                   }`}
                   placeholder="Enter publication title"
                 />
                 {errors.title && (
-                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+                  <p className="mt-1 text-sm text-red-600 animate-slide-down">{errors.title}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Authors *
                 </label>
                 <textarea
@@ -151,19 +169,19 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                   value={formData.authors}
                   onChange={handleChange}
                   rows={2}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                    errors.authors ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 ${
+                    errors.authors ? 'border-red-300 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300/60'
                   }`}
                   placeholder="Enter authors (comma-separated or formatted)"
                 />
                 {errors.authors && (
-                  <p className="mt-1 text-sm text-red-600">{errors.authors}</p>
+                  <p className="mt-1 text-sm text-red-600 animate-slide-down">{errors.authors}</p>
                 )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Journal *
                   </label>
                   <input
@@ -171,18 +189,18 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                     name="journal"
                     value={formData.journal}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                      errors.journal ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 ${
+                      errors.journal ? 'border-red-300 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300/60'
                     }`}
                     placeholder="Journal or publication venue"
                   />
                   {errors.journal && (
-                    <p className="mt-1 text-sm text-red-600">{errors.journal}</p>
+                    <p className="mt-1 text-sm text-red-600 animate-slide-down">{errors.journal}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Category *
                   </label>
                   <input
@@ -190,19 +208,19 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                      errors.category ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 ${
+                      errors.category ? 'border-red-300 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300/60'
                     }`}
                     placeholder="e.g., Poster, Article, Review"
                   />
                   {errors.category && (
-                    <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+                    <p className="mt-1 text-sm text-red-600 animate-slide-down">{errors.category}</p>
                   )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   URL *
                 </label>
                 <input
@@ -210,19 +228,19 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                   name="url"
                   value={formData.url}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                    errors.url ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 ${
+                    errors.url ? 'border-red-300 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300/60'
                   }`}
                   placeholder="https://example.com/publication.pdf"
                 />
                 {errors.url && (
-                  <p className="mt-1 text-sm text-red-600">{errors.url}</p>
+                  <p className="mt-1 text-sm text-red-600 animate-slide-down">{errors.url}</p>
                 )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Published Date *
                   </label>
                   <input
@@ -230,17 +248,17 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                     name="publishedDate"
                     value={formData.publishedDate}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                      errors.publishedDate ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-xl bg-white/50 backdrop-blur-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 ${
+                      errors.publishedDate ? 'border-red-300 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300/60'
                     }`}
                   />
                   {errors.publishedDate && (
-                    <p className="mt-1 text-sm text-red-600">{errors.publishedDate}</p>
+                    <p className="mt-1 text-sm text-red-600 animate-slide-down">{errors.publishedDate}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Button Text
                   </label>
                   <input
@@ -248,20 +266,20 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                     name="buttonText"
                     value={formData.buttonText}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
                     placeholder="View Publication"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Status
                   </label>
                   <select
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
                   >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
@@ -273,10 +291,10 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
 
             {/* Additional Details */}
             <div className="space-y-4">
-              <h4 className="text-md font-medium text-gray-900 border-b pb-2">Additional Details</h4>
+              <h4 className="text-md font-semibold text-slate-900 border-b border-slate-200 pb-2">Additional Details</h4>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Abstract
                 </label>
                 <textarea
@@ -284,14 +302,14 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                   value={formData.abstract}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
                   placeholder="Publication abstract or summary"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
                     DOI
                   </label>
                   <input
@@ -299,13 +317,13 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                     name="doi"
                     value={formData.doi}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
                     placeholder="10.1234/example.doi"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
                     PMID
                   </label>
                   <input
@@ -313,13 +331,13 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                     name="pmid"
                     value={formData.pmid}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
                     placeholder="PubMed ID"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Impact Factor
                   </label>
                   <input
@@ -328,19 +346,19 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                     name="impactFactor"
                     value={formData.impactFactor}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                      errors.impactFactor ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 ${
+                      errors.impactFactor ? 'border-red-300 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300/60'
                     }`}
                     placeholder="0.000"
                   />
                   {errors.impactFactor && (
-                    <p className="mt-1 text-sm text-red-600">{errors.impactFactor}</p>
+                    <p className="mt-1 text-sm text-red-600 animate-slide-down">{errors.impactFactor}</p>
                   )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Tags
                 </label>
                 <input
@@ -348,14 +366,14 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                   name="tags"
                   value={formData.tags}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
                   placeholder="cancer, therapy, immunoact (comma separated)"
                 />
-                <p className="mt-1 text-sm text-gray-500">Separate tags with commas</p>
+                <p className="mt-1 text-sm text-slate-500">Separate tags with commas</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Image URL
                 </label>
                 <input
@@ -363,23 +381,23 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                   name="imageUrl"
                   value={formData.imageUrl}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                    errors.imageUrl ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 ${
+                    errors.imageUrl ? 'border-red-300 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300/60'
                   }`}
                   placeholder="https://example.com/image.jpg"
                 />
                 {errors.imageUrl && (
-                  <p className="mt-1 text-sm text-red-600">{errors.imageUrl}</p>
+                  <p className="mt-1 text-sm text-red-600 animate-slide-down">{errors.imageUrl}</p>
                 )}
               </div>
             </div>
 
             {/* SEO */}
             <div className="space-y-4">
-              <h4 className="text-md font-medium text-gray-900 border-b pb-2">SEO</h4>
+              <h4 className="text-md font-semibold text-slate-900 border-b border-slate-200 pb-2">SEO</h4>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Meta Title
                 </label>
                 <input
@@ -387,13 +405,13 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                   name="metaTitle"
                   value={formData.metaTitle}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
                   placeholder="SEO title"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Meta Description
                 </label>
                 <textarea
@@ -401,26 +419,33 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                   value={formData.metaDescription}
                   onChange={handleChange}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
                   placeholder="SEO description"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex justify-end space-x-3 pt-6 border-t border-slate-200">
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-medium hover:shadow-strong transition-all duration-200 hover:-translate-y-0.5"
               >
-                {loading ? 'Saving...' : (publication ? 'Update' : 'Create')}
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2 inline-block"></div>
+                    Saving...
+                  </>
+                ) : (
+                  publication ? 'Update Publication' : 'Create Publication'
+                )}
               </button>
             </div>
           </form>

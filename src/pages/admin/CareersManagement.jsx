@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import CareerForm from '@/components/admin/CareerForm';
+import toast from 'react-hot-toast';
 
 const CareersManagement = () => {
   const { apiCall } = useAuth();
@@ -24,9 +25,15 @@ const CareersManagement = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCareer, setEditingCareer] = useState(null);
+  const [stats, setStats] = useState({
+    totalCareers: 0,
+    activeCareers: 0,
+    draftCareers: 0
+  });
 
   useEffect(() => {
     fetchCareers();
+    fetchStats();
   }, [filters, pagination.currentPage]);
 
   const fetchCareers = async () => {
@@ -45,8 +52,16 @@ const CareersManagement = () => {
       setError('');
     } else {
       setError(result.error);
+      toast.error('Failed to load careers');
     }
     setLoading(false);
+  };
+
+  const fetchStats = async () => {
+    const result = await apiCall('/api/v1/careers/stats');
+    if (result.success) {
+      setStats(result.data);
+    }
   };
 
   const handleFilterChange = (key, value) => {
@@ -84,8 +99,11 @@ const CareersManagement = () => {
     if (result.success) {
       setSelectedItems([]);
       fetchCareers();
+      fetchStats();
+      toast.success(`${selectedItems.length} job(s) updated to ${status}`);
     } else {
       setError(result.error);
+      toast.error('Failed to update jobs');
     }
   };
 
@@ -98,8 +116,11 @@ const CareersManagement = () => {
 
     if (result.success) {
       fetchCareers();
+      fetchStats();
+      toast.success('Job posting deleted successfully');
     } else {
       setError(result.error);
+      toast.error('Failed to delete job posting');
     }
   };
 
@@ -111,6 +132,8 @@ const CareersManagement = () => {
     setShowCreateModal(false);
     setEditingCareer(null);
     fetchCareers();
+    fetchStats();
+    toast.success(savedCareer ? 'Job posting updated successfully' : 'Job posting created successfully');
   };
 
   const handleFormCancel = () => {
@@ -120,64 +143,102 @@ const CareersManagement = () => {
 
   const getStatusBadge = (status) => {
     const colors = {
-      draft: 'bg-yellow-100 text-yellow-800',
-      active: 'bg-green-100 text-green-800',
-      paused: 'bg-orange-100 text-orange-800',
-      closed: 'bg-red-100 text-red-800',
-      archived: 'bg-gray-100 text-gray-800'
+      draft: 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-yellow-300',
+      active: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300',
+      paused: 'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border-orange-300',
+      closed: 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-red-300',
+      archived: 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-800 border-slate-300'
     };
-    return `px-2 py-1 text-xs font-medium rounded-full ${colors[status]}`;
+    const icons = {
+      draft: '📝',
+      active: '✅',
+      paused: '⏸️',
+      closed: '🔒',
+      archived: '📦'
+    };
+    return (
+      <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border ${colors[status]}`}>
+        <span className="mr-1.5">{icons[status]}</span>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
   };
 
   const getUrgencyBadge = (urgency) => {
     const colors = {
-      low: 'bg-blue-100 text-blue-800',
-      medium: 'bg-yellow-100 text-yellow-800',
-      high: 'bg-orange-100 text-orange-800',
-      urgent: 'bg-red-100 text-red-800'
+      low: 'bg-blue-100 text-blue-800 border border-blue-200',
+      medium: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+      high: 'bg-orange-100 text-orange-800 border border-orange-200',
+      urgent: 'bg-red-100 text-red-800 border border-red-200'
     };
-    return `px-2 py-1 text-xs font-medium rounded-full ${colors[urgency]}`;
+    return `inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${colors[urgency]}`;
   };
 
   const getEmploymentTypeBadge = (type) => {
     const colors = {
-      'full-time': 'bg-green-100 text-green-800',
-      'part-time': 'bg-blue-100 text-blue-800',
-      'contract': 'bg-purple-100 text-purple-800',
-      'internship': 'bg-pink-100 text-pink-800',
-      'temporary': 'bg-gray-100 text-gray-800'
+      'full-time': 'bg-green-100 text-green-800 border border-green-200',
+      'part-time': 'bg-blue-100 text-blue-800 border border-blue-200',
+      'contract': 'bg-purple-100 text-purple-800 border border-purple-200',
+      'internship': 'bg-pink-100 text-pink-800 border border-pink-200',
+      'temporary': 'bg-slate-100 text-slate-800 border border-slate-200'
     };
-    return `px-2 py-1 text-xs font-medium rounded-full ${colors[type]}`;
+    return `inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${colors[type]}`;
   };
 
   if (loading && careers.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        <div className="relative">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-500 border-t-transparent absolute top-0 left-0"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 animate-fade-in">
+      {/* Header with Stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Careers Management</h1>
-          <p className="text-gray-600">Manage job postings and career opportunities</p>
+          <h1 className="text-3xl font-bold text-slate-900">Careers Management</h1>
+          <p className="text-slate-600 mt-1">Manage job postings and career opportunities</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center"
-        >
-          <span className="mr-2">+</span>
-          Post New Job
-        </button>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 text-sm">
+            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+              <span className="text-slate-500">Total:</span>
+              <span className="font-semibold text-slate-900 ml-1">{stats.totalCareers}</span>
+            </div>
+            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+              <span className="text-slate-500">Active:</span>
+              <span className="font-semibold text-green-600 ml-1">{stats.activeCareers}</span>
+            </div>
+            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+              <span className="text-slate-500">Draft:</span>
+              <span className="font-semibold text-yellow-600 ml-1">{stats.draftCareers}</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-xl shadow-medium hover:shadow-strong transition-all duration-200 hover:-translate-y-0.5"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Post New Job
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-          {error}
+        <div className="bg-red-50/80 backdrop-blur-sm border border-red-200/60 text-red-700 px-4 py-3 rounded-xl animate-slide-down">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {error}
+          </div>
         </div>
       )}
 
