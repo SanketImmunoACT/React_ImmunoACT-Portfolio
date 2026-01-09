@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDebounceSearch } from '@/hooks/useDebounceSearch';
 import PublicationForm from '@/components/admin/PublicationForm';
 import toast from 'react-hot-toast';
 
 const PublicationsManagement = () => {
   const { apiCall } = useAuth();
+  const { searchInput, debouncedSearch, isSearching, setSearchInput, clearSearch } = useDebounceSearch();
   const [publications, setPublications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,10 +30,16 @@ const PublicationsManagement = () => {
     draftPublications: 0
   });
 
+  // Update search filter when debounced search changes
+  useEffect(() => {
+    setFilters(prev => ({ ...prev, search: debouncedSearch }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  }, [debouncedSearch]);
+
   useEffect(() => {
     fetchPublications();
     fetchStats();
-  }, [filters, pagination.currentPage]);
+  }, [filters.status, filters.search, filters.category, filters.journal, pagination.currentPage]);
 
   const fetchPublications = async () => {
     setLoading(true);
@@ -231,7 +239,7 @@ const PublicationsManagement = () => {
     };
     return (
       <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border ${colors[status]}`}>
-        <span className="mr-1.5">{icons[status]}</span>
+        {/* <span className="mr-1.5">{icons[status]}</span> */}
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
@@ -314,14 +322,18 @@ const PublicationsManagement = () => {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                {isSearching ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-emerald-500"></div>
+                ) : (
+                  <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                )}
               </div>
               <input
                 type="text"
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search publications..."
                 className="w-full pl-10 pr-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
               />
@@ -369,6 +381,7 @@ const PublicationsManagement = () => {
           <div className="flex items-end">
             <button
               onClick={() => {
+                clearSearch(); // Clear search input
                 setFilters({ status: '', search: '', category: '', journal: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDebounceSearch } from '@/hooks/useDebounceSearch';
 import CareerForm from '@/components/admin/CareerForm';
 import toast from 'react-hot-toast';
 
 const CareersManagement = () => {
   const { apiCall } = useAuth();
+  const { searchInput, debouncedSearch, isSearching, setSearchInput, clearSearch } = useDebounceSearch();
   const [careers, setCareers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,10 +33,16 @@ const CareersManagement = () => {
     draftCareers: 0
   });
 
+  // Update search filter when debounced search changes
+  useEffect(() => {
+    setFilters(prev => ({ ...prev, search: debouncedSearch }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  }, [debouncedSearch]);
+
   useEffect(() => {
     fetchCareers();
     fetchStats();
-  }, [filters, pagination.currentPage]);
+  }, [filters.status, filters.search, filters.department, filters.location, filters.employmentType, filters.experienceLevel, filters.isRemote, pagination.currentPage]);
 
   const fetchCareers = async () => {
     setLoading(true);
@@ -331,8 +339,8 @@ const CareersManagement = () => {
             </label>
             <input
               type="text"
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search jobs..."
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
             />
@@ -432,6 +440,7 @@ const CareersManagement = () => {
           <div className="flex items-end">
             <button
               onClick={() => {
+                clearSearch(); // Clear search input
                 setFilters({ status: '', search: '', department: '', location: '', employmentType: '', experienceLevel: '', isRemote: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}

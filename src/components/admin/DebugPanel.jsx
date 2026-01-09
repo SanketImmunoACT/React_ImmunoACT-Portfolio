@@ -49,6 +49,29 @@ const DebugPanel = () => {
     }
   };
 
+  const cleanupEmptyFields = async () => {
+    setLoading(true);
+    try {
+      const result = await apiCall('/api/v1/admin/cleanup-empty-fields', {
+        method: 'POST'
+      });
+      
+      if (result.success) {
+        setDebugInfo({
+          cleanup: result.data,
+          timestamp: new Date().toISOString()
+        });
+        toast.success(`Cleanup completed! Updated ${result.data.hospitalsUpdated} hospitals and ${result.data.publicationsUpdated} publications`);
+      } else {
+        toast.error('Cleanup failed: ' + result.error);
+      }
+    } catch (error) {
+      toast.error('Cleanup error: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const testApiCall = async () => {
     setLoading(true);
     try {
@@ -107,6 +130,14 @@ const DebugPanel = () => {
           className="w-full px-3 py-2 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50"
         >
           {loading ? 'Clearing...' : 'Clear Rate Limits'}
+        </button>
+        
+        <button
+          onClick={cleanupEmptyFields}
+          disabled={loading}
+          className="w-full px-3 py-2 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
+        >
+          {loading ? 'Cleaning...' : 'Cleanup Empty Fields'}
         </button>
       </div>
       

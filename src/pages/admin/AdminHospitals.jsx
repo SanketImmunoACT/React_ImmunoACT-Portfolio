@@ -8,6 +8,8 @@ const AdminHospitals = () => {
   const [hospitals, setHospitals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchInput, setSearchInput] = useState(''); // Separate search input state
+  const [isSearching, setIsSearching] = useState(false); // Loading indicator for search
   const [filters, setFilters] = useState({
     search: '',
     state: '',
@@ -26,10 +28,25 @@ const AdminHospitals = () => {
     governmentHospitals: 0
   });
 
+  // Debounce search input
+  useEffect(() => {
+    if (searchInput !== filters.search) {
+      setIsSearching(true);
+    }
+    
+    const timeoutId = setTimeout(() => {
+      setFilters(prev => ({ ...prev, search: searchInput }));
+      setPagination(prev => ({ ...prev, currentPage: 1 }));
+      setIsSearching(false);
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
+
   useEffect(() => {
     fetchHospitals();
     fetchStats();
-  }, [filters, pagination.currentPage]);
+  }, [filters.state, filters.type, filters.search, pagination.currentPage]); // Only trigger on actual filter changes
 
   const fetchHospitals = async () => {
     setLoading(true);
@@ -41,13 +58,13 @@ const AdminHospitals = () => {
       });
 
       const result = await apiCall(`/api/v1/hospitals?${queryParams}`);
-      
+
       console.log('API Result:', result); // Debug log
-      
+
       if (result.success && result.data) {
         let apiData;
         let hospitalsArray;
-        
+
         // Handle different response structures
         if (result.data.data) {
           // Nested structure: { success: true, data: { data: { hospitals: [...] } } }
@@ -66,10 +83,10 @@ const AdminHospitals = () => {
           hospitalsArray = [];
           apiData = { hospitals: [], total: 0, currentPage: 1, totalPages: 1 };
         }
-        
+
         console.log('Processed API Data:', apiData); // Debug log
         console.log('Hospitals Array:', hospitalsArray); // Debug log
-        
+
         setHospitals(hospitalsArray);
         setPagination({
           currentPage: apiData.currentPage || 1,
@@ -82,10 +99,10 @@ const AdminHospitals = () => {
       } else {
         console.warn('Failed to load hospitals:', result.error || 'No data received');
         console.log('Full result object:', result); // Debug log
-        
+
         // Don't show error for network/CORS issues
         if (result.error && (
-          result.error.includes('Network error') || 
+          result.error.includes('Network error') ||
           result.error.includes('CORS') ||
           result.error.includes('Failed to fetch')
         )) {
@@ -104,7 +121,7 @@ const AdminHospitals = () => {
         } else {
           setError(result.error || 'Failed to load hospitals');
           toast.error('Failed to load hospitals');
-          
+
           // Set fallback data only for non-network errors
           setHospitals([]);
           setPagination({
@@ -118,12 +135,12 @@ const AdminHospitals = () => {
       }
     } catch (error) {
       console.error('Error fetching hospitals:', error);
-      
+
       // Handle network errors gracefully
-      if (error.message.includes('CORS') || 
-          error.message.includes('NetworkError') || 
-          error.message.includes('Failed to fetch') ||
-          error.name === 'TypeError') {
+      if (error.message.includes('CORS') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('Failed to fetch') ||
+        error.name === 'TypeError') {
         console.log('Network error, keeping existing state');
         setError('');
         // Don't clear existing hospitals on network errors
@@ -140,7 +157,7 @@ const AdminHospitals = () => {
       } else {
         setError('An error occurred while loading hospitals');
         toast.error('An error occurred while loading hospitals');
-        
+
         // Set fallback data
         setHospitals([]);
         setPagination({
@@ -159,10 +176,17 @@ const AdminHospitals = () => {
   const fetchStats = async () => {
     try {
       const result = await apiCall('/api/v1/hospitals/stats');
-      if (result.success && result.data && result.data.data) {
-        setStats(result.data.data);
+      console.log('Hospital stats result:', result); // Debug log
+      
+      if (result.success && result.data) {
+        // Handle the correct data structure
+        const actualData = result.data.data || result.data;
+        console.log('Setting stats:', actualData); // Debug log
+        console.log('Debug info:', result.debug); // Debug log
+        setStats(actualData);
       } else {
         console.warn('Failed to load hospital stats:', result.error || 'No data received');
+        console.log('Full result object:', result); // Debug log
         // Set fallback stats
         setStats({
           totalHospitals: 0,
@@ -330,14 +354,18 @@ const AdminHospitals = () => {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                {isSearching ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-blue-500"></div>
+                ) : (
+                  <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                )}
               </div>
               <input
                 type="text"
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search hospitals..."
                 className="w-full pl-10 pr-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200"
               />
@@ -378,6 +406,7 @@ const AdminHospitals = () => {
           <div className="flex items-end">
             <button
               onClick={() => {
+                setSearchInput(''); // Clear search input
                 setFilters({ search: '', state: '', type: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}
@@ -554,6 +583,7 @@ const AdminHospitals = () => {
             <p className="text-slate-500 text-lg mt-4">No hospitals found matching your criteria.</p>
             <button
               onClick={() => {
+                setSearchInput(''); // Clear search input
                 setFilters({ search: '', state: '', type: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}

@@ -122,9 +122,19 @@ const HospitalForm = ({ hospital, onSave, onCancel }) => {
       
       const method = hospital ? 'PUT' : 'POST';
 
+      // Clean up empty strings to null for optional fields
+      const cleanedData = {
+        ...formData,
+        phone: formData.phone.trim() || null,
+        email: formData.email.trim() || null,
+        website: formData.website.trim() || null,
+        zipCode: formData.zipCode.trim() || null,
+        description: formData.description.trim() || null
+      };
+
       const result = await apiCall(url, {
         method,
-        body: JSON.stringify(formData)
+        body: JSON.stringify(cleanedData)
       });
 
       if (result.success) {
