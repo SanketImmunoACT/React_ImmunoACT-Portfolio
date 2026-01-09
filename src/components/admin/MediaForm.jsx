@@ -1,22 +1,45 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const MediaForm = ({ media = null, onSave, onCancel }) => {
   const { apiCall } = useAuth();
+  const modalRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState({
     title: media?.title || '',
     link: media?.link || '',
     publishedDate: media?.publishedDate ? new Date(media.publishedDate).toISOString().split('T')[0] : '',
     sourceName: media?.sourceName || '',
     status: media?.status || 'draft',
-    excerpt: media?.excerpt || '',
-    imageUrl: media?.imageUrl || '',
     tags: media?.tags ? media.tags.join(', ') : '',
     metaTitle: media?.metaTitle || '',
     metaDescription: media?.metaDescription || ''
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onCancel();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onCancel]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    setIsVisible(true);
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -48,10 +71,6 @@ const MediaForm = ({ media = null, onSave, onCancel }) => {
       newErrors.sourceName = 'Source name is required';
     }
 
-    if (formData.imageUrl && !/^https?:\/\/.+/.test(formData.imageUrl)) {
-      newErrors.imageUrl = 'Image URL must be a valid URL';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -65,9 +84,7 @@ const MediaForm = ({ media = null, onSave, onCancel }) => {
 
     const submitData = {
       ...formData,
-      tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
-      // Remove empty imageUrl to avoid validation issues
-      imageUrl: formData.imageUrl.trim() || undefined
+      tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
     };
 
     // Remove undefined values to avoid sending empty strings
@@ -94,13 +111,42 @@ const MediaForm = ({ media = null, onSave, onCancel }) => {
     setLoading(false);
   };
 
-  return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
-        <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-6">
-            {media ? 'Edit Media Article' : 'Add Media Article'}
-          </h3>
+  const handleBackdropClick = (e) => {
+    if (modalRef.current && !modalRef.current.contains(e.target)) {
+      onCancel();
+    }
+  };
+
+  return createPortal(
+    <div 
+      className={`fixed inset-0 bg-black transition-opacity duration-300 flex items-center justify-center p-4 ${
+        isVisible ? 'bg-opacity-60' : 'bg-opacity-0'
+      }`}
+      style={{ zIndex: 9999 }}
+      onClick={handleBackdropClick}
+    >
+      <div 
+        ref={modalRef}
+        className={`bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl transform transition-all duration-300 ${
+          isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">
+                {media ? 'Edit Media Article' : 'Add Media Article'}
+              </h3>
+              <button
+                onClick={onCancel}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
           {errors.submit && (
             <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
@@ -202,39 +248,7 @@ const MediaForm = ({ media = null, onSave, onCancel }) => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Excerpt
-              </label>
-              <textarea
-                name="excerpt"
-                value={formData.excerpt}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                placeholder="Brief description of the article"
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Image URL (Optional)
-              </label>
-              <input
-                type="url"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                  errors.imageUrl ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="https://example.com/image.jpg (optional)"
-              />
-              {errors.imageUrl && (
-                <p className="mt-1 text-sm text-red-600">{errors.imageUrl}</p>
-              )}
-              <p className="mt-1 text-sm text-gray-500">Leave empty if no image is needed</p>
-            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -251,56 +265,64 @@ const MediaForm = ({ media = null, onSave, onCancel }) => {
               <p className="mt-1 text-sm text-gray-500">Separate tags with commas</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Meta Title
-                </label>
-                <input
-                  type="text"
-                  name="metaTitle"
-                  value={formData.metaTitle}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="SEO title"
-                />
-              </div>
+            {/* Visual Divider and SEO Section */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h4 className="text-md font-semibold text-gray-800 mb-4">SEO Settings</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Meta Title
+                  </label>
+                  <input
+                    type="text"
+                    name="metaTitle"
+                    value={formData.metaTitle}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="SEO title"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Meta Description
-                </label>
-                <textarea
-                  name="metaDescription"
-                  value={formData.metaDescription}
-                  onChange={handleChange}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="SEO description"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Meta Description
+                  </label>
+                  <textarea
+                    name="metaDescription"
+                    value={formData.metaDescription}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 resize-none"
+                    placeholder="SEO description"
+                    style={{ height: '80px' }}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4">
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-6 py-3 text-slate-700 border border-slate-300 rounded-xl hover:bg-slate-50 font-medium transition-all duration-200 hover:shadow-soft"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-medium hover:shadow-strong transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
-                {loading ? 'Saving...' : (media ? 'Update' : 'Create')}
+                {loading ? 'Saving...' : (media ? 'Update Article' : 'Create Article')}
               </button>
             </div>
           </form>
         </div>
       </div>
     </div>
+  </div>,
+  document.body
   );
 };
 
