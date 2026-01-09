@@ -43,10 +43,15 @@ const validationSchema = yup.object({
     .string()
     .required('Please select a partnering category')
     .oneOf([
-      'Research & Development',
-      'Product Access',
-      'Philanthropy',
-      'Investment'
+      'Clinical Collaboration',
+      'Research Partnership',
+      'Technology Licensing',
+      'Manufacturing Partnership',
+      'Distribution Partnership',
+      'Investment Opportunity',
+      'Media Inquiry',
+      'General Inquiry',
+      'Other'
     ], 'Please select a valid partnering category'),
 
   message: yup
@@ -68,10 +73,15 @@ const Contact = () => {
   const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
 
   const partneringCategories = [
-    'Research & Development',
-    'Product Access',
-    'Philanthropy',
-    'Investment'
+    'Clinical Collaboration',
+    'Research Partnership',
+    'Technology Licensing',
+    'Manufacturing Partnership',
+    'Distribution Partnership',
+    'Investment Opportunity',
+    'Media Inquiry',
+    'General Inquiry',
+    'Other'
   ];
 
   // Initialize React Hook Form

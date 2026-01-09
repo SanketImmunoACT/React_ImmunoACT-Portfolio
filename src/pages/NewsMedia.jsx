@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo, useState, useEffect } from 'react'
 import { Calendar, ExternalLink, Filter, Search } from 'lucide-react'
 import BG1 from '@/assets/images/background/BG-1.png'
 import PageBanner from '@/components/PageBanner'
@@ -9,70 +8,37 @@ const NewsMedia = () => {
   const [sortBy, setSortBy] = useState('date-desc')
   const [filterBy, setFilterBy] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
+  const [mediaData, setMediaData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  // Dummy media data - this will be replaced with API data later
-  const mediaData = [
-    {
-      id: 1,
-      category: "The Hindu Bureau",
-      createdAt: "2024-11-08T10:43:00Z",
-      date: "2024-11-08",
-      excerpt: "Prime Minister Narendra Modi unveiled India's first indigenous CAR-T cell therapy for cancer treatment, marking a significant milestone in the country's healthcare sector.",
-      link: "https://voiofhealthcare.com/news/policy/pm-modi-unveils-nexcar19",
-      source: "Voice of Healthcare",
-      tags: ["CAR-T Therapy", "Healthcare", "Innovation", "Government"],
-      title: "PM Modi Unveils India's First Indigenous CAR-T Cancer Therapy 'NexCAR19'",
-      updatedAt: "2024-11-08T10:43:00Z"
-    },
-    {
-      id: 2,
-      category: "Medtech",
-      createdAt: "2024-10-17T09:30:00Z",
-      date: "2024-10-17",
-      excerpt: "Clinical trials of India's indigenous CAR-T cell therapy show promising results with 73% response rate in blood cancer patients.",
-      link: "https://economictimes.indiatimes.com/industry/healthcare/biotech/healthcare/indian-made-gene-therapy-for-blood-cancer-shows-73-response-rate-in-clinical-trials/articleshow/114321567.cms",
-      source: "The Economic Times",
-      tags: ["Clinical Trials", "Blood Cancer", "Gene Therapy"],
-      title: "Indian-Made Gene Therapy For Blood Cancer Shows 73% Response Rate in Clinical Trials",
-      updatedAt: "2024-10-17T09:30:00Z"
-    },
-    {
-      id: 3,
-      category: "Medtech",
-      createdAt: "2024-10-17T08:15:00Z",
-      date: "2024-10-17",
-      excerpt: "Revolutionary gene therapy developed in India demonstrates high success rate in treating blood cancer patients.",
-      link: "https://www.hindustantimes.com/india-news/gene-therapy-for-blood-cancer-shows-73-per-cent-response-rate-in-clinical-trials-101729152345678.html",
-      source: "Hindustan Times",
-      tags: ["Gene Therapy", "Clinical Success", "Healthcare Innovation"],
-      title: "Gene therapy for blood cancer shows 73 per cent response rate in clinical trials",
-      updatedAt: "2024-10-17T08:15:00Z"
-    },
-    {
-      id: 4,
-      category: "Medtech",
-      createdAt: "2024-09-12T14:20:00Z",
-      date: "2024-09-12",
-      excerpt: "ImmunoACT's breakthrough CAR-T cell therapy offers affordable treatment option for blood cancer patients in India.",
-      link: "https://medwatchindia.com/affordable-cart-cell-therapy-nexcar19",
-      source: "Medwatch India",
-      tags: ["Affordable Healthcare", "CAR-T Therapy", "Blood Cancer"],
-      title: "Affordable CAR-T Cell Therapy for Blood Cancers: ImmunoACT's NexCAR19",
-      updatedAt: "2024-09-12T14:20:00Z"
-    },
-    {
-      id: 5,
-      category: "Onlymyhealth",
-      createdAt: "2024-08-17T11:45:00Z",
-      date: "2024-08-17",
-      excerpt: "India's first CAR-T cell therapy demonstrates remarkable success in cancer treatment with 73% response rate.",
-      link: "https://www.onlymyhealth.com/fight-against-cancer-indias-1st-car-t-cell-therapy-shows-73-success-rate-know-other-breakthrough-treatments-1723876543",
-      source: "Onlymyhealth",
-      tags: ["Cancer Treatment", "Medical Breakthrough", "Success Rate"],
-      title: "Fight Against Cancer: India's 1st CAR-T Cell Therapy Shows 73% Success Rate; Know Other Breakthrough Treatments",
-      updatedAt: "2024-08-17T11:45:00Z"
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+  // Fetch media from API
+  useEffect(() => {
+    fetchMedia()
+  }, [])
+
+  const fetchMedia = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/v1/media/public?limit=100`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setMediaData(data.media || [])
+        setError('')
+      } else {
+        setError(data.message || 'Failed to load media articles')
+        setMediaData([])
+      }
+    } catch (err) {
+      console.error('Failed to fetch media:', err)
+      setError('Failed to load media articles')
+      setMediaData([])
     }
-  ]
+    setLoading(false)
+  }
 
   // Filter and sort logic
   const filteredAndSortedMedia = useMemo(() => {
@@ -83,8 +49,9 @@ const NewsMedia = () => {
       filtered = filtered.filter(item =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        item.sourceName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.tags && item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
       )
     }
 
@@ -93,13 +60,14 @@ const NewsMedia = () => {
       filtered = filtered.filter(item => {
         switch (filterBy) {
           case 'recent':
-            return new Date(item.date) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+            return new Date(item.date || item.publishedDate) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
           case 'clinical-trials':
-            return item.tags.some(tag => tag.toLowerCase().includes('clinical') || tag.toLowerCase().includes('trial'))
+            return item.tags && item.tags.some(tag => tag.toLowerCase().includes('clinical') || tag.toLowerCase().includes('trial'))
           case 'car-t':
-            return item.tags.some(tag => tag.toLowerCase().includes('car-t'))
+            return item.tags && item.tags.some(tag => tag.toLowerCase().includes('car-t'))
           case 'collaboration':
-            return item.category.toLowerCase().includes('collaboration') || item.tags.some(tag => tag.toLowerCase().includes('collaboration'))
+            return (item.category && item.category.toLowerCase().includes('collaboration')) || 
+                   (item.tags && item.tags.some(tag => tag.toLowerCase().includes('collaboration')))
           default:
             return true
         }
@@ -110,17 +78,17 @@ const NewsMedia = () => {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'date-desc':
-          return new Date(b.date) - new Date(a.date)
+          return new Date(b.date || b.publishedDate) - new Date(a.date || a.publishedDate)
         case 'date-asc':
-          return new Date(a.date) - new Date(b.date)
+          return new Date(a.date || a.publishedDate) - new Date(b.date || b.publishedDate)
         case 'title-asc':
           return a.title.localeCompare(b.title)
         case 'title-desc':
           return b.title.localeCompare(a.title)
         case 'created-desc':
-          return new Date(b.createdAt) - new Date(a.createdAt)
+          return new Date(b.createdAt || b.publishedDate) - new Date(a.createdAt || a.publishedDate)
         case 'updated-desc':
-          return new Date(b.updatedAt) - new Date(a.updatedAt)
+          return new Date(b.updatedAt || b.publishedDate) - new Date(a.updatedAt || a.publishedDate)
         default:
           return 0
       }
@@ -137,10 +105,39 @@ const NewsMedia = () => {
     })
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <PageBanner title="Media" subtitle="Stay updated with our latest news, media coverage, and breakthrough announcements in cancer immunotherapy" />
+        <div className="flex items-center justify-center h-64">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent absolute top-0 left-0"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <PageBanner title="Media" subtitle="Stay updated with our latest news, media coverage, and breakthrough announcements in cancer immunotherapy" />
+
+      {error && (
+        <div className="py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {error}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search and Filter Section */}
       <div className="py-8">
@@ -248,22 +245,24 @@ const NewsMedia = () => {
                     {/* Source Tag and Date */}
                     <div className="flex items-center justify-between">
                       <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                        {item.source}
+                        {item.source || item.sourceName}
                       </span>
                       <div className="flex items-center gap-1 text-sm text-gray-500">
                         <Calendar className="w-4 h-4" />
-                        <span>{formatDate(item.date)}</span>
+                        <span>{formatDate(item.date || item.publishedDate)}</span>
                       </div>
                     </div>
 
-                    {/* Read More Button */}
-                    <Link
-                      to={`/news-media/${item.id}`}
+                    {/* Read More Button - Opens external link */}
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm"
                     >
                       Read Full Article
                       <ExternalLink className="w-4 h-4" />
-                    </Link>
+                    </a>
                   </div>
                 </div>
               </article>
@@ -271,13 +270,20 @@ const NewsMedia = () => {
           </div>
 
           {/* No Results */}
-          {filteredAndSortedMedia.length === 0 && (
+          {!loading && filteredAndSortedMedia.length === 0 && (
             <div className="text-center py-12">
               <div className="text-gray-400 mb-4">
                 <Search className="w-16 h-16 mx-auto" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No articles found</h3>
-              <p className="text-gray-500">Try adjusting your search terms or filters</p>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                {mediaData.length === 0 ? 'No media articles available' : 'No articles found'}
+              </h3>
+              <p className="text-gray-500">
+                {mediaData.length === 0 
+                  ? 'Check back later for the latest news and media coverage' 
+                  : 'Try adjusting your search terms or filters'
+                }
+              </p>
             </div>
           )}
 

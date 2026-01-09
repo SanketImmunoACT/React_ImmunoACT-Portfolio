@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo, useState, useEffect } from 'react'
 import { Calendar, ExternalLink, Filter, Search } from 'lucide-react'
 import PageBanner from '@/components/PageBanner'
 
@@ -8,104 +7,40 @@ const Publications = () => {
   const [sortBy, setSortBy] = useState('date-desc')
   const [filterBy, setFilterBy] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
+  const [publicationsData, setPublicationsData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  // Dummy publications data - this will be managed by admin dashboard
-  const publicationsData = [
-    {
-      id: 1,
-      category: "Clinical Research",
-      createdAt: "2022-06-12T10:00:00Z",
-      date: "2022-06-12",
-      isActive: true,
-      journal: "European Hematology Association Congress",
-      tags: ["CAR-T Therapy", "Real World Data", "B-ALL"],
-      title: "Real World Data of the safety and efficacy of Teclistamab Autologous Humanized CD19 CAR-T in relapsed / refractory B-cell acute lymphoblastic leukemia from India",
-      type: "Poster",
-      updatedAt: "2022-06-12T10:00:00Z",
-      year: "2022"
-    },
-    {
-      id: 2,
-      category: "Clinical Research",
-      createdAt: "2022-06-12T09:30:00Z",
-      date: "2022-06-12",
-      isActive: true,
-      journal: "European Hematology Association Congress",
-      tags: ["Safety", "Efficacy", "Bridging Therapy"],
-      title: "Safety And Efficacy Of Polyclonally Activated Plus Obinutuzumab As Bridging Therapy Prior To Teclistamab Autologous Humanized For Relapsed/Refractory B-cell Lymphoma",
-      type: "Poster",
-      updatedAt: "2022-06-12T09:30:00Z",
-      year: "2022"
-    },
-    {
-      id: 3,
-      category: "Clinical Research",
-      createdAt: "2022-06-12T14:20:00Z",
-      date: "2022-06-12",
-      isActive: true,
-      journal: "European Hematology Association Congress",
-      tags: ["Immunoads", "Integration", "R/R B-ALL"],
-      title: "Bridging the Gap: Immunoads Integration Prior To Teclistamab Autologous In R/R B-ALL",
-      type: "Poster",
-      updatedAt: "2022-06-12T14:20:00Z",
-      year: "2022"
-    },
-    {
-      id: 4,
-      category: "Clinical Research",
-      createdAt: "2022-05-10T11:45:00Z",
-      date: "2022-05-10",
-      isActive: true,
-      journal: "International Society for Cell and Gene Therapy",
-      tags: ["Development", "Clinical Trial", "Affordable CAR-T"],
-      title: "Development and clinical trial of nationwide implementation of affordable CAR-T cell therapy in India: a real-world experience",
-      type: "Poster",
-      updatedAt: "2022-05-10T11:45:00Z",
-      year: "2022"
-    },
-    {
-      id: 5,
-      category: "Clinical Research",
-      createdAt: "2022-05-10T16:30:00Z",
-      date: "2022-05-10",
-      isActive: true,
-      journal: "Cytotherapy",
-      tags: ["Development", "Clinical Trial", "Real-World"],
-      title: "Development and clinical trial of nationwide implementation of affordable CAR-T cell therapy in India: a real-world experience",
-      type: "Article",
-      updatedAt: "2022-05-10T16:30:00Z",
-      year: "2022"
-    },
-    {
-      id: 6,
-      category: "Clinical Research",
-      createdAt: "2022-04-24T13:15:00Z",
-      date: "2022-04-24",
-      isActive: true,
-      journal: "Article",
-      tags: ["CD19 CAR-T", "Psychosocial", "Pediatric"],
-      title: "Novel CD19 CAR-T Cells: Psychosocial, psychological, Educational needs in relapsed/refractory pediatric B acute lymphoblastic leukemia: an open-label single arm phase I/II study",
-      type: "Article",
-      updatedAt: "2022-04-24T13:15:00Z",
-      year: "2022"
-    },
-    {
-      id: 6,
-      category: "Quality Control",
-      createdAt: "2023-07-12T13:15:00Z",
-      date: "2023-07-12",
-      isActive: true,
-      journal: "Cytotherapy",
-      tags: ["Quality Control", "Manufacturing", "GMP"],
-      title: "Quality control measures in CAR-T cell manufacturing: Indian perspective",
-      type: "Review Article",
-      updatedAt: "2023-07-12T13:15:00Z",
-      year: "2023"
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+  // Fetch publications from API
+  useEffect(() => {
+    fetchPublications()
+  }, [])
+
+  const fetchPublications = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/v1/publications/public?limit=100`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setPublicationsData(data.publications || [])
+        setError('')
+      } else {
+        setError(data.message || 'Failed to load publications')
+        setPublicationsData([])
+      }
+    } catch (err) {
+      console.error('Failed to fetch publications:', err)
+      setError('Failed to load publications')
+      setPublicationsData([])
     }
-  ]
+    setLoading(false)
+  }
   // Filter and sort logic
   const filteredAndSortedPublications = useMemo(() => {
-    let filtered = publicationsData.filter(item => item.isActive)
+    let filtered = publicationsData.filter(item => item.isActive !== false)
 
     // Apply search filter
     if (searchTerm) {
@@ -113,7 +48,7 @@ const Publications = () => {
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.journal.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        (item.tags && item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
       )
     }
 
@@ -122,7 +57,7 @@ const Publications = () => {
       filtered = filtered.filter(item => {
         switch (filterBy) {
           case 'recent':
-            return new Date(item.date) >= new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) // Last year
+            return new Date(item.date || item.publishedDate) >= new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) // Last year
           case 'clinical-research':
             return item.category.toLowerCase().includes('clinical')
           case 'manufacturing':
@@ -139,9 +74,9 @@ const Publications = () => {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'date-desc':
-          return new Date(b.date) - new Date(a.date)
+          return new Date(b.date || b.publishedDate) - new Date(a.date || a.publishedDate)
         case 'date-asc':
-          return new Date(a.date) - new Date(b.date)
+          return new Date(a.date || a.publishedDate) - new Date(b.date || b.publishedDate)
         case 'title-asc':
           return a.title.localeCompare(b.title)
         case 'title-desc':
@@ -164,6 +99,23 @@ const Publications = () => {
     })
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <PageBanner 
+          title="Publications" 
+          subtitle="Discover our latest research findings and clinical data published in leading scientific journals worldwide."
+        />
+        <div className="flex items-center justify-center h-64">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent absolute top-0 left-0"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -171,6 +123,21 @@ const Publications = () => {
         title="Publications" 
         subtitle="Discover our latest research findings and clinical data published in leading scientific journals worldwide."
       />
+
+      {error && (
+        <div className="py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {error}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search and Filter Section */}
       <div className="py-8">
@@ -255,7 +222,7 @@ const Publications = () => {
 
             {/* Results Count */}
             <div className="mt-4 text-sm text-gray-600">
-              Showing {filteredAndSortedPublications.length} of {publicationsData.filter(item => item.isActive).length} publications
+              Showing {filteredAndSortedPublications.length} of {publicationsData.length} publications
             </div>
           </div>
 
@@ -274,11 +241,11 @@ const Publications = () => {
                     {/* Type Badge and Date */}
                     <div className="flex items-center justify-between mb-4">
                       <span className="bg-green-100 text-green-800 px-3 py-1 rounded text-sm font-medium">
-                        {publication.type}
+                        {publication.type || publication.buttonText || 'Publication'}
                       </span>
                       <div className="flex items-center gap-1 text-sm text-gray-500">
                         <Calendar className="w-4 h-4" />
-                        <span>{formatDate(publication.date)}</span>
+                        <span>{formatDate(publication.date || publication.publishedDate)}</span>
                       </div>
                     </div>
                   </div>
@@ -290,13 +257,15 @@ const Publications = () => {
                       {publication.journal}
                     </div>
 
-                    {/* View Button */}
-                    <Link
-                      to={`/publications/${publication.id}`}
+                    {/* View Button - Opens external link */}
+                    <a
+                      href={publication.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="block w-full bg-[#FFBF00] hover:bg-yellow-500 text-black text-center py-2 px-4 rounded-3xl font-medium transition-colors text-sm"
                     >
-                      View Poster
-                    </Link>
+                      {publication.buttonText || 'View Publication'}
+                    </a>
                   </div>
                 </div>
               </article>
@@ -304,13 +273,20 @@ const Publications = () => {
           </div>
 
           {/* No Results */}
-          {filteredAndSortedPublications.length === 0 && (
+          {!loading && filteredAndSortedPublications.length === 0 && (
             <div className="text-center py-12">
               <div className="text-gray-400 mb-4">
                 <Search className="w-16 h-16 mx-auto" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No publications found</h3>
-              <p className="text-gray-500">Try adjusting your search terms or filters</p>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                {publicationsData.length === 0 ? 'No publications available' : 'No publications found'}
+              </h3>
+              <p className="text-gray-500">
+                {publicationsData.length === 0 
+                  ? 'Check back later for the latest research publications' 
+                  : 'Try adjusting your search terms or filters'
+                }
+              </p>
             </div>
           )}
 

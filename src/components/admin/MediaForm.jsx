@@ -65,8 +65,17 @@ const MediaForm = ({ media = null, onSave, onCancel }) => {
 
     const submitData = {
       ...formData,
-      tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
+      tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
+      // Remove empty imageUrl to avoid validation issues
+      imageUrl: formData.imageUrl.trim() || undefined
     };
+
+    // Remove undefined values to avoid sending empty strings
+    Object.keys(submitData).forEach(key => {
+      if (submitData[key] === undefined || submitData[key] === '') {
+        delete submitData[key];
+      }
+    });
 
     const endpoint = media ? `/api/v1/media/${media.id}` : '/api/v1/media';
     const method = media ? 'PUT' : 'POST';
@@ -209,7 +218,7 @@ const MediaForm = ({ media = null, onSave, onCancel }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Image URL
+                Image URL (Optional)
               </label>
               <input
                 type="url"
@@ -219,11 +228,12 @@ const MediaForm = ({ media = null, onSave, onCancel }) => {
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
                   errors.imageUrl ? 'border-red-300' : 'border-gray-300'
                 }`}
-                placeholder="https://example.com/image.jpg"
+                placeholder="https://example.com/image.jpg (optional)"
               />
               {errors.imageUrl && (
                 <p className="mt-1 text-sm text-red-600">{errors.imageUrl}</p>
               )}
+              <p className="mt-1 text-sm text-gray-500">Leave empty if no image is needed</p>
             </div>
 
             <div>

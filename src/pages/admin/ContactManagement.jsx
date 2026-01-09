@@ -23,11 +23,27 @@ const ContactManagement = () => {
     pendingCount: 0,
     thisMonth: 0
   });
+  const [exportLoading, setExportLoading] = useState(false);
+  const [showExportOptions, setShowExportOptions] = useState(false);
 
   useEffect(() => {
     fetchContacts();
     fetchStats();
   }, [filters, pagination.currentPage]);
+
+  // Close export options when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showExportOptions && !event.target.closest('.export-dropdown')) {
+        setShowExportOptions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportOptions]);
 
   const fetchContacts = async () => {
     setLoading(true);
@@ -41,26 +57,30 @@ const ContactManagement = () => {
       const result = await apiCall(`/api/v1/contact/admin/forms?${queryParams}`);
       
       if (result.success && result.data) {
-        setContacts(result.data.contacts || []);
+        // The apiCall wraps the response, so the actual data is at result.data.data
+        const actualData = result.data.data || result.data;
+        const contactsData = actualData.contacts || [];
+        setContacts(contactsData);
         
         // Safely update pagination with fallback values
-        if (result.data.pagination) {
+        if (actualData.pagination) {
           setPagination(prev => ({
             ...prev,
-            ...result.data.pagination
+            ...actualData.pagination
           }));
         } else {
           // Fallback pagination if API doesn't return pagination data
           setPagination(prev => ({
             ...prev,
             totalPages: 1,
-            totalItems: result.data.contacts?.length || 0,
+            totalItems: contactsData.length,
             hasNext: false,
             hasPrev: false
           }));
         }
         setError('');
       } else {
+        console.error('API call failed:', result);
         setError(result.error || 'Failed to load contacts');
         toast.error('Failed to load contacts');
         
@@ -97,7 +117,9 @@ const ContactManagement = () => {
     try {
       const result = await apiCall('/api/v1/contact/admin/stats');
       if (result.success && result.data) {
-        setStats(result.data);
+        // Handle the same nested structure as contacts
+        const actualData = result.data.data || result.data;
+        setStats(actualData);
       } else {
         console.warn('Failed to load contact stats:', result.error);
         // Set fallback stats
@@ -164,10 +186,96 @@ const ContactManagement = () => {
     }
   };
 
+  const handleExportCSV = async (filtered = false) => {
+    setExportLoading(true);
+    try {
+      // Determine which contacts to export
+      let contactsToExport;
+      let filename;
+      
+      if (filtered && (filters.status || filters.search || filters.partneringCategory)) {
+        // Export filtered results
+        contactsToExport = contacts;
+        filename = `contact-forms-filtered-${new Date().toISOString().split('T')[0]}.csv`;
+      } else {
+        // Export all contacts
+        const result = await apiCall('/api/v1/contact/admin/forms?limit=10000');
+        if (!result.success || !result.data) {
+          toast.error('Failed to fetch contacts for export');
+          return;
+        }
+        const actualData = result.data.data || result.data;
+        if (!actualData.contacts) {
+          toast.error('Failed to fetch contacts for export');
+          return;
+        }
+        contactsToExport = actualData.contacts;
+        filename = `contact-forms-all-${new Date().toISOString().split('T')[0]}.csv`;
+      }
+      
+      // Define CSV headers
+      const headers = [
+        'ID',
+        'First Name',
+        'Last Name',
+        'Email',
+        'Phone',
+        'Institution',
+        'Partnership Category',
+        'Message',
+        'Status',
+        'Consent Given',
+        'Submission Date',
+        'IP Address',
+        'User Agent'
+      ];
+
+      // Convert contacts to CSV format
+      const csvContent = [
+        headers.join(','),
+        ...contactsToExport.map(contact => [
+          contact.id,
+          `"${(contact.firstName || '').replace(/"/g, '""')}"`,
+          `"${(contact.lastName || '').replace(/"/g, '""')}"`,
+          `"${(contact.email || '').replace(/"/g, '""')}"`,
+          `"${(contact.phone || '').replace(/"/g, '""')}"`,
+          `"${(contact.institution || '').replace(/"/g, '""')}"`,
+          `"${(contact.partneringCategory || '').replace(/"/g, '""')}"`,
+          `"${(contact.message || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+          contact.status,
+          contact.consentGiven ? 'Yes' : 'No',
+          new Date(contact.submissionDate).toLocaleString(),
+          `"${(contact.ipAddress || '').replace(/"/g, '""')}"`,
+          `"${(contact.userAgent || '').replace(/"/g, '""')}"`
+        ].join(','))
+      ].join('\n');
+
+      // Create and download CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success(`Exported ${contactsToExport.length} contact forms to CSV`);
+      setShowExportOptions(false);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export contacts');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   const handleViewDetails = async (contact) => {
     const result = await apiCall(`/api/v1/contact/admin/forms/${contact.id}`);
-    if (result.success) {
-      setSelectedContact(result.data.contact);
+    if (result.success && result.data) {
+      const actualData = result.data.data || result.data;
+      setSelectedContact(actualData.contact);
     } else {
       toast.error('Failed to load contact details');
     }
@@ -215,18 +323,63 @@ const ContactManagement = () => {
           <h1 className="text-3xl font-bold text-slate-900">Contact Management</h1>
           <p className="text-slate-600 mt-1">Manage contact form submissions and inquiries</p>
         </div>
-        <div className="flex items-center space-x-4 text-sm">
-          <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
-            <span className="text-slate-500">Total:</span>
-            <span className="font-semibold text-slate-900 ml-1">{stats.totalSubmissions}</span>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 text-sm">
+            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+              <span className="text-slate-500">Total:</span>
+              <span className="font-semibold text-slate-900 ml-1">{stats.totalSubmissions}</span>
+            </div>
+            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+              <span className="text-slate-500">Pending:</span>
+              <span className="font-semibold text-orange-600 ml-1">{stats.pendingCount}</span>
+            </div>
+            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+              <span className="text-slate-500">This Month:</span>
+              <span className="font-semibold text-green-600 ml-1">{stats.thisMonth}</span>
+            </div>
           </div>
-          <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
-            <span className="text-slate-500">Pending:</span>
-            <span className="font-semibold text-orange-600 ml-1">{stats.pendingCount}</span>
-          </div>
-          <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
-            <span className="text-slate-500">This Month:</span>
-            <span className="font-semibold text-green-600 ml-1">{stats.thisMonth}</span>
+          <div className="relative export-dropdown">
+            <button
+              onClick={() => setShowExportOptions(!showExportOptions)}
+              disabled={exportLoading}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-medium hover:shadow-strong transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {exportLoading ? 'Exporting...' : 'Export CSV'}
+              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {showExportOptions && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-strong border border-slate-200/60 z-10">
+                <div className="p-2">
+                  <button
+                    onClick={() => handleExportCSV(false)}
+                    disabled={exportLoading}
+                    className="w-full text-left px-4 py-3 text-slate-700 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="font-medium">Export All Contacts</div>
+                    <div className="text-sm text-slate-500">Download all contact submissions</div>
+                  </button>
+                  <button
+                    onClick={() => handleExportCSV(true)}
+                    disabled={exportLoading || (!filters.status && !filters.search && !filters.partneringCategory)}
+                    className="w-full text-left px-4 py-3 text-slate-700 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="font-medium">Export Filtered Results</div>
+                    <div className="text-sm text-slate-500">
+                      {(!filters.status && !filters.search && !filters.partneringCategory) 
+                        ? 'Apply filters first' 
+                        : `Export current filtered view (${contacts.length} items)`
+                      }
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -342,7 +495,7 @@ const ContactManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200/60">
-              {contacts.map((contact, index) => (
+              {contacts && contacts.length > 0 ? contacts.map((contact, index) => (
                 <tr key={contact.id} className="hover:bg-slate-50/50 transition-colors animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
                   <td className="px-6 py-4">
                     <div>
@@ -406,7 +559,13 @@ const ContactManagement = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-500">
+                    {loading ? 'Loading contacts...' : 'No contacts found'}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

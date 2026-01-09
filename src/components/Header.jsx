@@ -198,7 +198,7 @@ const Header = () => {
             </div>
 
             {/* Regular Links */}
-            <Link to="/news-media" className="text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors">Media</Link>
+            <Link to="/media" className="text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors">Media</Link>
             <Link to="/philanthropy" className="text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors">Philanthropy</Link>
             <Link to="/careers" className="text-[#363636] text-lg hover:text-gray-900 font-medium transition-colors">Careers</Link>
           </nav>
@@ -300,7 +300,7 @@ const Header = () => {
               )}
             </div>
 
-            <Link to="/news-media" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">Media</Link>
+            <Link to="/media" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">Media</Link>
             <Link to="/philanthropy" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">Philanthropy</Link>
             <Link to="/careers" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">Careers</Link>
             <Link

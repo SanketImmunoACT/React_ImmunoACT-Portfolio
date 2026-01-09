@@ -9,7 +9,6 @@ import { CookieProvider } from '@/contexts/CookieContext'
 import Home from '@/pages/Home'
 import Contact from '@/pages/Contact'
 import NewsMedia from '@/pages/NewsMedia'
-import BlogPost from '@/pages/BlogPost'
 import Careers from '@/pages/Careers'
 import Philanthropy from '@/pages/Philanthropy'
 import Publications from '@/pages/Publications'
@@ -154,12 +153,9 @@ function App() {
                   <Route path="/hcp" element={<ForHCP />} />
                   
                   {/* Media Routes */}
-                  <Route path="/news-media" element={<NewsMedia />} />
-                  <Route path="/news-media/:id" element={<BlogPost />} />
-                  
-                  {/* Other Routes */}
-                  <Route path="/contact" element={<Contact />} />
                   <Route path="/media" element={<NewsMedia />} />
+                  
+                  <Route path="/contact" element={<Contact />} />
                   <Route path="/media/newsroom" element={<NewsMedia />} />
                   <Route path="/philanthropy" element={<Philanthropy />} />
                   <Route path="/philanthropy/immunoact-foundation" element={<Philanthropy />} />

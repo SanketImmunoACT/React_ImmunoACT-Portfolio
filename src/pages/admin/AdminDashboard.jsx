@@ -17,10 +17,10 @@ const AdminDashboard = () => {
 
   const fetchDashboardStats = async () => {
     setLoading(true);
-    
+
     // Fetch different stats based on user role
     const promises = [];
-    
+
     if (isSuperAdmin) {
       promises.push(
         apiCall('/api/v1/media/stats'),
@@ -40,39 +40,48 @@ const AdminDashboard = () => {
         apiCall('/api/v1/contact/admin/stats')
       );
     }
-    
+
     try {
       const results = await Promise.allSettled(promises);
-      
+
       if (isSuperAdmin) {
         if (results[0]?.value?.success) {
-          setStats(prev => ({ ...prev, media: results[0].value.data }));
+          const actualData = results[0].value.data.data || results[0].value.data;
+          setStats(prev => ({ ...prev, media: actualData }));
         }
         if (results[1]?.value?.success) {
-          setStats(prev => ({ ...prev, publications: results[1].value.data }));
+          const actualData = results[1].value.data.data || results[1].value.data;
+          setStats(prev => ({ ...prev, publications: actualData }));
         }
         if (results[2]?.value?.success) {
-          setStats(prev => ({ ...prev, careers: results[2].value.data }));
+          const actualData = results[2].value.data.data || results[2].value.data;
+          setStats(prev => ({ ...prev, careers: actualData }));
         }
         if (results[3]?.value?.success) {
-          setStats(prev => ({ ...prev, contacts: results[3].value.data }));
+          const actualData = results[3].value.data.data || results[3].value.data;
+          setStats(prev => ({ ...prev, contacts: actualData }));
         }
       } else if (isOfficeExecutive) {
         if (results[0]?.value?.success) {
-          setStats(prev => ({ ...prev, media: results[0].value.data }));
+          const actualData = results[0].value.data.data || results[0].value.data;
+          setStats(prev => ({ ...prev, media: actualData }));
         }
         if (results[1]?.value?.success) {
-          setStats(prev => ({ ...prev, publications: results[1].value.data }));
+          const actualData = results[1].value.data.data || results[1].value.data;
+          setStats(prev => ({ ...prev, publications: actualData }));
         }
         if (results[2]?.value?.success) {
-          setStats(prev => ({ ...prev, contacts: results[2].value.data }));
+          const actualData = results[2].value.data.data || results[2].value.data;
+          setStats(prev => ({ ...prev, contacts: actualData }));
         }
       } else if (isHRManager) {
         if (results[0]?.value?.success) {
-          setStats(prev => ({ ...prev, careers: results[0].value.data }));
+          const actualData = results[0].value.data.data || results[0].value.data;
+          setStats(prev => ({ ...prev, careers: actualData }));
         }
         if (results[1]?.value?.success) {
-          setStats(prev => ({ ...prev, contacts: results[1].value.data }));
+          const actualData = results[1].value.data.data || results[1].value.data;
+          setStats(prev => ({ ...prev, contacts: actualData }));
         }
       }
     } catch (error) {
@@ -91,68 +100,68 @@ const AdminDashboard = () => {
 
   const getQuickActions = () => {
     const actions = [];
-    
+
     if (isOfficeExecutive || isSuperAdmin) {
       actions.push(
-        { 
-          name: 'Add Media Article', 
-          href: '/admin/media/new', 
+        {
+          name: 'Add Media Article',
+          href: '/admin/media/new',
           icon: (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
             </svg>
-          ), 
+          ),
           gradient: 'from-blue-500 to-blue-600',
           description: 'Create new media content'
         },
-        { 
-          name: 'Add Publication', 
-          href: '/admin/publications/new', 
+        {
+          name: 'Add Publication',
+          href: '/admin/publications/new',
           icon: (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-          ), 
+          ),
           gradient: 'from-emerald-500 to-emerald-600',
           description: 'Publish research papers'
         }
       );
     }
-    
+
     if (isHRManager || isSuperAdmin) {
       actions.push(
-        { 
-          name: 'Post New Job', 
-          href: '/admin/careers/new', 
+        {
+          name: 'Post New Job',
+          href: '/admin/careers/new',
           icon: (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-          ), 
+          ),
           gradient: 'from-purple-500 to-purple-600',
           description: 'Create job openings'
         }
       );
     }
-    
+
     if (isSuperAdmin) {
       // No additional actions for super admin beyond the common ones
     }
-    
+
     actions.push(
-      { 
-        name: 'View Contacts', 
-        href: '/admin/contacts', 
+      {
+        name: 'View Contacts',
+        href: '/admin/contacts',
         icon: (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
-        ), 
+        ),
         gradient: 'from-slate-500 to-slate-600',
         description: 'Review inquiries'
       }
     );
-    
+
     return actions;
   };
 
@@ -182,18 +191,6 @@ const AdminDashboard = () => {
               <p className="text-slate-600 text-lg">
                 {getRoleBasedWelcome()} Dashboard
               </p>
-              <div className="mt-4 flex items-center space-x-4 text-sm text-slate-500">
-                <div className="flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 9l6-6m0 0v6m0-6H6" />
-                  </svg>
-                  Last login: {new Date().toLocaleDateString()}
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                  System Status: Online
-                </div>
-              </div>
             </div>
             <div className="hidden lg:block">
               <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-medium">
@@ -211,60 +208,48 @@ const AdminDashboard = () => {
             <StatCard
               title="Media Articles"
               value={stats.media.totalMedia || 0}
-              subtitle={`${stats.media.publishedMedia || 0} published`}
               icon={(
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                 </svg>
               )}
               gradient="from-purple-500 to-purple-600"
-              trend="+8%"
-              trendUp={true}
             />
             <StatCard
               title="Publications"
               value={stats.publications.totalPublications || 0}
-              subtitle={`${stats.publications.publishedPublications || 0} published`}
               icon={(
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               )}
               gradient="from-indigo-500 to-indigo-600"
-              trend="+15%"
-              trendUp={true}
             />
           </>
         )}
-        
+
         {(isHRManager || isSuperAdmin) && (
           <StatCard
             title="Job Postings"
             value={stats.careers.totalCareers || 0}
-            subtitle={`${stats.careers.activeCareers || 0} active`}
             icon={(
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             )}
             gradient="from-amber-500 to-amber-600"
-            trend="+5%"
-            trendUp={true}
           />
         )}
-        
+
         <StatCard
           title="Contact Forms"
           value={stats.contacts?.totalSubmissions || 0}
-          subtitle={`${stats.contacts?.pendingCount || 0} pending`}
           icon={(
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           )}
           gradient="from-rose-500 to-rose-600"
-          trend={`+${stats.contacts?.thisMonth || 0} this month`}
-          trendUp={true}
         />
       </div>
 
@@ -308,110 +293,113 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activity & System Status */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Recent Activity */}
-        <div className="xl:col-span-2 bg-white shadow-soft rounded-2xl p-8 border border-slate-200/60">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">Recent Activity</h2>
-              <p className="text-slate-600 text-sm mt-1">Latest system activities and updates</p>
-            </div>
-            <button className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-              View All
-            </button>
+      {/* Recent Activity */}
+      <div className="bg-white shadow-soft rounded-2xl p-8 border border-slate-200/60">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Recent Activity</h2>
+            <p className="text-slate-600 text-sm mt-1">Latest system activities and updates</p>
           </div>
-          <div className="space-y-4">
-            {[
-              { action: 'New user registered', user: 'John Doe', time: '2 minutes ago', type: 'user' },
-              { action: 'Media article published', user: 'Admin', time: '15 minutes ago', type: 'media' },
-              { action: 'Contact form submitted', user: 'Jane Smith', time: '1 hour ago', type: 'contact' },
-              { action: 'Job posting updated', user: 'HR Manager', time: '2 hours ago', type: 'career' },
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center p-4 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 transition-colors animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  activity.type === 'user' ? 'bg-blue-100 text-blue-600' :
-                  activity.type === 'media' ? 'bg-purple-100 text-purple-600' :
-                  activity.type === 'contact' ? 'bg-rose-100 text-rose-600' :
-                  'bg-amber-100 text-amber-600'
-                }`}>
-                  {activity.type === 'user' ? '👤' : activity.type === 'media' ? '📰' : activity.type === 'contact' ? '📧' : '💼'}
-                </div>
-                <div className="ml-4 flex-1">
-                  <p className="text-sm font-medium text-slate-900">{activity.action}</p>
-                  <p className="text-xs text-slate-500">by {activity.user} • {activity.time}</p>
-                </div>
-                <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
-              </div>
-            ))}
-          </div>
+          <button
+            onClick={() => window.location.href = '/admin/activity-log'}
+            className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            View All
+          </button>
         </div>
-
-        {/* System Status */}
-        <div className="bg-white shadow-soft rounded-2xl p-8 border border-slate-200/60">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">System Status</h2>
-              <p className="text-slate-600 text-sm mt-1">Current system health</p>
-            </div>
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-          </div>
-          <div className="space-y-4">
-            {[
-              { name: 'API Server', status: 'Operational', uptime: '99.9%', color: 'green' },
-              { name: 'Database', status: 'Operational', uptime: '99.8%', color: 'green' },
-              { name: 'File Storage', status: 'Operational', uptime: '100%', color: 'green' },
-              { name: 'Email Service', status: 'Degraded', uptime: '95.2%', color: 'yellow' },
-            ].map((service, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-slate-50/50 rounded-lg animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
-                <div className="flex items-center">
-                  <div className={`w-2 h-2 rounded-full mr-3 ${
-                    service.color === 'green' ? 'bg-green-500' : 'bg-yellow-500'
-                  }`}></div>
-                  <span className="text-sm font-medium text-slate-900">{service.name}</span>
-                </div>
-                <div className="text-right">
-                  <div className={`text-xs font-medium ${
-                    service.color === 'green' ? 'text-green-600' : 'text-yellow-600'
-                  }`}>
-                    {service.status}
-                  </div>
-                  <div className="text-xs text-slate-500">{service.uptime}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <RecentActivityFeed />
       </div>
     </div>
   );
 };
 
-const StatCard = ({ title, value, subtitle, icon, gradient, trend, trendUp }) => (
+// New component for Recent Activity Feed
+const RecentActivityFeed = () => {
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { apiCall } = useAuth();
+
+  useEffect(() => {
+    fetchRecentActivity();
+  }, []);
+
+  const fetchRecentActivity = async () => {
+    try {
+      // Temporarily disabled - uncomment when backend is ready
+      // const result = await apiCall('/api/v1/admin/recent-activity?limit=5');
+      // if (result.success) {
+      //   const actualData = result.data.data || result.data;
+      //   setActivities(actualData.activities || []);
+      // }
+    } catch (error) {
+      console.error('Failed to fetch recent activity:', error);
+    } finally {
+      // Use mock data for now
+      setActivities([
+        { action: 'New contact form submitted', user: 'System', time: '2 minutes ago', type: 'contact', id: 1 },
+        { action: 'Media article published', user: 'Admin', time: '15 minutes ago', type: 'media', id: 2 },
+        { action: 'Publication updated', user: 'Editor', time: '1 hour ago', type: 'publication', id: 3 },
+        { action: 'Job posting created', user: 'HR Manager', time: '2 hours ago', type: 'career', id: 4 },
+      ]);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="animate-pulse flex items-center p-4 bg-slate-50/50 rounded-xl">
+            <div className="w-10 h-10 bg-slate-200 rounded-full"></div>
+            <div className="ml-4 flex-1">
+              <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {activities.map((activity, index) => (
+        <div key={activity.id || index} className="flex items-center p-4 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 transition-colors animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activity.type === 'user' ? 'bg-blue-100 text-blue-600' :
+            activity.type === 'media' ? 'bg-purple-100 text-purple-600' :
+              activity.type === 'contact' ? 'bg-rose-100 text-rose-600' :
+                activity.type === 'publication' ? 'bg-indigo-100 text-indigo-600' :
+                  'bg-amber-100 text-amber-600'
+            }`}>
+            {activity.type === 'user' ? '👤' :
+              activity.type === 'media' ? '📰' :
+                activity.type === 'contact' ? '📧' :
+                  activity.type === 'publication' ? '📚' :
+                    '💼'}
+          </div>
+          <div className="ml-4 flex-1">
+            <p className="text-sm font-medium text-slate-900">{activity.action}</p>
+            <p className="text-xs text-slate-500">by {activity.user} • {activity.time}</p>
+          </div>
+          <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const StatCard = ({ title, value, icon, gradient }) => (
   <div className="group relative overflow-hidden bg-white shadow-soft hover:shadow-medium rounded-2xl p-6 border border-slate-200/60 transition-all duration-300 hover:-translate-y-1 animate-slide-up">
     <div className="flex items-center justify-between">
       <div className="flex-1">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center mb-4">
           <div className={`w-12 h-12 bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center text-white shadow-medium group-hover:scale-110 transition-transform duration-300`}>
             {icon}
           </div>
-          {trend && (
-            <div className={`flex items-center text-xs font-medium px-2 py-1 rounded-full ${
-              trendUp ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'
-            }`}>
-              <svg className={`w-3 h-3 mr-1 ${trendUp ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17l9.2-9.2M17 17V7H7" />
-              </svg>
-              {trend}
-            </div>
-          )}
         </div>
         <div>
           <h3 className="text-sm font-medium text-slate-600 mb-1">{title}</h3>
-          <div className="text-2xl font-bold text-slate-900 mb-1">{value.toLocaleString()}</div>
-          {subtitle && (
-            <p className="text-sm text-slate-500">{subtitle}</p>
-          )}
+          <div className="text-2xl font-bold text-slate-900">{value.toLocaleString()}</div>
         </div>
       </div>
     </div>

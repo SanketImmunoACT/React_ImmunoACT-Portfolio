@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDown, Upload, X } from 'lucide-react'
 import BG1 from '@/assets/images/background/BG-1.png'
 import PageBanner from '@/components/PageBanner'
@@ -7,6 +7,9 @@ const Careers = () => {
   const [showApplicationModal, setShowApplicationModal] = useState(false)
   const [selectedJob, setSelectedJob] = useState(null)
   const [expandedJob, setExpandedJob] = useState(null)
+  const [jobListings, setJobListings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     coverLetter: '',
     currentCTC: '',
@@ -20,366 +23,33 @@ const Careers = () => {
     resume: null
   })
 
-  // Dynamic job data - this will be managed by HR through admin dashboard
-  const jobListings = [
-    {
-      id: 1,
-      department: "HR & Admin",
-      desiredQualities: [
-        "Strong leadership and people management capabilities.",
-        "Excellent organizational and multitasking skills.",
-        "Effective negotiation and vendor management abilities.",
-        "In-depth knowledge of office administration, facility management, and compliance processes.",
-        "Proficiency in MS Office (Word, Excel, PowerPoint) and ERP systems (if applicable).",
-        "Strong communication (written and verbal) skills."
-      ],
-      isActive: true,
-      keyResponsibilities: [
-        {
-          items: [
-            "Manage day-to-day office operations and ensure smooth functioning of all administrative activities.",
-            "Oversee maintenance of office infrastructure, facilities, and equipment.",
-            "Ensure proper housekeeping, security, and hygiene standards are consistently maintained."
-          ],
-          title: "Office Administration & Operations"
-        },
-        {
-          items: [
-            "Handle vendor negotiations, contracts, and relationships (stationary, travel, housekeeping, security, IT support, etc.).",
-            "Monitor service-level agreements (SLAs) and ensure cost-effective, high-quality services."
-          ],
-          title: "Vendor & Facility Management"
-        },
-        {
-          items: [
-            "Ensure adherence to statutory compliances related to administration (health & safety, fire safety, applicable labor laws).",
-            "Implement, maintain, and monitor administrative policies and procedures."
-          ],
-          title: "Compliance & Policies"
-        },
-        {
-          items: [
-            "Lead, mentor, and manage the administrative team (reception, office assistants, housekeeping staff, drivers, etc.).",
-            "Organize training sessions to improve team productivity and compliance awareness."
-          ],
-          title: "People & Team Management"
-        },
-        {
-          items: [
-            "Oversee domestic and international travel arrangements (tickets, visas, hotels, transportation).",
-            "Plan and execute office events, employee engagement activities, and corporate meetings."
-          ],
-          title: "Travel & Event Management"
-        },
-        {
-          items: [
-            "Prepare and manage the administration budget.",
-            "Track expenses, control costs, and ensure timely processing of bills and vendor payments."
-          ],
-          title: "Budgeting & Cost Control"
-        },
-        {
-          items: [
-            "Serve as a key point of contact for management and employees regarding administrative queries.",
-            "Support HR and other departments in logistics and administrative requirements."
-          ],
-          title: "Coordination & Support"
-        }
-      ],
-      qualifications: [
-        "Master's/Bachelor's degree in Business Administration, Management, or a related field.",
-        "6-12 years of experience in administrative or office management role.",
-        "Strong experience in facility management, vendor coordination, compliance, and general admin operations.",
-        "Proven experience in office or administrative management roles.",
-        "Strong leadership abilities with a demonstrated track record of managing teams.",
-        "Excellent organizational and multitasking skills.",
-        "Proficiency in MS Office, Google Workspace, and other administrative software/tools.",
-        "Strong written and verbal communication skills.",
-        "Ability to handle confidential information with discretion."
-      ],
-      title: "Admin Manager"
-    },
-    {
-      id: 2,
-      department: "Research & Development",
-      desiredQualities: [
-        "Experience with CAR-T cell therapy or immunotherapy research.",
-        "Knowledge of regulatory requirements for cell and gene therapy products.",
-        "Ability to work independently and as part of a multidisciplinary team.",
-        "Strong problem-solving skills and analytical thinking.",
-        "Commitment to maintaining high-quality standards in all work activities."
-      ],
-      isActive: true,
-      keyResponsibilities: [
-        {
-          items: [
-            "Perform cell culture techniques for CAR-T cell development and expansion.",
-            "Maintain sterile conditions and follow GMP guidelines in laboratory operations.",
-            "Execute cell harvesting, washing, and cryopreservation procedures."
-          ],
-          title: "Cell Culture & Processing"
-        },
-        {
-          items: [
-            "Conduct viability, purity, and potency testing of cell products.",
-            "Perform flow cytometry analysis and interpret results.",
-            "Document all testing procedures and maintain accurate records."
-          ],
-          title: "Quality Control Testing"
-        },
-        {
-          items: [
-            "Operate and maintain laboratory equipment including incubators, centrifuges, and flow cytometers.",
-            "Perform routine calibration and maintenance of instruments.",
-            "Troubleshoot equipment issues and coordinate repairs when necessary."
-          ],
-          title: "Equipment Management"
-        },
-        {
-          items: [
-            "Maintain detailed laboratory notebooks and electronic records.",
-            "Ensure compliance with regulatory guidelines and standard operating procedures.",
-            "Participate in internal and external audits as required."
-          ],
-          title: "Documentation & Compliance"
-        }
-      ],
-      qualifications: [
-        "Bachelor's degree in Life Sciences, Biotechnology, Microbiology, or related field.",
-        "2-5 years of experience in cell culture and molecular biology techniques.",
-        "Experience with flow cytometry, cell counting, and viability assays.",
-        "Knowledge of GMP guidelines and laboratory safety protocols.",
-        "Strong attention to detail and ability to work in a regulated environment.",
-        "Proficiency in laboratory information management systems (LIMS).",
-        "Excellent documentation and record-keeping skills."
-      ],
-      title: "Laboratory Technician"
-    },
-    {
-      id: 3,
-      department: "Sales & Marketing",
-      desiredQualities: [
-        "Experience in cell and gene therapy or advanced therapeutics.",
-        "Established relationships with key opinion leaders in oncology.",
-        "MBA or advanced degree in business or life sciences.",
-        "Strong analytical skills and data-driven decision making.",
-        "Cultural sensitivity and ability to work in diverse markets."
-      ],
-      isActive: true,
-      keyResponsibilities: [
-        {
-          items: [
-            "Develop and maintain relationships with key healthcare institutions and oncology centers.",
-            "Identify new business opportunities and expand market presence.",
-            "Negotiate contracts and pricing agreements with key accounts."
-          ],
-          title: "Account Management"
-        },
-        {
-          items: [
-            "Develop and implement strategic account plans to achieve sales targets.",
-            "Present product information and clinical data to healthcare professionals.",
-            "Coordinate with medical affairs team for scientific support."
-          ],
-          title: "Sales Strategy & Execution"
-        },
-        {
-          items: [
-            "Monitor competitive landscape and market trends in oncology.",
-            "Provide feedback to product development and marketing teams.",
-            "Analyze market data and prepare sales forecasts."
-          ],
-          title: "Market Intelligence"
-        },
-        {
-          items: [
-            "Provide ongoing support to customers regarding product usage and protocols.",
-            "Address customer concerns and resolve issues promptly.",
-            "Facilitate training programs for healthcare professionals."
-          ],
-          title: "Customer Support"
-        }
-      ],
-      qualifications: [
-        "Bachelor's degree in Business, Marketing, Life Sciences, or related field.",
-        "5-8 years of experience in pharmaceutical or biotech sales.",
-        "Strong understanding of oncology market and immunotherapy landscape.",
-        "Proven track record in key account management and achieving sales targets.",
-        "Excellent communication, presentation, and negotiation skills.",
-        "Ability to understand and communicate complex scientific information.",
-        "Willingness to travel extensively within assigned territory."
-      ],
-      title: "Key Account Manager"
-    },
-    {
-      id: 4,
-      department: "Clinical Research",
-      desiredQualities: [
-        "Experience in oncology or cell and gene therapy clinical trials.",
-        "Clinical research certification (ACRP, SoCRA, or equivalent).",
-        "Knowledge of FDA, EMA, and other regulatory agency requirements.",
-        "Experience with adaptive trial designs and complex protocols.",
-        "Multilingual capabilities for international studies."
-      ],
-      isActive: true,
-      keyResponsibilities: [
-        {
-          items: [
-            "Monitor clinical trial sites to ensure protocol compliance and data quality.",
-            "Conduct site initiation, routine monitoring, and close-out visits.",
-            "Review and verify source documents and case report forms."
-          ],
-          title: "Clinical Trial Monitoring"
-        },
-        {
-          items: [
-            "Ensure adherence to GCP guidelines and regulatory requirements.",
-            "Maintain trial master files and essential documents.",
-            "Support regulatory inspections and audits."
-          ],
-          title: "Regulatory Compliance"
-        },
-        {
-          items: [
-            "Build and maintain relationships with principal investigators and site staff.",
-            "Provide training and support to clinical sites on study procedures.",
-            "Monitor patient recruitment and enrollment progress."
-          ],
-          title: "Site Management"
-        },
-        {
-          items: [
-            "Review clinical data for accuracy, completeness, and consistency.",
-            "Generate and follow up on data queries with clinical sites.",
-            "Collaborate with data management team on database activities."
-          ],
-          title: "Data Management"
-        }
-      ],
-      qualifications: [
-        "Bachelor's degree in Life Sciences, Medicine, Nursing, or related field.",
-        "3-6 years of clinical research experience in pharmaceutical or biotech industry.",
-        "Strong knowledge of GCP, ICH guidelines, and regulatory requirements.",
-        "Experience with clinical trial management systems and electronic data capture.",
-        "Excellent organizational skills and attention to detail.",
-        "Strong communication and interpersonal skills.",
-        "Ability to travel frequently to clinical sites."
-      ],
-      title: "Clinical Research Associate"
-    },
-    {
-      id: 5,
-      department: "Regulatory Affairs",
-      desiredQualities: [
-        "Regulatory Affairs Certification (RAC) or equivalent professional certification.",
-        "Experience with breakthrough therapy designations and accelerated approval pathways.",
-        "Knowledge of CMC requirements for biological products.",
-        "International regulatory experience across multiple jurisdictions.",
-        "Strong analytical and problem-solving skills."
-      ],
-      isActive: true,
-      keyResponsibilities: [
-        {
-          items: [
-            "Develop regulatory strategies for product development and commercialization.",
-            "Provide regulatory guidance to cross-functional teams throughout product lifecycle.",
-            "Monitor regulatory landscape and assess impact on business operations."
-          ],
-          title: "Regulatory Strategy"
-        },
-        {
-          items: [
-            "Prepare and submit regulatory applications (IND, BLA, MAA) to health authorities.",
-            "Coordinate with external consultants and regulatory agencies.",
-            "Manage regulatory timelines and ensure compliance with submission requirements."
-          ],
-          title: "Regulatory Submissions"
-        },
-        {
-          items: [
-            "Ensure compliance with applicable regulations and guidelines.",
-            "Maintain regulatory databases and tracking systems.",
-            "Support regulatory inspections and respond to agency queries."
-          ],
-          title: "Compliance Management"
-        },
-        {
-          items: [
-            "Work closely with clinical, manufacturing, and quality teams.",
-            "Provide regulatory input on product labeling and promotional materials.",
-            "Support business development activities with regulatory assessments."
-          ],
-          title: "Cross-functional Collaboration"
-        }
-      ],
-      qualifications: [
-        "Master's degree in Life Sciences, Pharmacy, Law, or related field.",
-        "4-7 years of regulatory affairs experience in biotechnology or pharmaceutical industry.",
-        "Strong knowledge of FDA, EMA, and other international regulatory requirements.",
-        "Experience with cell and gene therapy or advanced therapeutic products preferred.",
-        "Excellent written and verbal communication skills.",
-        "Strong project management and organizational abilities.",
-        "Ability to work effectively in a fast-paced, dynamic environment."
-      ],
-      title: "Regulatory Affairs Specialist"
-    },
-    {
-      id: 6,
-      department: "Quality Assurance",
-      desiredQualities: [
-        "Experience with cell and gene therapy manufacturing and quality systems.",
-        "Quality management certification (ASQ CQE, CQA, or equivalent).",
-        "Experience with risk-based quality management approaches.",
-        "Knowledge of international quality standards and regulations.",
-        "Change management and organizational development experience."
-      ],
-      isActive: true,
-      keyResponsibilities: [
-        {
-          items: [
-            "Develop, implement, and maintain quality management systems.",
-            "Ensure compliance with GMP, GLP, and other applicable quality standards.",
-            "Lead quality system improvements and corrective/preventive actions."
-          ],
-          title: "Quality System Management"
-        },
-        {
-          items: [
-            "Plan and conduct internal quality audits across all functional areas.",
-            "Support external audits and regulatory inspections.",
-            "Manage audit findings and ensure timely resolution of issues."
-          ],
-          title: "Audit & Inspection Management"
-        },
-        {
-          items: [
-            "Lead and mentor quality assurance team members.",
-            "Provide quality training and awareness programs to all staff.",
-            "Foster a culture of quality and continuous improvement."
-          ],
-          title: "Team Leadership"
-        },
-        {
-          items: [
-            "Identify and assess quality risks throughout the organization.",
-            "Implement risk mitigation strategies and monitoring systems.",
-            "Investigate quality incidents and implement corrective measures."
-          ],
-          title: "Risk Management"
-        }
-      ],
-      qualifications: [
-        "Master's degree in Life Sciences, Engineering, or related field.",
-        "8-12 years of quality assurance experience in pharmaceutical or biotech industry.",
-        "Strong knowledge of GMP, ICH guidelines, and regulatory requirements.",
-        "Experience in quality system implementation and management.",
-        "Proven leadership and team management skills.",
-        "Excellent analytical and problem-solving abilities.",
-        "Strong communication and presentation skills."
-      ],
-      title: "Quality Assurance Manager"
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+  // Fetch jobs from API
+  useEffect(() => {
+    fetchJobs()
+  }, [])
+
+  const fetchJobs = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/v1/careers/public?limit=100`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setJobListings(data.careers || [])
+        setError('')
+      } else {
+        setError(data.message || 'Failed to load job listings')
+        setJobListings([])
+      }
+    } catch (err) {
+      console.error('Failed to fetch jobs:', err)
+      setError('Failed to load job listings')
+      setJobListings([])
     }
-  ]
+    setLoading(false)
+  }
 
   const toggleJobExpansion = (jobId) => {
     setExpandedJob(expandedJob === jobId ? null : jobId)
@@ -431,8 +101,52 @@ const Careers = () => {
     handleCloseModal()
   }
 
-  // Filter only active jobs (this will be managed by HR in admin dashboard)
-  const activeJobs = jobListings.filter(job => job.isActive)
+  // Filter only active jobs from API (they should already be active from the public endpoint)
+  const activeJobs = jobListings
+
+  // Helper function to format job data for display
+  const formatJobForDisplay = (job) => {
+    // Process keyResponsibilities
+    let keyResponsibilities = []
+    if (Array.isArray(job.keyResponsibilities)) {
+      keyResponsibilities = job.keyResponsibilities
+    } else if (Array.isArray(job.responsibilities)) {
+      keyResponsibilities = job.responsibilities.map(item => ({ title: 'Responsibility', items: [item] }))
+    } else if (typeof job.responsibilities === 'string') {
+      keyResponsibilities = [{ title: 'Key Responsibilities', items: job.responsibilities.split('\n').filter(item => item.trim()) }]
+    } else {
+      keyResponsibilities = job.keyResponsibilities || job.responsibilities || []
+    }
+
+    // Process qualifications
+    let qualifications = []
+    if (Array.isArray(job.qualifications)) {
+      qualifications = job.qualifications
+    } else if (typeof job.qualifications === 'string') {
+      qualifications = job.qualifications.split('\n').filter(item => item.trim())
+    } else {
+      qualifications = job.qualifications || []
+    }
+
+    // Process desiredQualities
+    let desiredQualities = []
+    if (Array.isArray(job.desiredQualities)) {
+      desiredQualities = job.desiredQualities
+    } else if (Array.isArray(job.benefits)) {
+      desiredQualities = job.benefits
+    } else if (typeof job.benefits === 'string') {
+      desiredQualities = job.benefits.split('\n').filter(item => item.trim())
+    } else {
+      desiredQualities = job.desiredQualities || job.benefits || []
+    }
+
+    return {
+      ...job,
+      keyResponsibilities,
+      qualifications,
+      desiredQualities
+    }
+  }
 
   return (
     <div className="min-h-screen">
@@ -483,99 +197,180 @@ const Careers = () => {
       {/* Job Listings */}
       <div className="py-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-6">
-            {activeJobs.map((job) => (
-              <div
-                key={job.id}
-                className="bg-white rounded-[32px] border-2 overflow-hidden transition-all duration-300 hover:-translate-y-1"
-                style={{
-                  boxShadow: '0 10px 15px -3px rgb(71 161 120 / 0.1), 0 4px 6px -4px rgb(71 161 120 / 0.1), 0 15px 20px -3px rgb(243 203 81 / 0.08), 0 8px 10px -4px rgb(243 203 81 / 0.08), 0px -1px 10px 2px rgb(71 161 120 / 0.1)'
-                }}
-              >
-                {/* Job Header */}
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-2xl text-[#363636] mb-1">{job.title}</h3>
-                      <p className="text-[#9E9E9E] text-xl">{job.department}</p>
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-500 border-t-transparent absolute top-0 left-0"></div>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl max-w-md mx-auto">
+                <p>{error}</p>
+              </div>
+            </div>
+          ) : activeJobs.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-8 rounded-xl max-w-md mx-auto">
+                <h3 className="text-lg font-semibold mb-2">No Open Positions</h3>
+                <p>We don't have any open positions at the moment, but we're always looking for talented individuals!</p>
+                <p className="mt-2">
+                  Send your resume to{' '}
+                  <a href="mailto:jobs@immunoact.com" className="text-blue-600 hover:text-blue-700 font-medium">
+                    jobs@immunoact.com
+                  </a>
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {activeJobs.map((job) => {
+                const formattedJob = formatJobForDisplay(job)
+                return (
+                  <div
+                    key={job.id}
+                    className="bg-white rounded-[32px] border-2 overflow-hidden transition-all duration-300 hover:-translate-y-1"
+                    style={{
+                      boxShadow: '0 10px 15px -3px rgb(71 161 120 / 0.1), 0 4px 6px -4px rgb(71 161 120 / 0.1), 0 15px 20px -3px rgb(243 203 81 / 0.08), 0 8px 10px -4px rgb(243 203 81 / 0.08), 0px -1px 10px 2px rgb(71 161 120 / 0.1)'
+                    }}
+                  >
+                    {/* Job Header */}
+                    <div className="p-6 border-b border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-2xl text-[#363636] mb-1">{job.title}</h3>
+                          <p className="text-[#9E9E9E] text-xl">{job.department}</p>
+                          {job.location && (
+                            <p className="text-sm text-gray-500 mt-1">📍 {job.location}</p>
+                          )}
+                          {job.employmentType && (
+                            <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                              {job.employmentType.replace('-', ' ')}
+                            </span>
+                          )}
+                          {job.isRemote && (
+                            <span className="inline-block mt-2 ml-2 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                              Remote
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => toggleJobExpansion(job.id)}
+                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                          <ChevronDown
+                            className={`w-6 h-6 text-gray-400 transition-transform ${expandedJob === job.id ? 'rotate-180' : ''
+                              }`}
+                          />
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => toggleJobExpansion(job.id)}
-                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <ChevronDown
-                        className={`w-6 h-6 text-gray-400 transition-transform ${expandedJob === job.id ? 'rotate-180' : ''
-                          }`}
-                      />
-                    </button>
-                  </div>
-                </div>
 
-                {/* Job Details */}
-                <div className={`transition-all duration-300 ${expandedJob === job.id ? 'block' : 'hidden'}`}>
-                  <div className="p-6 space-y-8">
-                    {/* Key Responsibilities */}
-                    <div>
-                      <h4 className="text-xl font-bold text-gray-900 mb-4">Key Responsibilities</h4>
-                      <div className="space-y-4">
-                        {job.keyResponsibilities.map((section, index) => (
-                          <div key={index}>
-                            <h5 className="text-lg font-semibold text-gray-800 mb-2">
-                              {index + 1}. {section.title}
-                            </h5>
-                            <ul className="space-y-2 ml-4">
-                              {section.items.map((item, itemIndex) => (
-                                <li key={itemIndex} className="flex items-start gap-2">
+                    {/* Job Details */}
+                    <div className={`transition-all duration-300 ${expandedJob === job.id ? 'block' : 'hidden'}`}>
+                      <div className="p-6 space-y-8">
+                        {/* Job Description */}
+                        {job.description && (
+                          <div>
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">Job Description</h4>
+                            <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
+                              {job.description}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Key Responsibilities */}
+                        {formattedJob.keyResponsibilities.length > 0 && (
+                          <div>
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">Key Responsibilities</h4>
+                            <div className="space-y-4">
+                              {formattedJob.keyResponsibilities.map((section, index) => (
+                                <div key={index}>
+                                  {section.title && (
+                                    <h5 className="text-lg font-semibold text-gray-800 mb-2">
+                                      {index + 1}. {section.title}
+                                    </h5>
+                                  )}
+                                  <ul className="space-y-2 ml-4">
+                                    {(section.items || []).map((item, itemIndex) => (
+                                      <li key={itemIndex} className="flex items-start gap-2">
+                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
+                                        <span className="text-gray-700 text-sm leading-relaxed">{item}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Qualifications & Educational Requirements */}
+                        {formattedJob.qualifications.length > 0 && (
+                          <div>
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">Qualifications & Educational Requirements</h4>
+                            <ul className="space-y-2">
+                              {formattedJob.qualifications.map((qualification, index) => (
+                                <li key={index} className="flex items-start gap-2">
                                   <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
-                                  <span className="text-gray-700 text-sm leading-relaxed">{item}</span>
+                                  <span className="text-gray-700 text-sm leading-relaxed">{qualification}</span>
                                 </li>
                               ))}
                             </ul>
                           </div>
-                        ))}
+                        )}
+
+                        {/* Desired Qualities */}
+                        {formattedJob.desiredQualities.length > 0 && (
+                          <div>
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">Desired Qualities</h4>
+                            <ul className="space-y-2">
+                              {formattedJob.desiredQualities.map((quality, index) => (
+                                <li key={index} className="flex items-start gap-2">
+                                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
+                                  <span className="text-gray-700 text-sm leading-relaxed">{quality}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Additional Job Details */}
+                        {(job.salaryRange || job.experienceLevel) && (
+                          <div>
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">Additional Details</h4>
+                            <div className="space-y-2">
+                              {job.experienceLevel && (
+                                <p className="text-gray-700">
+                                  <span className="font-semibold">Experience Level:</span> {job.experienceLevel.replace('-', ' ')}
+                                </p>
+                              )}
+                              {job.salaryRange && (
+                                <p className="text-gray-700">
+                                  <span className="font-semibold">Salary Range:</span> {job.salaryRange}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Apply Button */}
+                        <div className="pt-4">
+                          <button
+                            onClick={() => handleApplyNow(job)}
+                            className="bg-[#FFBF00] hover:bg-yellow-500 text-black px-[18px] py-[9px] rounded-[24px] transition-colors"
+                          >
+                            Apply →
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    {/* Qualifications & Educational Requirements */}
-                    <div>
-                      <h4 className="text-xl font-bold text-gray-900 mb-4">Qualifications & Educational Requirements</h4>
-                      <ul className="space-y-2">
-                        {job.qualifications.map((qualification, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
-                            <span className="text-gray-700 text-sm leading-relaxed">{qualification}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Desired Qualities */}
-                    <div>
-                      <h4 className="text-xl font-bold text-gray-900 mb-4">Desired Qualities</h4>
-                      <ul className="space-y-2">
-                        {job.desiredQualities.map((quality, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
-                            <span className="text-gray-700 text-sm leading-relaxed">{quality}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Apply Button */}
-                    <div className="pt-4">
-                      <button
-                        onClick={() => handleApplyNow(job)}
-                        className="bg-[#FFBF00] hover:bg-yellow-500 text-black px-[18px] py-[9px] rounded-[24px] transition-colors"
-                      >
-                        Apply →
-                      </button>
-                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 

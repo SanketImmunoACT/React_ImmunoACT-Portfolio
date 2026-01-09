@@ -42,9 +42,15 @@ const MediaManagement = () => {
 
     const result = await apiCall(`/api/v1/media?${queryParams}`);
     
-    if (result.success) {
-      setMedia(result.data.media);
-      setPagination(result.data.pagination);
+    if (result.success && result.data) {
+      // Handle the same nested structure as contacts
+      const actualData = result.data.data || result.data;
+      setMedia(actualData.media || []);
+      setPagination(actualData.pagination || {
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0
+      });
       setError('');
     } else {
       setError(result.error);
@@ -55,8 +61,10 @@ const MediaManagement = () => {
 
   const fetchStats = async () => {
     const result = await apiCall('/api/v1/media/stats');
-    if (result.success) {
-      setStats(result.data);
+    if (result.success && result.data) {
+      // Handle the same nested structure as contacts
+      const actualData = result.data.data || result.data;
+      setStats(actualData);
     }
   };
 
