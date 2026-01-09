@@ -14,13 +14,7 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
     buttonText: publication?.buttonText || 'View Publication',
     status: publication?.status || 'draft',
     abstract: publication?.abstract || '',
-    doi: publication?.doi || '',
-    pmid: publication?.pmid || '',
-    tags: publication?.tags ? publication.tags.join(', ') : '',
-    imageUrl: publication?.imageUrl || '',
-    metaTitle: publication?.metaTitle || '',
-    metaDescription: publication?.metaDescription || '',
-    impactFactor: publication?.impactFactor || ''
+    tags: publication?.tags ? publication.tags.join(', ') : ''
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -63,14 +57,6 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
       newErrors.category = 'Category is required';
     }
 
-    if (formData.imageUrl && !/^https?:\/\/.+/.test(formData.imageUrl)) {
-      newErrors.imageUrl = 'Image URL must be a valid URL';
-    }
-
-    if (formData.impactFactor && (isNaN(formData.impactFactor) || formData.impactFactor < 0)) {
-      newErrors.impactFactor = 'Impact factor must be a positive number';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -84,8 +70,7 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
 
     const submitData = {
       ...formData,
-      tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
-      impactFactor: formData.impactFactor ? parseFloat(formData.impactFactor) : null
+      tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
     };
 
     const endpoint = publication ? `/api/v1/publications/${publication.id}` : '/api/v1/publications';
@@ -139,7 +124,7 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h4 className="text-md font-semibold text-slate-900 border-b border-slate-200 pb-2">Basic Information</h4>
+              <h4 className="text-md font-semibold text-slate-900 border-b border-slate-200 pb-2">Publication Information</h4>
               
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -307,56 +292,6 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    DOI
-                  </label>
-                  <input
-                    type="text"
-                    name="doi"
-                    value={formData.doi}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
-                    placeholder="10.1234/example.doi"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    PMID
-                  </label>
-                  <input
-                    type="text"
-                    name="pmid"
-                    value={formData.pmid}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
-                    placeholder="PubMed ID"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Impact Factor
-                  </label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    name="impactFactor"
-                    value={formData.impactFactor}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 ${
-                      errors.impactFactor ? 'border-red-300 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300/60'
-                    }`}
-                    placeholder="0.000"
-                  />
-                  {errors.impactFactor && (
-                    <p className="mt-1 text-sm text-red-600 animate-slide-down">{errors.impactFactor}</p>
-                  )}
-                </div>
-              </div>
-
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Tags
@@ -370,58 +305,6 @@ const PublicationForm = ({ publication = null, onSave, onCancel }) => {
                   placeholder="cancer, therapy, immunoact (comma separated)"
                 />
                 <p className="mt-1 text-sm text-slate-500">Separate tags with commas</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Image URL
-                </label>
-                <input
-                  type="url"
-                  name="imageUrl"
-                  value={formData.imageUrl}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 ${
-                    errors.imageUrl ? 'border-red-300 focus:ring-red-500/50 focus:border-red-500' : 'border-slate-300/60'
-                  }`}
-                  placeholder="https://example.com/image.jpg"
-                />
-                {errors.imageUrl && (
-                  <p className="mt-1 text-sm text-red-600 animate-slide-down">{errors.imageUrl}</p>
-                )}
-              </div>
-            </div>
-
-            {/* SEO */}
-            <div className="space-y-4">
-              <h4 className="text-md font-semibold text-slate-900 border-b border-slate-200 pb-2">SEO</h4>
-              
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Meta Title
-                </label>
-                <input
-                  type="text"
-                  name="metaTitle"
-                  value={formData.metaTitle}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
-                  placeholder="SEO title"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Meta Description
-                </label>
-                <textarea
-                  name="metaDescription"
-                  value={formData.metaDescription}
-                  onChange={handleChange}
-                  rows={2}
-                  className="w-full px-4 py-3 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
-                  placeholder="SEO description"
-                />
               </div>
             </div>
 

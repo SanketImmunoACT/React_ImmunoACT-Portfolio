@@ -465,7 +465,7 @@ const HospitalList = ({ hospitals, onHospitalSelect, selectedHospital }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-full overflow-y-auto">
-      <h3 className="text-lg text-gray-800 mb-4">``
+      <h3 className="text-lg text-gray-800 mb-4">
         Partnered Treatment Centers ({hospitals.length})
         {selectedHospital && (
           <span className="ml-2 text-sm text-red-600 font-normal">

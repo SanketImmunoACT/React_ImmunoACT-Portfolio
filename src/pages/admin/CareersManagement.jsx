@@ -38,29 +38,109 @@ const CareersManagement = () => {
 
   const fetchCareers = async () => {
     setLoading(true);
-    const queryParams = new URLSearchParams({
-      page: pagination.currentPage,
-      limit: 10,
-      ...filters
-    });
+    try {
+      const queryParams = new URLSearchParams({
+        page: pagination.currentPage,
+        limit: 10,
+        ...filters
+      });
 
-    const result = await apiCall(`/api/v1/careers?${queryParams}`);
-    
-    if (result.success) {
-      setCareers(result.data.careers);
-      setPagination(result.data.pagination);
-      setError('');
-    } else {
-      setError(result.error);
-      toast.error('Failed to load careers');
+      const result = await apiCall(`/api/v1/careers?${queryParams}`);
+      
+      if (result.success) {
+        setCareers(result.data.careers);
+        setPagination(result.data.pagination);
+        setError('');
+      } else {
+        console.error('API call failed:', result);
+        
+        // Don't show error for network/CORS issues
+        if (result.error && (
+          result.error.includes('Network error') || 
+          result.error.includes('CORS') ||
+          result.error.includes('Failed to fetch')
+        )) {
+          setError('');
+          // Keep existing careers if any, don't clear them
+          if (careers.length === 0) {
+            setCareers([]);
+            setPagination({
+              currentPage: 1,
+              totalPages: 1,
+              totalItems: 0
+            });
+          }
+        } else {
+          setError(result.error || 'Failed to load careers');
+          toast.error('Failed to load careers');
+          
+          // Set empty state only for non-network errors
+          setCareers([]);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching careers:', error);
+      
+      // Handle network errors gracefully
+      if (error.message.includes('CORS') || 
+          error.message.includes('NetworkError') || 
+          error.message.includes('Failed to fetch') ||
+          error.name === 'TypeError') {
+        console.log('Network error, keeping existing state');
+        setError('');
+        // Don't clear existing careers on network errors
+        if (careers.length === 0) {
+          setCareers([]);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0
+          });
+        }
+      } else {
+        setError('An error occurred while loading careers');
+        toast.error('An error occurred while loading careers');
+        
+        // Set empty state
+        setCareers([]);
+        setPagination({
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 0
+        });
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchStats = async () => {
-    const result = await apiCall('/api/v1/careers/stats');
-    if (result.success) {
-      setStats(result.data);
+    try {
+      const result = await apiCall('/api/v1/careers/stats');
+      if (result.success) {
+        setStats(result.data);
+      } else {
+        console.warn('Failed to load career stats:', result.error);
+        // Set fallback stats
+        setStats({
+          totalCareers: 0,
+          activeCareers: 0,
+          draftCareers: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching career stats:', error);
+      // Set fallback stats
+      setStats({
+        totalCareers: 0,
+        activeCareers: 0,
+        draftCareers: 0
+      });
     }
   };
 

@@ -82,8 +82,64 @@ const AdminHospitals = () => {
       } else {
         console.warn('Failed to load hospitals:', result.error || 'No data received');
         console.log('Full result object:', result); // Debug log
-        setError(result.error || 'Failed to load hospitals');
-        toast.error('Failed to load hospitals');
+        
+        // Don't show error for network/CORS issues
+        if (result.error && (
+          result.error.includes('Network error') || 
+          result.error.includes('CORS') ||
+          result.error.includes('Failed to fetch')
+        )) {
+          setError('');
+          // Keep existing hospitals if any, don't clear them
+          if (hospitals.length === 0) {
+            setHospitals([]);
+            setPagination({
+              currentPage: 1,
+              totalPages: 1,
+              totalItems: 0,
+              hasNext: false,
+              hasPrev: false
+            });
+          }
+        } else {
+          setError(result.error || 'Failed to load hospitals');
+          toast.error('Failed to load hospitals');
+          
+          // Set fallback data only for non-network errors
+          setHospitals([]);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0,
+            hasNext: false,
+            hasPrev: false
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching hospitals:', error);
+      
+      // Handle network errors gracefully
+      if (error.message.includes('CORS') || 
+          error.message.includes('NetworkError') || 
+          error.message.includes('Failed to fetch') ||
+          error.name === 'TypeError') {
+        console.log('Network error, keeping existing state');
+        setError('');
+        // Don't clear existing hospitals on network errors
+        if (hospitals.length === 0) {
+          setHospitals([]);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0,
+            hasNext: false,
+            hasPrev: false
+          });
+        }
+      } else {
+        setError('An error occurred while loading hospitals');
+        toast.error('An error occurred while loading hospitals');
         
         // Set fallback data
         setHospitals([]);
@@ -95,20 +151,6 @@ const AdminHospitals = () => {
           hasPrev: false
         });
       }
-    } catch (error) {
-      console.error('Error fetching hospitals:', error);
-      setError('An error occurred while loading hospitals');
-      toast.error('An error occurred while loading hospitals');
-      
-      // Set fallback data
-      setHospitals([]);
-      setPagination({
-        currentPage: 1,
-        totalPages: 1,
-        totalItems: 0,
-        hasNext: false,
-        hasPrev: false
-      });
     } finally {
       setLoading(false);
     }

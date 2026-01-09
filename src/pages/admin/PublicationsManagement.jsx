@@ -35,29 +35,109 @@ const PublicationsManagement = () => {
 
   const fetchPublications = async () => {
     setLoading(true);
-    const queryParams = new URLSearchParams({
-      page: pagination.currentPage,
-      limit: 10,
-      ...filters
-    });
+    try {
+      const queryParams = new URLSearchParams({
+        page: pagination.currentPage,
+        limit: 10,
+        ...filters
+      });
 
-    const result = await apiCall(`/api/v1/publications?${queryParams}`);
-    
-    if (result.success) {
-      setPublications(result.data.publications);
-      setPagination(result.data.pagination);
-      setError('');
-    } else {
-      setError(result.error);
-      toast.error('Failed to load publications');
+      const result = await apiCall(`/api/v1/publications?${queryParams}`);
+      
+      if (result.success) {
+        setPublications(result.data.publications);
+        setPagination(result.data.pagination);
+        setError('');
+      } else {
+        console.error('API call failed:', result);
+        
+        // Don't show error for network/CORS issues
+        if (result.error && (
+          result.error.includes('Network error') || 
+          result.error.includes('CORS') ||
+          result.error.includes('Failed to fetch')
+        )) {
+          setError('');
+          // Keep existing publications if any, don't clear them
+          if (publications.length === 0) {
+            setPublications([]);
+            setPagination({
+              currentPage: 1,
+              totalPages: 1,
+              totalItems: 0
+            });
+          }
+        } else {
+          setError(result.error || 'Failed to load publications');
+          toast.error('Failed to load publications');
+          
+          // Set empty state only for non-network errors
+          setPublications([]);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching publications:', error);
+      
+      // Handle network errors gracefully
+      if (error.message.includes('CORS') || 
+          error.message.includes('NetworkError') || 
+          error.message.includes('Failed to fetch') ||
+          error.name === 'TypeError') {
+        console.log('Network error, keeping existing state');
+        setError('');
+        // Don't clear existing publications on network errors
+        if (publications.length === 0) {
+          setPublications([]);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0
+          });
+        }
+      } else {
+        setError('An error occurred while loading publications');
+        toast.error('An error occurred while loading publications');
+        
+        // Set empty state
+        setPublications([]);
+        setPagination({
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 0
+        });
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchStats = async () => {
-    const result = await apiCall('/api/v1/publications/stats');
-    if (result.success) {
-      setStats(result.data);
+    try {
+      const result = await apiCall('/api/v1/publications/stats');
+      if (result.success) {
+        setStats(result.data);
+      } else {
+        console.warn('Failed to load publication stats:', result.error);
+        // Set fallback stats
+        setStats({
+          totalPublications: 0,
+          publishedPublications: 0,
+          draftPublications: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching publication stats:', error);
+      // Set fallback stats
+      setStats({
+        totalPublications: 0,
+        publishedPublications: 0,
+        draftPublications: 0
+      });
     }
   };
 

@@ -113,12 +113,12 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="contacts" element={
-              <ProtectedRoute requiredRoles={['super_admin', 'office_executive', 'hr_manager']}>
+              <ProtectedRoute requiredRoles={['super_admin', 'office_executive']}>
                 <ContactManagement />
               </ProtectedRoute>
             } />
             <Route path="hospitals" element={
-              <ProtectedRoute requiredRoles={['super_admin', 'office_executive']}>
+              <ProtectedRoute requiredRoles={['super_admin']}>
                 <AdminHospitals />
               </ProtectedRoute>
             } />

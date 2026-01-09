@@ -45,6 +45,24 @@ export const AuthProvider = ({ children }) => {
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+  // Test API connection
+  const testConnection = async () => {
+    try {
+      const response = await fetch(`${API_URL}/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        mode: 'cors'
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('Connection test failed:', error);
+      return false;
+    }
+  };
+
   // Auto-logout function
   const autoLogout = (reason = 'Token expired') => {
     console.log(`Auto-logout triggered: ${reason}`);
@@ -89,7 +107,7 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is authenticated on app load
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuth = async (retryCount = 0) => {
       const storedToken = localStorage.getItem('adminToken');
       
       if (!storedToken) {
@@ -133,11 +151,37 @@ export const AuthProvider = ({ children }) => {
         console.error('Auth check failed:', error);
         
         // Handle different types of errors
-        if (error.message.includes('CORS') || error.message.includes('NetworkError')) {
+        if ((error.message.includes('CORS') || 
+            error.message.includes('NetworkError') || 
+            error.message.includes('Failed to fetch') ||
+            error.name === 'TypeError') && retryCount < 2) {
+          console.log(`Network/CORS error during token verification, retrying... (${retryCount + 1}/3)`);
+          // Retry after a short delay
+          setTimeout(() => checkAuth(retryCount + 1), 1000 * (retryCount + 1));
+          return;
+        } else if (error.message.includes('CORS') || 
+                   error.message.includes('NetworkError') || 
+                   error.message.includes('Failed to fetch') ||
+                   error.name === 'TypeError') {
           console.log('Network/CORS error during token verification, keeping token for retry');
           // Still setup monitoring even with network errors
           if (setupTokenMonitoring(storedToken)) {
             setToken(storedToken);
+            // Try to decode the token to get user info as fallback
+            try {
+              const decoded = decodeToken(storedToken);
+              if (decoded && decoded.userId) {
+                // Set a minimal user object to prevent logout
+                setUser({ 
+                  id: decoded.userId, 
+                  role: decoded.role || 'office_executive',
+                  firstName: 'User',
+                  lastName: ''
+                });
+              }
+            } catch (decodeError) {
+              console.error('Failed to decode token:', decodeError);
+            }
           }
         } else {
           localStorage.removeItem('adminToken');
@@ -262,25 +306,45 @@ export const AuthProvider = ({ children }) => {
         ...(token && { 'Authorization': `Bearer ${token}` }),
         ...options.headers
       },
+      credentials: 'include',
+      mode: 'cors',
       ...options
     };
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
-
+      
+      // Handle CORS and network errors
       if (!response.ok) {
-        // If unauthorized, logout user
-        if (response.status === 401) {
+        const data = await response.json().catch(() => ({ message: 'Network error' }));
+        
+        // If unauthorized, logout user only if it's not a CORS issue
+        if (response.status === 401 && !data.message.includes('CORS')) {
+          console.log('Unauthorized response, logging out user');
           logout();
         }
+        
         throw new Error(data.message || `HTTP ${response.status}`);
       }
 
+      const data = await response.json();
       return { success: true, data };
 
     } catch (error) {
       console.error(`API call to ${endpoint} failed:`, error);
+      
+      // Don't logout on network/CORS errors
+      if (error.message.includes('CORS') || 
+          error.message.includes('NetworkError') || 
+          error.message.includes('Failed to fetch') ||
+          error.name === 'TypeError') {
+        console.log('Network/CORS error, not logging out user');
+        return { 
+          success: false, 
+          error: 'Network error - please check your connection and try again' 
+        };
+      }
+      
       return { 
         success: false, 
         error: error.message || 'API call failed' 
@@ -297,6 +361,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     changePassword,
     apiCall,
+    testConnection,
     // Role-based access helpers
     isSuperAdmin: user?.role === 'super_admin',
     isOfficeExecutive: user?.role === 'office_executive',

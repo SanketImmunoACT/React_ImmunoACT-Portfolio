@@ -81,8 +81,64 @@ const ContactManagement = () => {
         setError('');
       } else {
         console.error('API call failed:', result);
-        setError(result.error || 'Failed to load contacts');
-        toast.error('Failed to load contacts');
+        
+        // Don't show error for network/CORS issues, just show loading state
+        if (result.error && (
+          result.error.includes('Network error') || 
+          result.error.includes('CORS') ||
+          result.error.includes('Failed to fetch')
+        )) {
+          setError('');
+          // Keep existing contacts if any, don't clear them
+          if (contacts.length === 0) {
+            setContacts([]);
+            setPagination(prev => ({
+              ...prev,
+              totalPages: 1,
+              totalItems: 0,
+              hasNext: false,
+              hasPrev: false
+            }));
+          }
+        } else {
+          setError(result.error || 'Failed to load contacts');
+          toast.error('Failed to load contacts');
+          
+          // Set empty state only for non-network errors
+          setContacts([]);
+          setPagination(prev => ({
+            ...prev,
+            totalPages: 1,
+            totalItems: 0,
+            hasNext: false,
+            hasPrev: false
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      
+      // Handle network errors gracefully
+      if (error.message.includes('CORS') || 
+          error.message.includes('NetworkError') || 
+          error.message.includes('Failed to fetch') ||
+          error.name === 'TypeError') {
+        console.log('Network error, keeping existing state');
+        setError('');
+        // Don't clear existing contacts on network errors
+        if (contacts.length === 0) {
+          setContacts([]);
+          setPagination(prev => ({
+            ...prev,
+            totalPages: 1,
+            totalItems: 0,
+            hasNext: false,
+            hasPrev: false
+          }));
+        }
+      } else {
+        setError('An error occurred while loading contacts');
+        toast.error('An error occurred while loading contacts');
         
         // Set empty state
         setContacts([]);
@@ -94,20 +150,6 @@ const ContactManagement = () => {
           hasPrev: false
         }));
       }
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
-      setError('An error occurred while loading contacts');
-      toast.error('An error occurred while loading contacts');
-      
-      // Set empty state
-      setContacts([]);
-      setPagination(prev => ({
-        ...prev,
-        totalPages: 1,
-        totalItems: 0,
-        hasNext: false,
-        hasPrev: false
-      }));
     } finally {
       setLoading(false);
     }

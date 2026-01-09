@@ -34,37 +34,117 @@ const MediaManagement = () => {
 
   const fetchMedia = async () => {
     setLoading(true);
-    const queryParams = new URLSearchParams({
-      page: pagination.currentPage,
-      limit: 10,
-      ...filters
-    });
-
-    const result = await apiCall(`/api/v1/media?${queryParams}`);
-    
-    if (result.success && result.data) {
-      // Handle the same nested structure as contacts
-      const actualData = result.data.data || result.data;
-      setMedia(actualData.media || []);
-      setPagination(actualData.pagination || {
-        currentPage: 1,
-        totalPages: 1,
-        totalItems: 0
+    try {
+      const queryParams = new URLSearchParams({
+        page: pagination.currentPage,
+        limit: 10,
+        ...filters
       });
-      setError('');
-    } else {
-      setError(result.error);
-      toast.error('Failed to load media articles');
+
+      const result = await apiCall(`/api/v1/media?${queryParams}`);
+      
+      if (result.success && result.data) {
+        // Handle the same nested structure as contacts
+        const actualData = result.data.data || result.data;
+        setMedia(actualData.media || []);
+        setPagination(actualData.pagination || {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 0
+        });
+        setError('');
+      } else {
+        console.error('API call failed:', result);
+        
+        // Don't show error for network/CORS issues, just show loading state
+        if (result.error && (
+          result.error.includes('Network error') || 
+          result.error.includes('CORS') ||
+          result.error.includes('Failed to fetch')
+        )) {
+          setError('');
+          // Keep existing media if any, don't clear them
+          if (media.length === 0) {
+            setMedia([]);
+            setPagination({
+              currentPage: 1,
+              totalPages: 1,
+              totalItems: 0
+            });
+          }
+        } else {
+          setError(result.error || 'Failed to load media articles');
+          toast.error('Failed to load media articles');
+          
+          // Set empty state only for non-network errors
+          setMedia([]);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching media:', error);
+      
+      // Handle network errors gracefully
+      if (error.message.includes('CORS') || 
+          error.message.includes('NetworkError') || 
+          error.message.includes('Failed to fetch') ||
+          error.name === 'TypeError') {
+        console.log('Network error, keeping existing state');
+        setError('');
+        // Don't clear existing media on network errors
+        if (media.length === 0) {
+          setMedia([]);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0
+          });
+        }
+      } else {
+        setError('An error occurred while loading media articles');
+        toast.error('An error occurred while loading media articles');
+        
+        // Set empty state
+        setMedia([]);
+        setPagination({
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: 0
+        });
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchStats = async () => {
-    const result = await apiCall('/api/v1/media/stats');
-    if (result.success && result.data) {
-      // Handle the same nested structure as contacts
-      const actualData = result.data.data || result.data;
-      setStats(actualData);
+    try {
+      const result = await apiCall('/api/v1/media/stats');
+      if (result.success && result.data) {
+        // Handle the same nested structure as contacts
+        const actualData = result.data.data || result.data;
+        setStats(actualData);
+      } else {
+        console.warn('Failed to load media stats:', result.error);
+        // Set fallback stats
+        setStats({
+          totalMedia: 0,
+          publishedMedia: 0,
+          draftMedia: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching media stats:', error);
+      // Set fallback stats
+      setStats({
+        totalMedia: 0,
+        publishedMedia: 0,
+        draftMedia: 0
+      });
     }
   };
 
