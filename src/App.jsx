@@ -42,6 +42,8 @@ import PublicationsManagement from '@/pages/admin/PublicationsManagement'
 import CareersManagement from '@/pages/admin/CareersManagement'
 import ContactManagement from '@/pages/admin/ContactManagement'
 import AdminHospitals from '@/pages/admin/AdminHospitals'
+import ReferralManagement from '@/pages/admin/ReferralManagement'
+import EmployeeReferral from '@/pages/EmployeeReferral'
 import ProtectedRoute from '@/components/admin/ProtectedRoute'
 
 import '@/App.css'
@@ -122,6 +124,11 @@ function App() {
                 <AdminHospitals />
               </ProtectedRoute>
             } />
+            <Route path="referrals" element={
+              <ProtectedRoute requiredRoles={['super_admin', 'hr_manager']}>
+                <ReferralManagement />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
           </Route>
 
@@ -167,6 +174,7 @@ function App() {
                   <Route path="/partnered-hospitals" element={<PartneredHospitals />} />
                   <Route path="/treatment-centres" element={<PartneredHospitals />} />
                   <Route path="/collaborations" element={<Contact />} />
+                  <Route path="/employee-referral" element={<EmployeeReferral />} />
                   <Route path="/sitemap" element={<Sitemap />} />
                 </Routes>
               </main>
