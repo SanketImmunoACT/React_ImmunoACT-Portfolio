@@ -20,6 +20,7 @@ const ContactManagement = () => {
     totalItems: 0
   });
   const [selectedContact, setSelectedContact] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
   const [stats, setStats] = useState({
     totalSubmissions: 0,
     pendingCount: 0,
@@ -45,13 +46,16 @@ const ContactManagement = () => {
       if (showExportOptions && !event.target.closest('.export-dropdown')) {
         setShowExportOptions(false);
       }
+      if (openMenuId && !event.target.closest('.action-menu')) {
+        setOpenMenuId(null);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showExportOptions]);
+  }, [showExportOptions, openMenuId]);
 
   const fetchContacts = async () => {
     setLoading(true);
@@ -88,8 +92,6 @@ const ContactManagement = () => {
         }
         setError('');
       } else {
-        console.error('API call failed:', result);
-
         // Don't show error for network/CORS issues, just show loading state
         if (result.error && (
           result.error.includes('Network error') ||
@@ -124,14 +126,11 @@ const ContactManagement = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching contacts:', error);
-
       // Handle network errors gracefully
       if (error.message.includes('CORS') ||
         error.message.includes('NetworkError') ||
         error.message.includes('Failed to fetch') ||
         error.name === 'TypeError') {
-        console.log('Network error, keeping existing state');
         setError('');
         // Don't clear existing contacts on network errors
         if (contacts.length === 0) {
@@ -171,7 +170,6 @@ const ContactManagement = () => {
         const actualData = result.data.data || result.data;
         setStats(actualData);
       } else {
-        console.warn('Failed to load contact stats:', result.error);
         // Set fallback stats
         setStats({
           totalSubmissions: 0,
@@ -182,7 +180,6 @@ const ContactManagement = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching contact stats:', error);
       // Set fallback stats
       setStats({
         totalSubmissions: 0,
@@ -200,21 +197,25 @@ const ContactManagement = () => {
   };
 
   const handleStatusUpdate = async (id, newStatus) => {
-    const result = await apiCall(`/api/v1/contact/admin/forms/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: newStatus })
-    });
+    try {
+      const result = await apiCall(`/api/v1/contact/admin/forms/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
 
-    if (result.success) {
-      setContacts(prev =>
-        prev.map(contact =>
-          contact.id === id ? { ...contact, status: newStatus } : contact
-        )
-      );
-      toast.success('Status updated successfully');
-      fetchStats(); // Refresh stats
-    } else {
-      toast.error('Failed to update status');
+      if (result.success) {
+        setContacts(prev =>
+          prev.map(contact =>
+            contact.id === id ? { ...contact, status: newStatus } : contact
+          )
+        );
+        toast.success('Status updated successfully');
+        fetchStats(); // Refresh stats
+      } else {
+        toast.error(result.error || 'Failed to update status');
+      }
+    } catch (error) {
+      toast.error('Network error: Failed to update status');
     }
   };
 
@@ -223,16 +224,24 @@ const ContactManagement = () => {
       return;
     }
 
-    const result = await apiCall(`/api/v1/contact/admin/forms/${id}`, {
-      method: 'DELETE'
-    });
+    try {
+      const result = await apiCall(`/api/v1/contact/admin/forms/${id}`, {
+        method: 'DELETE'
+      });
 
-    if (result.success) {
-      setContacts(prev => prev.filter(contact => contact.id !== id));
-      toast.success('Contact deleted successfully');
-      fetchStats(); // Refresh stats
-    } else {
-      toast.error('Failed to delete contact');
+      if (result.success) {
+        setContacts(prev => prev.filter(contact => contact.id !== id));
+        toast.success('Contact deleted successfully');
+        fetchStats(); // Refresh stats
+        // Close modal if the deleted contact was being viewed
+        if (selectedContact && selectedContact.id === id) {
+          setSelectedContact(null);
+        }
+      } else {
+        toast.error(result.error || 'Failed to delete contact');
+      }
+    } catch (error) {
+      toast.error('Network error: Failed to delete contact');
     }
   };
 
@@ -263,21 +272,21 @@ const ContactManagement = () => {
         filename = `contact-forms-all-${new Date().toISOString().split('T')[0]}.csv`;
       }
 
-      // Define CSV headers
+      // Define CSV headers - all 13 columns including timestamps
       const headers = [
-        'ID',
-        'First Name',
-        'Last Name',
-        'Email',
-        'Phone',
-        'Institution',
-        'Partnership Category',
-        'Message',
-        'Status',
-        'Consent Given',
-        'Submission Date',
-        'IP Address',
-        'User Agent'
+        'id',
+        'first_name',
+        'last_name',
+        'email',
+        'phone',
+        'institution',
+        'partnership_category',
+        'message',
+        'status',
+        'consent_given',
+        'submission_date',
+        'created_at',
+        'updated_at'
       ];
 
       // Convert contacts to CSV format
@@ -294,9 +303,9 @@ const ContactManagement = () => {
           `"${(contact.message || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`,
           contact.status,
           contact.consentGiven ? 'Yes' : 'No',
-          new Date(contact.submissionDate).toLocaleString(),
-          `"${(contact.ipAddress || '').replace(/"/g, '""')}"`,
-          `"${(contact.userAgent || '').replace(/"/g, '""')}"`
+          new Date(contact.submissionDate).toISOString().split('T')[0], // YYYY-MM-DD format
+          contact.createdAt ? new Date(contact.createdAt).toISOString().split('T')[0] : '',
+          contact.updatedAt ? new Date(contact.updatedAt).toISOString().split('T')[0] : ''
         ].join(','))
       ].join('\n');
 
@@ -314,7 +323,6 @@ const ContactManagement = () => {
       toast.success(`Exported ${contactsToExport.length} contact forms to CSV`);
       setShowExportOptions(false);
     } catch (error) {
-      console.error('Export error:', error);
       toast.error('Failed to export contacts');
     } finally {
       setExportLoading(false);
@@ -322,12 +330,16 @@ const ContactManagement = () => {
   };
 
   const handleViewDetails = async (contact) => {
-    const result = await apiCall(`/api/v1/contact/admin/forms/${contact.id}`);
-    if (result.success && result.data) {
-      const actualData = result.data.data || result.data;
-      setSelectedContact(actualData.contact);
-    } else {
-      toast.error('Failed to load contact details');
+    try {
+      const result = await apiCall(`/api/v1/contact/admin/forms/${contact.id}`);
+      if (result.success && result.data) {
+        const actualData = result.data.data || result.data;
+        setSelectedContact(actualData.contact);
+      } else {
+        toast.error(result.error || 'Failed to load contact details');
+      }
+    } catch (error) {
+      toast.error('Network error: Failed to load contact details');
     }
   };
 
@@ -384,10 +396,27 @@ const ContactManagement = () => {
               <span className="font-semibold text-orange-600 ml-1">{stats.pendingCount}</span>
             </div>
             <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
-              <span className="text-slate-500">This Month:</span>
-              <span className="font-semibold text-green-600 ml-1">{stats.thisMonth}</span>
+              <span className="text-slate-500">Reviewed:</span>
+              <span className="font-semibold text-blue-600 ml-1">{stats.reviewedCount || 0}</span>
+            </div>
+            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+              <span className="text-slate-500">Responded:</span>
+              <span className="font-semibold text-green-600 ml-1">{stats.respondedCount || 0}</span>
             </div>
           </div>
+          <button
+            onClick={() => {
+              fetchContacts();
+              fetchStats();
+            }}
+            className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+            title="Refresh data"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
           <div className="relative export-dropdown">
             <button
               onClick={() => setShowExportOptions(!showExportOptions)}
@@ -453,22 +482,18 @@ const ContactManagement = () => {
               Search
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                {isSearching ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-orange-500"></div>
-                ) : (
-                  <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                )}
-              </div>
               <input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search contacts..."
-                className="w-full pl-10 pr-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200"
+                className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200"
               />
+              {isSearching && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-orange-500"></div>
+                </div>
+              )}
             </div>
           </div>
           <div>
@@ -515,7 +540,7 @@ const ContactManagement = () => {
                 setFilters({ status: '', search: '', partneringCategory: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}
-              className="px-4 py-2.5 text-slate-700 bg-slate-100 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-colors font-medium"
+              className="px-6 py-2.5 text-slate-700 bg-white border border-slate-300 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-400 rounded-xl transition-all duration-200 font-medium shadow-sm hover:shadow-md"
             >
               Clear Filters
             </button>
@@ -529,22 +554,22 @@ const ContactManagement = () => {
           <table className="min-w-full divide-y divide-slate-200/60">
             <thead className="bg-gradient-to-r from-slate-50 to-slate-100/50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Contact
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Institution
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Category
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Submitted
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -552,7 +577,7 @@ const ContactManagement = () => {
             <tbody className="bg-white divide-y divide-slate-200/60">
               {contacts && contacts.length > 0 ? contacts.map((contact, index) => (
                 <tr key={contact.id} className="hover:bg-slate-50/50 transition-colors animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <div>
                       <div className="text-sm font-semibold text-slate-900">
                         {contact.firstName} {contact.lastName}
@@ -567,19 +592,30 @@ const ContactManagement = () => {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-900">
+                  <td className="px-6 py-4 text-sm text-slate-900 text-center">
                     {contact.institution || 'Not specified'}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <span className={getCategoryBadge(contact.partneringCategory)}>
                       {contact.partneringCategory}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <select
                       value={contact.status}
                       onChange={(e) => handleStatusUpdate(contact.id, e.target.value)}
-                      className={`text-xs font-medium rounded-full border-0 focus:ring-2 focus:ring-orange-500 px-3 py-1 ${getStatusBadge(contact.status)}`}
+                      className="text-xs font-medium rounded-full border-0 focus:ring-2 focus:ring-orange-500 px-3 py-1.5 bg-white shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md focus:shadow-lg"
+                      style={{
+                        backgroundColor: contact.status === 'pending' ? '#fef3c7' : 
+                                       contact.status === 'reviewed' ? '#dbeafe' :
+                                       contact.status === 'responded' ? '#d1fae5' : '#f3f4f6',
+                        color: contact.status === 'pending' ? '#92400e' : 
+                               contact.status === 'reviewed' ? '#1e40af' :
+                               contact.status === 'responded' ? '#065f46' : '#374151',
+                        border: contact.status === 'pending' ? '1px solid #f59e0b' : 
+                               contact.status === 'reviewed' ? '1px solid #3b82f6' :
+                               contact.status === 'responded' ? '1px solid #10b981' : '1px solid #6b7280'
+                      }}
                     >
                       <option value="pending">Pending</option>
                       <option value="reviewed">Reviewed</option>
@@ -587,30 +623,51 @@ const ContactManagement = () => {
                       <option value="archived">Archived</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-900">
+                  <td className="px-6 py-4 text-sm text-slate-900 text-center">
                     {new Date(contact.submissionDate).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
+                  <td className="px-6 py-4 text-center">
+                    <div className="relative action-menu">
                       <button
-                        onClick={() => handleViewDetails(contact)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-orange-700 bg-orange-100 hover:bg-orange-200 rounded-lg transition-colors"
+                        onClick={() => setOpenMenuId(openMenuId === contact.id ? null : contact.id)}
+                        className="inline-flex items-center justify-center w-8 h-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
                       >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                         </svg>
-                        View
                       </button>
-                      <button
-                        onClick={() => handleDelete(contact.id)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
-                      >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
-                      </button>
+                      
+                      {openMenuId === contact.id && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-strong border border-slate-200/60 z-10">
+                          <div className="p-1">
+                            <button
+                              onClick={() => {
+                                handleViewDetails(contact);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors flex items-center"
+                            >
+                              <svg className="w-4 h-4 mr-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              View Details
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleDelete(contact.id);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center"
+                            >
+                              <svg className="w-4 h-4 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Delete Contact
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -745,7 +802,7 @@ const ContactManagement = () => {
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Consent</label>
                   <p className="text-sm text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">
-                    {selectedContact.consentGiven ? '✅ Consent given for data processing' : '❌ No consent provided'}
+                    {selectedContact.consentGiven ? 'Consent given for data processing' : '❌ No consent provided'}
                   </p>
                 </div>
               </div>
@@ -753,13 +810,13 @@ const ContactManagement = () => {
               <div className="mt-8 flex justify-end space-x-3">
                 <button
                   onClick={() => setSelectedContact(null)}
-                  className="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors font-medium"
+                  className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
                 >
                   Close
                 </button>
                 <button
                   onClick={() => handleDelete(selectedContact.id)}
-                  className="px-6 py-2.5 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors font-medium"
+                  className="px-6 py-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl hover:bg-red-100 hover:border-red-300 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
                 >
                   Delete Contact
                 </button>
