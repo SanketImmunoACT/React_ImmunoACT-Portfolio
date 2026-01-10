@@ -186,7 +186,7 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-slate-900 mb-2">
-                Welcome back, {user?.firstName}! 👋
+                Welcome back, {user?.firstName}{user?.lastName}! 👋
               </h1>
               <p className="text-slate-600 text-lg">
                 {getRoleBasedWelcome()} Dashboard

@@ -1,8 +1,88 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebounceSearch } from '@/hooks/useDebounceSearch';
 import PublicationForm from '@/components/admin/PublicationForm';
 import toast from 'react-hot-toast';
+
+// Dropdown Menu Component
+const ActionDropdown = ({ item, onEdit, onDelete, onView }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        className="inline-flex items-center justify-center w-8 h-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-strong border border-slate-200 z-50">
+          <div className="py-2">
+            <button
+              onClick={() => {
+                onView(item);
+                setIsOpen(false);
+              }}
+              className="flex items-center w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              <svg className="w-4 h-4 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              View Publication
+            </button>
+            <button
+              onClick={() => {
+                onEdit(item);
+                setIsOpen(false);
+              }}
+              className="flex items-center w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              <svg className="w-4 h-4 mr-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Publication
+            </button>
+            <div className="border-t border-slate-100 my-1"></div>
+            <button
+              onClick={() => {
+                onDelete(item.id);
+                setIsOpen(false);
+              }}
+              className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete Publication
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const PublicationsManagement = () => {
   const { apiCall } = useAuth();
@@ -27,7 +107,8 @@ const PublicationsManagement = () => {
   const [stats, setStats] = useState({
     totalPublications: 0,
     publishedPublications: 0,
-    draftPublications: 0
+    draftPublications: 0,
+    archivedPublications: 0
   });
 
   // Update search filter when debounced search changes
@@ -47,13 +128,29 @@ const PublicationsManagement = () => {
       const queryParams = new URLSearchParams({
         page: pagination.currentPage,
         limit: 10,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
         ...filters
       });
 
       const result = await apiCall(`/api/v1/publications?${queryParams}`);
 
       if (result.success) {
-        setPublications(result.data.publications);
+        let publications = result.data.publications;
+        
+        // Sort publications by creation date (most recent first) as fallback
+        if (publications && Array.isArray(publications)) {
+          publications = publications.sort((a, b) => {
+            // First try to sort by createdAt if available
+            if (a.createdAt && b.createdAt) {
+              return new Date(b.createdAt) - new Date(a.createdAt);
+            }
+            // Fallback to id (assuming higher id = more recent)
+            return b.id - a.id;
+          });
+        }
+        
+        setPublications(publications);
         setPagination(result.data.pagination);
         setError('');
       } else {
@@ -135,7 +232,8 @@ const PublicationsManagement = () => {
         setStats({
           totalPublications: 0,
           publishedPublications: 0,
-          draftPublications: 0
+          draftPublications: 0,
+          archivedPublications: 0
         });
       }
     } catch (error) {
@@ -144,7 +242,8 @@ const PublicationsManagement = () => {
       setStats({
         totalPublications: 0,
         publishedPublications: 0,
-        draftPublications: 0
+        draftPublications: 0,
+        archivedPublications: 0
       });
     }
   };
@@ -228,12 +327,12 @@ const PublicationsManagement = () => {
 
   const getStatusBadge = (status) => {
     const colors = {
-      draft: 'bg-yellow-100 text-yellow-800 border border-yellow-300',
-      published: 'bg-green-100 text-green-800 border border-green-300',
-      archived: 'bg-slate-100 text-slate-800 border border-slate-300'
+      draft: 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-yellow-300',
+      published: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300',
+      archived: 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-800 border-slate-300'
     };
     return (
-      <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border ${colors[status]}`}>
+      <span className={`inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full border ${colors[status]}`}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
@@ -283,9 +382,16 @@ const PublicationsManagement = () => {
               <span className="text-slate-500">Draft:</span>
               <span className="font-semibold text-yellow-600 ml-1">{stats.draftPublications}</span>
             </div>
+            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+              <span className="text-slate-500">Archived:</span>
+              <span className="font-semibold text-slate-600 ml-1">{stats.archivedPublications}</span>
+            </div>
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={(e) => {
+              e.preventDefault();
+              setShowCreateModal(true);
+            }}
             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-medium hover:shadow-strong transition-all duration-200 hover:-translate-y-0.5"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -309,82 +415,109 @@ const PublicationsManagement = () => {
 
       {/* Filters */}
       <div className="bg-white shadow-soft rounded-2xl p-6 border border-slate-200/60">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Search
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                {isSearching ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-emerald-500"></div>
-                ) : (
-                  <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Search
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    setSearchInput(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
+                  placeholder="Search publications..."
+                  className="w-full px-4 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
+                />
+                {isSearching && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-emerald-500"></div>
+                  </div>
                 )}
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Status
+              </label>
+              <select
+                value={filters.status}
+                onChange={(e) => {
+                  e.preventDefault();
+                  handleFilterChange('status', e.target.value);
+                }}
+                className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
+              >
+                <option value="">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Category
+              </label>
               <input
                 type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search publications..."
-                className="w-full pl-10 pr-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
+                value={filters.category}
+                onChange={(e) => {
+                  e.preventDefault();
+                  handleFilterChange('category', e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
+                placeholder="Filter by category..."
+                className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
               />
             </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Journal
+              </label>
+              <input
+                type="text"
+                value={filters.journal}
+                onChange={(e) => {
+                  e.preventDefault();
+                  handleFilterChange('journal', e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
+                placeholder="Filter by journal..."
+                className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  clearSearch(); // Clear search input
+                  setFilters({ status: '', search: '', category: '', journal: '' });
+                  setPagination(prev => ({ ...prev, currentPage: 1 }));
+                }}
+                className="px-4 py-2.5 text-slate-700 bg-slate-100 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-colors font-medium"
+              >
+                Clear Filters
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Status
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
-            >
-              <option value="">All Status</option>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Category
-            </label>
-            <input
-              type="text"
-              value={filters.category}
-              onChange={(e) => handleFilterChange('category', e.target.value)}
-              placeholder="Filter by category..."
-              className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Journal
-            </label>
-            <input
-              type="text"
-              value={filters.journal}
-              onChange={(e) => handleFilterChange('journal', e.target.value)}
-              placeholder="Filter by journal..."
-              className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200"
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              onClick={() => {
-                clearSearch(); // Clear search input
-                setFilters({ status: '', search: '', category: '', journal: '' });
-                setPagination(prev => ({ ...prev, currentPage: 1 }));
-              }}
-              className="px-4 py-2.5 text-slate-700 bg-slate-100 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-colors font-medium"
-            >
-              Clear Filters
-            </button>
-          </div>
-        </div>
+        </form>
       </div>
 
       {/* Bulk Actions */}
@@ -404,7 +537,10 @@ const PublicationsManagement = () => {
             </div>
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => handleBulkStatusUpdate('published')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleBulkStatusUpdate('published');
+                }}
                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-medium"
               >
                 <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -413,7 +549,10 @@ const PublicationsManagement = () => {
                 Publish
               </button>
               <button
-                onClick={() => handleBulkStatusUpdate('draft')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleBulkStatusUpdate('draft');
+                }}
                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-medium rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-medium"
               >
                 <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -422,7 +561,10 @@ const PublicationsManagement = () => {
                 Draft
               </button>
               <button
-                onClick={() => handleBulkStatusUpdate('archived')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleBulkStatusUpdate('archived');
+                }}
                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white font-medium rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-medium"
               >
                 <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -441,7 +583,7 @@ const PublicationsManagement = () => {
           <table className="min-w-full divide-y divide-slate-200/60">
             <thead className="bg-gradient-to-r from-slate-50 to-slate-100/50">
               <tr>
-                <th className="px-6 py-4 text-left">
+                <th className="px-6 py-4 text-center">
                   <input
                     type="checkbox"
                     checked={selectedItems.length === publications.length && publications.length > 0}
@@ -449,22 +591,22 @@ const PublicationsManagement = () => {
                     className="rounded cursor-pointer border-slate-300 text-emerald-600 focus:ring-emerald-500"
                   />
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Publication
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Journal
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Category
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Published Date
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -472,7 +614,7 @@ const PublicationsManagement = () => {
             <tbody className="bg-white divide-y divide-slate-200/60">
               {publications.map((item, index) => (
                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <input
                       type="checkbox"
                       checked={selectedItems.includes(item.id)}
@@ -480,64 +622,36 @@ const PublicationsManagement = () => {
                       className="rounded cursor-pointer border-slate-300 text-emerald-600 focus:ring-emerald-500"
                     />
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="max-w-xs">
+                  <td className="px-6 py-4 text-center">
+                    <div className="max-w-xs mx-auto">
                       <div className="text-sm font-semibold text-slate-900 truncate">
                         {item.title}
                       </div>
-                      <div className="text-sm text-slate-500 truncate mt-1">
-                        {item.authors}
-                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-900">
-                    <div className="max-w-xs truncate">
-                      {item.journal}
+                  <td className="px-6 py-4 text-center text-sm text-slate-900">
+                    <div className="max-w-xs mx-auto truncate">
+                      {item.authors || item.journal}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <span className={getCategoryBadge(item.category)}>
                       {item.category}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     {getStatusBadge(item.status)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-900">
+                  <td className="px-6 py-4 text-center text-sm text-slate-900">
                     {new Date(item.publishedDate).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
-                      >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                        View
-                      </a>
-                      <button
-                        onClick={() => handleEdit(item)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded-lg transition-colors"
-                      >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
-                      >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
-                      </button>
-                    </div>
+                  <td className="px-6 py-4 text-center">
+                    <ActionDropdown
+                      item={item}
+                      onView={(item) => window.open(item.url, '_blank', 'noopener,noreferrer')}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
                   </td>
                 </tr>
               ))}

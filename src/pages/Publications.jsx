@@ -74,8 +74,34 @@ const Publications = () => {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'date-desc':
+          // First try to sort by creation date (when added to system)
+          if (a.createdAt && b.createdAt) {
+            const createdAtDiff = new Date(b.createdAt) - new Date(a.createdAt);
+            if (createdAtDiff !== 0) return createdAtDiff;
+          }
+          // If same creation date or no creation date, sort by ID (higher ID = more recent)
+          if (a.id && b.id) {
+            const idDiff = b.id - a.id;
+            if (idDiff !== 0) return idDiff;
+          }
+          // Finally fall back to publication date
           return new Date(b.date || b.publishedDate) - new Date(a.date || a.publishedDate)
         case 'date-asc':
+          // First try to sort by creation date (oldest first)
+          if (a.createdAt && b.createdAt) {
+            const createdAtDiff = new Date(a.createdAt) - new Date(b.createdAt);
+            if (createdAtDiff !== 0) return createdAtDiff;
+          }
+          // If same creation date or no creation date, sort by ID (lower ID = older)
+          if (a.id && b.id) {
+            const idDiff = a.id - b.id;
+            if (idDiff !== 0) return idDiff;
+          }
+          // Finally fall back to publication date
+          return new Date(a.date || a.publishedDate) - new Date(b.date || b.publishedDate)
+        case 'pub-date-desc':
+          return new Date(b.date || b.publishedDate) - new Date(a.date || a.publishedDate)
+        case 'pub-date-asc':
           return new Date(a.date || a.publishedDate) - new Date(b.date || b.publishedDate)
         case 'title-asc':
           return a.title.localeCompare(b.title)
@@ -211,8 +237,10 @@ const Publications = () => {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="date-desc">Latest First</option>
-                  <option value="date-asc">Oldest First</option>
+                  <option value="date-desc">Recently Added First</option>
+                  <option value="date-asc">Oldest Added First</option>
+                  <option value="pub-date-desc">Latest Published First</option>
+                  <option value="pub-date-asc">Oldest Published First</option>
                   <option value="title-asc">Title A-Z</option>
                   <option value="title-desc">Title Z-A</option>
                   <option value="journal-asc">Journal A-Z</option>
@@ -241,7 +269,7 @@ const Publications = () => {
                     {/* Type Badge and Date */}
                     <div className="flex items-center justify-between mb-4">
                       <span className="bg-green-100 text-green-800 px-3 py-1 rounded text-sm font-medium">
-                        {publication.type || publication.buttonText || 'Publication'}
+                        {publication.category || publication.type || 'Publication'}
                       </span>
                       <div className="flex items-center gap-1 text-sm text-gray-500">
                         <Calendar className="w-4 h-4" />

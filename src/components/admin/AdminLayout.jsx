@@ -131,7 +131,7 @@ const AdminLayout = () => {
       </div>
 
       {/* Desktop sidebar */}
-      <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-72'}`}>
+      <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-[80px]' : 'lg:w-72'}`}>
         <SidebarContent 
           navigation={filteredNavigation} 
           isActive={isActive} 
@@ -143,7 +143,7 @@ const AdminLayout = () => {
       </div>
 
       {/* Main content */}
-      <div className={`lg:flex lg:flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72'}`}>
+      <div className={`lg:flex lg:flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'}`}>
         {/* Top bar with search */}
         <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-soft">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
@@ -214,7 +214,7 @@ const AdminLayout = () => {
 
 const SidebarContent = ({ navigation, isActive, user, onLogout, collapsed, onToggleCollapse }) => (
   <div className="flex-1 flex flex-col min-h-0 bg-white shadow-strong border-r border-slate-200/60">
-    <div className="flex-1 flex flex-col overflow-y-auto">
+    <div className="flex-1 flex flex-col">
       {/* Logo and collapse button */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200/60">
         <div className={`flex items-center transition-all duration-300 ${collapsed ? 'justify-center' : ''}`}>
