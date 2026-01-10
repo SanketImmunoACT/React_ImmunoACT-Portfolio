@@ -25,7 +25,11 @@ const ActionDropdown = ({ item, onEdit, onDelete, onView }) => {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
         className="inline-flex items-center justify-center w-8 h-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -102,7 +106,8 @@ const MediaManagement = () => {
   const [stats, setStats] = useState({
     totalMedia: 0,
     publishedMedia: 0,
-    draftMedia: 0
+    draftMedia: 0,
+    archivedMedia: 0
   });
 
   // Update search filter when debounced search changes
@@ -126,7 +131,7 @@ const MediaManagement = () => {
       });
 
       const result = await apiCall(`/api/v1/media?${queryParams}`);
-      
+
       if (result.success && result.data) {
         // Handle the same nested structure as contacts
         const actualData = result.data.data || result.data;
@@ -139,10 +144,10 @@ const MediaManagement = () => {
         setError('');
       } else {
         console.error('API call failed:', result);
-        
+
         // Don't show error for network/CORS issues, just show loading state
         if (result.error && (
-          result.error.includes('Network error') || 
+          result.error.includes('Network error') ||
           result.error.includes('CORS') ||
           result.error.includes('Failed to fetch')
         )) {
@@ -159,7 +164,7 @@ const MediaManagement = () => {
         } else {
           setError(result.error || 'Failed to load media articles');
           toast.error('Failed to load media articles');
-          
+
           // Set empty state only for non-network errors
           setMedia([]);
           setPagination({
@@ -171,12 +176,12 @@ const MediaManagement = () => {
       }
     } catch (error) {
       console.error('Error fetching media:', error);
-      
+
       // Handle network errors gracefully
-      if (error.message.includes('CORS') || 
-          error.message.includes('NetworkError') || 
-          error.message.includes('Failed to fetch') ||
-          error.name === 'TypeError') {
+      if (error.message.includes('CORS') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('Failed to fetch') ||
+        error.name === 'TypeError') {
         console.log('Network error, keeping existing state');
         setError('');
         // Don't clear existing media on network errors
@@ -191,7 +196,7 @@ const MediaManagement = () => {
       } else {
         setError('An error occurred while loading media articles');
         toast.error('An error occurred while loading media articles');
-        
+
         // Set empty state
         setMedia([]);
         setPagination({
@@ -218,7 +223,8 @@ const MediaManagement = () => {
         setStats({
           totalMedia: 0,
           publishedMedia: 0,
-          draftMedia: 0
+          draftMedia: 0,
+          archivedMedia: 0
         });
       }
     } catch (error) {
@@ -227,7 +233,8 @@ const MediaManagement = () => {
       setStats({
         totalMedia: 0,
         publishedMedia: 0,
-        draftMedia: 0
+        draftMedia: 0,
+        archivedMedia: 0
       });
     }
   };
@@ -238,8 +245,8 @@ const MediaManagement = () => {
   };
 
   const handleSelectItem = (id) => {
-    setSelectedItems(prev => 
-      prev.includes(id) 
+    setSelectedItems(prev =>
+      prev.includes(id)
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
@@ -355,9 +362,16 @@ const MediaManagement = () => {
               <span className="text-slate-500">Draft:</span>
               <span className="font-semibold text-yellow-600 ml-1">{stats.draftMedia}</span>
             </div>
+            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
+              <span className="text-slate-500">Archived:</span>
+              <span className="font-semibold text-slate-600 ml-1">{stats.archivedMedia}</span>
+            </div>
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={(e) => {
+              e.preventDefault();
+              setShowCreateModal(true);
+            }}
             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-medium hover:shadow-strong transition-all duration-200 hover:-translate-y-0.5"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -381,66 +395,89 @@ const MediaManagement = () => {
 
       {/* Filters */}
       <div className="bg-white shadow-soft rounded-2xl p-6 border border-slate-200/60">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Search
-            </label>
-            <div className="relative">
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Search
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    setSearchInput(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
+                  placeholder="Search articles..."
+                  className="w-full px-4 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all duration-200"
+                />
+                {isSearching && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-purple-500"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Status
+              </label>
+              <select
+                value={filters.status}
+                onChange={(e) => {
+                  e.preventDefault();
+                  handleFilterChange('status', e.target.value);
+                }}
+                className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all duration-200"
+              >
+                <option value="">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Source
+              </label>
               <input
                 type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search articles..."
-                className="w-full px-4 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all duration-200"
+                value={filters.sourceName}
+                onChange={(e) => {
+                  e.preventDefault();
+                  handleFilterChange('sourceName', e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
+                placeholder="Filter by source..."
+                className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all duration-200"
               />
-              {isSearching && (
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-purple-500"></div>
-                </div>
-              )}
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  clearSearch(); // Clear search input
+                  setFilters({ status: '', search: '', sourceName: '' });
+                  setPagination(prev => ({ ...prev, currentPage: 1 }));
+                }}
+                className="px-4 py-2.5 text-slate-700 bg-slate-100 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-colors font-medium"
+              >
+                Clear Filters
+              </button>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Status
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all duration-200"
-            >
-              <option value="">All Status</option>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Source
-            </label>
-            <input
-              type="text"
-              value={filters.sourceName}
-              onChange={(e) => handleFilterChange('sourceName', e.target.value)}
-              placeholder="Filter by source..."
-              className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all duration-200"
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              onClick={() => {
-                clearSearch(); // Clear search input
-                setFilters({ status: '', search: '', sourceName: '' });
-                setPagination(prev => ({ ...prev, currentPage: 1 }));
-              }}
-              className="px-4 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors font-medium"
-            >
-              Clear Filters
-            </button>
-          </div>
-        </div>
+        </form>
       </div>
 
       {/* Bulk Actions */}
@@ -460,7 +497,10 @@ const MediaManagement = () => {
             </div>
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => handleBulkStatusUpdate('published')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleBulkStatusUpdate('published');
+                }}
                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-medium"
               >
                 <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,7 +509,10 @@ const MediaManagement = () => {
                 Publish
               </button>
               <button
-                onClick={() => handleBulkStatusUpdate('draft')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleBulkStatusUpdate('draft');
+                }}
                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-medium rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-medium"
               >
                 <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -478,7 +521,10 @@ const MediaManagement = () => {
                 Draft
               </button>
               <button
-                onClick={() => handleBulkStatusUpdate('archived')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleBulkStatusUpdate('archived');
+                }}
                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white font-medium rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-medium"
               >
                 <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -502,7 +548,7 @@ const MediaManagement = () => {
                     type="checkbox"
                     checked={selectedItems.length === media.length && media.length > 0}
                     onChange={handleSelectAll}
-                    className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                    className="rounded border-slate-300 text-purple-600 cursor-pointer focus:ring-purple-500"
                   />
                 </th>
                 <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -530,7 +576,7 @@ const MediaManagement = () => {
                       type="checkbox"
                       checked={selectedItems.includes(item.id)}
                       onChange={() => handleSelectItem(item.id)}
-                      className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
                     />
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -568,16 +614,22 @@ const MediaManagement = () => {
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-slate-200/60">
             <div className="flex-1 flex justify-between sm:hidden">
               <button
-                onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
-                disabled={!pagination.hasPrev}
-                className="relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }));
+                }}
+                disabled={pagination.currentPage <= 1}
+                className="relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Previous
               </button>
               <button
-                onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
-                disabled={!pagination.hasNext}
-                className="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }));
+                }}
+                disabled={pagination.currentPage >= pagination.totalPages}
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
               </button>
@@ -591,18 +643,30 @@ const MediaManagement = () => {
               <div>
                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                   <button
-                    onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
-                    disabled={!pagination.hasPrev}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }));
+                    }}
+                    disabled={pagination.currentPage <= 1}
+                    className="relative inline-flex items-center px-3 py-2 rounded-l-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
                     Previous
                   </button>
                   <button
-                    onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
-                    disabled={!pagination.hasNext}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }));
+                    }}
+                    disabled={pagination.currentPage >= pagination.totalPages}
+                    className="relative inline-flex items-center px-3 py-2 rounded-r-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Next
+                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </nav>
               </div>

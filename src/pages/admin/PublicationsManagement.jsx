@@ -51,17 +51,17 @@ const PublicationsManagement = () => {
       });
 
       const result = await apiCall(`/api/v1/publications?${queryParams}`);
-      
+
       if (result.success) {
         setPublications(result.data.publications);
         setPagination(result.data.pagination);
         setError('');
       } else {
         console.error('API call failed:', result);
-        
+
         // Don't show error for network/CORS issues
         if (result.error && (
-          result.error.includes('Network error') || 
+          result.error.includes('Network error') ||
           result.error.includes('CORS') ||
           result.error.includes('Failed to fetch')
         )) {
@@ -78,7 +78,7 @@ const PublicationsManagement = () => {
         } else {
           setError(result.error || 'Failed to load publications');
           toast.error('Failed to load publications');
-          
+
           // Set empty state only for non-network errors
           setPublications([]);
           setPagination({
@@ -90,12 +90,12 @@ const PublicationsManagement = () => {
       }
     } catch (error) {
       console.error('Error fetching publications:', error);
-      
+
       // Handle network errors gracefully
-      if (error.message.includes('CORS') || 
-          error.message.includes('NetworkError') || 
-          error.message.includes('Failed to fetch') ||
-          error.name === 'TypeError') {
+      if (error.message.includes('CORS') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('Failed to fetch') ||
+        error.name === 'TypeError') {
         console.log('Network error, keeping existing state');
         setError('');
         // Don't clear existing publications on network errors
@@ -110,7 +110,7 @@ const PublicationsManagement = () => {
       } else {
         setError('An error occurred while loading publications');
         toast.error('An error occurred while loading publications');
-        
+
         // Set empty state
         setPublications([]);
         setPagination({
@@ -155,8 +155,8 @@ const PublicationsManagement = () => {
   };
 
   const handleSelectItem = (id) => {
-    setSelectedItems(prev => 
-      prev.includes(id) 
+    setSelectedItems(prev =>
+      prev.includes(id)
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
@@ -228,18 +228,12 @@ const PublicationsManagement = () => {
 
   const getStatusBadge = (status) => {
     const colors = {
-      draft: 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-yellow-300',
-      published: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300',
-      archived: 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-800 border-slate-300'
-    };
-    const icons = {
-      draft: '📝',
-      published: '✅',
-      archived: '📦'
+      draft: 'bg-yellow-100 text-yellow-800 border border-yellow-300',
+      published: 'bg-green-100 text-green-800 border border-green-300',
+      archived: 'bg-slate-100 text-slate-800 border border-slate-300'
     };
     return (
       <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border ${colors[status]}`}>
-        {/* <span className="mr-1.5">{icons[status]}</span> */}
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
@@ -385,7 +379,7 @@ const PublicationsManagement = () => {
                 setFilters({ status: '', search: '', category: '', journal: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}
-              className="px-4 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors font-medium"
+              className="px-4 py-2.5 text-slate-700 bg-slate-100 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-colors font-medium"
             >
               Clear Filters
             </button>
@@ -452,7 +446,7 @@ const PublicationsManagement = () => {
                     type="checkbox"
                     checked={selectedItems.length === publications.length && publications.length > 0}
                     onChange={handleSelectAll}
-                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    className="rounded cursor-pointer border-slate-300 text-emerald-600 focus:ring-emerald-500"
                   />
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -483,7 +477,7 @@ const PublicationsManagement = () => {
                       type="checkbox"
                       checked={selectedItems.includes(item.id)}
                       onChange={() => handleSelectItem(item.id)}
-                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      className="rounded cursor-pointer border-slate-300 text-emerald-600 focus:ring-emerald-500"
                     />
                   </td>
                   <td className="px-6 py-4">

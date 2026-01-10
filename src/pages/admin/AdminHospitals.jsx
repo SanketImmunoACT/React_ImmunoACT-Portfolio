@@ -33,7 +33,7 @@ const AdminHospitals = () => {
     if (searchInput !== filters.search) {
       setIsSearching(true);
     }
-    
+
     const timeoutId = setTimeout(() => {
       setFilters(prev => ({ ...prev, search: searchInput }));
       setPagination(prev => ({ ...prev, currentPage: 1 }));
@@ -177,7 +177,7 @@ const AdminHospitals = () => {
     try {
       const result = await apiCall('/api/v1/hospitals/stats');
       console.log('Hospital stats result:', result); // Debug log
-      
+
       if (result.success && result.data) {
         // Handle the correct data structure
         const actualData = result.data.data || result.data;
@@ -410,7 +410,7 @@ const AdminHospitals = () => {
                 setFilters({ search: '', state: '', type: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}
-              className="px-4 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors font-medium"
+              className="px-4 py-2.5 text-slate-700 bg-slate-100 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-colors font-medium"
             >
               Clear Filters
             </button>

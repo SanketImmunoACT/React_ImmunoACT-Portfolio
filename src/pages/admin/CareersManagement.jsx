@@ -54,17 +54,17 @@ const CareersManagement = () => {
       });
 
       const result = await apiCall(`/api/v1/careers?${queryParams}`);
-      
+
       if (result.success) {
         setCareers(result.data.careers);
         setPagination(result.data.pagination);
         setError('');
       } else {
         console.error('API call failed:', result);
-        
+
         // Don't show error for network/CORS issues
         if (result.error && (
-          result.error.includes('Network error') || 
+          result.error.includes('Network error') ||
           result.error.includes('CORS') ||
           result.error.includes('Failed to fetch')
         )) {
@@ -81,7 +81,7 @@ const CareersManagement = () => {
         } else {
           setError(result.error || 'Failed to load careers');
           toast.error('Failed to load careers');
-          
+
           // Set empty state only for non-network errors
           setCareers([]);
           setPagination({
@@ -93,12 +93,12 @@ const CareersManagement = () => {
       }
     } catch (error) {
       console.error('Error fetching careers:', error);
-      
+
       // Handle network errors gracefully
-      if (error.message.includes('CORS') || 
-          error.message.includes('NetworkError') || 
-          error.message.includes('Failed to fetch') ||
-          error.name === 'TypeError') {
+      if (error.message.includes('CORS') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('Failed to fetch') ||
+        error.name === 'TypeError') {
         console.log('Network error, keeping existing state');
         setError('');
         // Don't clear existing careers on network errors
@@ -113,7 +113,7 @@ const CareersManagement = () => {
       } else {
         setError('An error occurred while loading careers');
         toast.error('An error occurred while loading careers');
-        
+
         // Set empty state
         setCareers([]);
         setPagination({
@@ -158,8 +158,8 @@ const CareersManagement = () => {
   };
 
   const handleSelectItem = (id) => {
-    setSelectedItems(prev => 
-      prev.includes(id) 
+    setSelectedItems(prev =>
+      prev.includes(id)
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
@@ -231,22 +231,14 @@ const CareersManagement = () => {
 
   const getStatusBadge = (status) => {
     const colors = {
-      draft: 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-yellow-300',
-      active: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300',
-      paused: 'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border-orange-300',
-      closed: 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-red-300',
-      archived: 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-800 border-slate-300'
-    };
-    const icons = {
-      draft: '📝',
-      active: '✅',
-      paused: '⏸️',
-      closed: '🔒',
-      archived: '📦'
+      draft: 'bg-yellow-100 text-yellow-800 border border-yellow-300',
+      active: 'bg-green-100 text-green-800 border border-green-300',
+      paused: 'bg-orange-100 text-orange-800 border border-orange-300',
+      closed: 'bg-red-100 text-red-800 border border-red-300',
+      archived: 'bg-slate-100 text-slate-800 border border-slate-300'
     };
     return (
       <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border ${colors[status]}`}>
-        <span className="mr-1.5">{icons[status]}</span>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
@@ -387,7 +379,7 @@ const CareersManagement = () => {
             />
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -444,7 +436,7 @@ const CareersManagement = () => {
                 setFilters({ status: '', search: '', department: '', location: '', employmentType: '', experienceLevel: '', isRemote: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              className="px-4 py-2.5 text-slate-700 bg-slate-100 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-colors font-medium"
             >
               Clear Filters
             </button>
@@ -500,7 +492,7 @@ const CareersManagement = () => {
                     type="checkbox"
                     checked={selectedItems.length === careers.length && careers.length > 0}
                     onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    className="rounded cursor-pointer border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -534,7 +526,7 @@ const CareersManagement = () => {
                       type="checkbox"
                       checked={selectedItems.includes(item.id)}
                       onChange={() => handleSelectItem(item.id)}
-                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      className="rounded cursor-pointer border-gray-300 text-orange-600 focus:ring-orange-500"
                     />
                   </td>
                   <td className="px-6 py-4">

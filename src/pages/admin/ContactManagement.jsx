@@ -63,13 +63,13 @@ const ContactManagement = () => {
       });
 
       const result = await apiCall(`/api/v1/contact/admin/forms?${queryParams}`);
-      
+
       if (result.success && result.data) {
         // The apiCall wraps the response, so the actual data is at result.data.data
         const actualData = result.data.data || result.data;
         const contactsData = actualData.contacts || [];
         setContacts(contactsData);
-        
+
         // Safely update pagination with fallback values
         if (actualData.pagination) {
           setPagination(prev => ({
@@ -89,10 +89,10 @@ const ContactManagement = () => {
         setError('');
       } else {
         console.error('API call failed:', result);
-        
+
         // Don't show error for network/CORS issues, just show loading state
         if (result.error && (
-          result.error.includes('Network error') || 
+          result.error.includes('Network error') ||
           result.error.includes('CORS') ||
           result.error.includes('Failed to fetch')
         )) {
@@ -111,7 +111,7 @@ const ContactManagement = () => {
         } else {
           setError(result.error || 'Failed to load contacts');
           toast.error('Failed to load contacts');
-          
+
           // Set empty state only for non-network errors
           setContacts([]);
           setPagination(prev => ({
@@ -125,12 +125,12 @@ const ContactManagement = () => {
       }
     } catch (error) {
       console.error('Error fetching contacts:', error);
-      
+
       // Handle network errors gracefully
-      if (error.message.includes('CORS') || 
-          error.message.includes('NetworkError') || 
-          error.message.includes('Failed to fetch') ||
-          error.name === 'TypeError') {
+      if (error.message.includes('CORS') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('Failed to fetch') ||
+        error.name === 'TypeError') {
         console.log('Network error, keeping existing state');
         setError('');
         // Don't clear existing contacts on network errors
@@ -147,7 +147,7 @@ const ContactManagement = () => {
       } else {
         setError('An error occurred while loading contacts');
         toast.error('An error occurred while loading contacts');
-        
+
         // Set empty state
         setContacts([]);
         setPagination(prev => ({
@@ -206,8 +206,8 @@ const ContactManagement = () => {
     });
 
     if (result.success) {
-      setContacts(prev => 
-        prev.map(contact => 
+      setContacts(prev =>
+        prev.map(contact =>
           contact.id === id ? { ...contact, status: newStatus } : contact
         )
       );
@@ -242,7 +242,7 @@ const ContactManagement = () => {
       // Determine which contacts to export
       let contactsToExport;
       let filename;
-      
+
       if (filtered && (filters.status || filters.search || filters.partneringCategory)) {
         // Export filtered results
         contactsToExport = contacts;
@@ -262,7 +262,7 @@ const ContactManagement = () => {
         contactsToExport = actualData.contacts;
         filename = `contact-forms-all-${new Date().toISOString().split('T')[0]}.csv`;
       }
-      
+
       // Define CSV headers
       const headers = [
         'ID',
@@ -310,7 +310,7 @@ const ContactManagement = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       toast.success(`Exported ${contactsToExport.length} contact forms to CSV`);
       setShowExportOptions(false);
     } catch (error) {
@@ -402,7 +402,7 @@ const ContactManagement = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            
+
             {showExportOptions && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-strong border border-slate-200/60 z-10">
                 <div className="p-2">
@@ -421,8 +421,8 @@ const ContactManagement = () => {
                   >
                     <div className="font-medium">Export Filtered Results</div>
                     <div className="text-sm text-slate-500">
-                      {(!filters.status && !filters.search && !filters.partneringCategory) 
-                        ? 'Apply filters first' 
+                      {(!filters.status && !filters.search && !filters.partneringCategory)
+                        ? 'Apply filters first'
                         : `Export current filtered view (${contacts.length} items)`
                       }
                     </div>
@@ -515,7 +515,7 @@ const ContactManagement = () => {
                 setFilters({ status: '', search: '', partneringCategory: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}
-              className="px-4 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors font-medium"
+              className="px-4 py-2.5 text-slate-700 bg-slate-100 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-colors font-medium"
             >
               Clear Filters
             </button>
@@ -689,7 +689,7 @@ const ContactManagement = () => {
                   </svg>
                 </button>
               </div>
-              
+
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -701,7 +701,7 @@ const ContactManagement = () => {
                     <p className="text-sm text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">{selectedContact.email}</p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Phone</label>
@@ -712,21 +712,21 @@ const ContactManagement = () => {
                     <p className="text-sm text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">{selectedContact.institution || 'Not provided'}</p>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Partnership Category</label>
                   <span className={getCategoryBadge(selectedContact.partneringCategory)}>
                     {selectedContact.partneringCategory}
                   </span>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Message</label>
                   <div className="mt-1 p-4 bg-slate-50 rounded-lg border border-slate-200">
                     <p className="text-sm text-slate-900 whitespace-pre-wrap">{selectedContact.message}</p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Status</label>
@@ -741,7 +741,7 @@ const ContactManagement = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Consent</label>
                   <p className="text-sm text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">
@@ -749,7 +749,7 @@ const ContactManagement = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="mt-8 flex justify-end space-x-3">
                 <button
                   onClick={() => setSelectedContact(null)}
