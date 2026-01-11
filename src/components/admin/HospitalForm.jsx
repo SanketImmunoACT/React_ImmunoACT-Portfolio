@@ -15,45 +15,46 @@ const HospitalForm = ({ hospital, onSave, onCancel }) => {
     phone: '',
     email: '',
     website: '',
-    description: '',
-    type: 'Private',
-    services: [],
-    operatingHours: {
-      monday: { open: '09:00', close: '17:00', closed: false },
-      tuesday: { open: '09:00', close: '17:00', closed: false },
-      wednesday: { open: '09:00', close: '17:00', closed: false },
-      thursday: { open: '09:00', close: '17:00', closed: false },
-      friday: { open: '09:00', close: '17:00', closed: false },
-      saturday: { open: '09:00', close: '13:00', closed: false },
-      sunday: { open: '09:00', close: '13:00', closed: true }
-    }
+    type: 'Private'
   });
 
-  const availableServices = [
-    'Emergency Care',
-    'Cardiology',
-    'Neurology',
-    'Oncology',
-    'Orthopedics',
-    'Pediatrics',
-    'Gynecology',
-    'Dermatology',
-    'Radiology',
-    'Laboratory',
-    'Pharmacy',
-    'ICU',
-    'Surgery',
-    'Dialysis',
-    'Blood Bank'
-  ];
-
   const indianStates = [
-    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-    'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
-    'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
-    'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan',
-    'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
-    'Uttarakhand', 'West Bengal'
+    'Andaman and Nicobar Islands',
+    'Andhra Pradesh', 
+    'Arunachal Pradesh', 
+    'Assam', 
+    'Bihar', 
+    'Chandigarh',
+    'Chhattisgarh',
+    'Dadra and Nagar Haveli and Daman and Diu',
+    'Delhi', 
+    'Goa', 
+    'Gujarat', 
+    'Haryana', 
+    'Himachal Pradesh', 
+    'Jammu and Kashmir',
+    'Jharkhand',
+    'Karnataka', 
+    'Kerala', 
+    'Ladakh',
+    'Lakshadweep',
+    'Madhya Pradesh', 
+    'Maharashtra', 
+    'Manipur',
+    'Meghalaya', 
+    'Mizoram', 
+    'Nagaland', 
+    'Odisha', 
+    'Puducherry',
+    'Punjab', 
+    'Rajasthan',
+    'Sikkim', 
+    'Tamil Nadu', 
+    'Telangana', 
+    'Tripura', 
+    'Uttar Pradesh',
+    'Uttarakhand', 
+    'West Bengal'
   ];
 
   useEffect(() => {
@@ -68,18 +69,7 @@ const HospitalForm = ({ hospital, onSave, onCancel }) => {
         phone: hospital.phone || '',
         email: hospital.email || '',
         website: hospital.website || '',
-        description: hospital.description || '',
-        type: hospital.type || 'Private',
-        services: hospital.services || [],
-        operatingHours: hospital.operatingHours || {
-          monday: { open: '09:00', close: '17:00', closed: false },
-          tuesday: { open: '09:00', close: '17:00', closed: false },
-          wednesday: { open: '09:00', close: '17:00', closed: false },
-          thursday: { open: '09:00', close: '17:00', closed: false },
-          friday: { open: '09:00', close: '17:00', closed: false },
-          saturday: { open: '09:00', close: '13:00', closed: false },
-          sunday: { open: '09:00', close: '13:00', closed: true }
-        }
+        type: hospital.type || 'Private'
       });
     }
   }, [hospital]);
@@ -128,8 +118,7 @@ const HospitalForm = ({ hospital, onSave, onCancel }) => {
         phone: formData.phone.trim() || null,
         email: formData.email.trim() || null,
         website: formData.website.trim() || null,
-        zipCode: formData.zipCode.trim() || null,
-        description: formData.description.trim() || null
+        zipCode: formData.zipCode.trim() || null
       };
 
       const result = await apiCall(url, {
@@ -201,8 +190,9 @@ const HospitalForm = ({ hospital, onSave, onCancel }) => {
               value={formData.address}
               onChange={handleInputChange}
               required
-              rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={4}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-24"
+              style={{ minHeight: '96px', maxHeight: '96px' }}
             />
           </div>
 
@@ -291,95 +281,19 @@ const HospitalForm = ({ hospital, onSave, onCancel }) => {
             </div>
           </div>
 
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={4}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Services */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">
-              Services Offered
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {availableServices.map(service => (
-                <label key={service} className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.services.includes(service)}
-                    onChange={() => handleServiceToggle(service)}
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-slate-700">{service}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Operating Hours */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">
-              Operating Hours
-            </label>
-            <div className="space-y-3">
-              {Object.entries(formData.operatingHours).map(([day, hours]) => (
-                <div key={day} className="flex items-center space-x-4">
-                  <div className="w-20 text-sm font-medium text-slate-700 capitalize">
-                    {day}
-                  </div>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={!hours.closed}
-                      onChange={(e) => handleOperatingHoursChange(day, 'closed', !e.target.checked)}
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-slate-600">Open</span>
-                  </label>
-                  {!hours.closed && (
-                    <>
-                      <input
-                        type="time"
-                        value={hours.open}
-                        onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)}
-                        className="px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                      <span className="text-slate-500">to</span>
-                      <input
-                        type="time"
-                        value={hours.close}
-                        onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)}
-                        className="px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Form Actions */}
           <div className="flex justify-end space-x-4 pt-6 border-t border-slate-200">
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2 text-slate-600 hover:text-slate-800 font-medium"
+              className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50"
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl disabled:opacity-50 transition-all duration-200 shadow-sm hover:shadow-md"
             >
               {loading ? 'Saving...' : (hospital ? 'Update Hospital' : 'Create Hospital')}
             </button>
