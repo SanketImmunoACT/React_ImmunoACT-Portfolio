@@ -11,16 +11,19 @@ const Careers = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState({
-    coverLetter: '',
-    currentCTC: '',
-    currentLocation: '',
+    name: '',
     email: '',
-    expectedCTC: '',
-    experience: '',
-    fullName: '',
-    noticePeriod: '',
     phone: '',
-    resume: null
+    currentLocation: '',
+    currentDesignation: '',
+    currentLastOrganisation: '',
+    highestEducation: '',
+    noticePeriod: '',
+    comfortableToRelocate: false,
+    totalExperience: '',
+    reasonForJobChange: '',
+    resume: null,
+    coverLetter: ''
   })
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
@@ -64,16 +67,19 @@ const Careers = () => {
     setShowApplicationModal(false)
     setSelectedJob(null)
     setFormData({
-      coverLetter: '',
-      currentCTC: '',
-      currentLocation: '',
+      name: '',
       email: '',
-      expectedCTC: '',
-      experience: '',
-      fullName: '',
-      noticePeriod: '',
       phone: '',
-      resume: null
+      currentLocation: '',
+      currentDesignation: '',
+      currentLastOrganisation: '',
+      highestEducation: '',
+      noticePeriod: '',
+      comfortableToRelocate: false,
+      totalExperience: '',
+      reasonForJobChange: '',
+      resume: null,
+      coverLetter: ''
     })
   }
 
@@ -93,12 +99,52 @@ const Careers = () => {
     }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Handle form submission here - will integrate with backend API
-    console.log('Application submitted:', formData)
-    alert('Application submitted successfully!')
-    handleCloseModal()
+    
+    if (!selectedJob) {
+      alert('No job selected')
+      return
+    }
+
+    // Create FormData for file upload
+    const submitData = new FormData()
+    submitData.append('jobId', selectedJob.id)
+    submitData.append('name', formData.name)
+    submitData.append('email', formData.email)
+    submitData.append('phone', formData.phone)
+    submitData.append('currentLocation', formData.currentLocation)
+    submitData.append('currentDesignation', formData.currentDesignation)
+    submitData.append('currentLastOrganisation', formData.currentLastOrganisation)
+    submitData.append('highestEducation', formData.highestEducation)
+    submitData.append('noticePeriod', formData.noticePeriod)
+    submitData.append('comfortableToRelocate', formData.comfortableToRelocate)
+    submitData.append('totalExperience', formData.totalExperience)
+    submitData.append('reasonForJobChange', formData.reasonForJobChange)
+    submitData.append('coverLetter', formData.coverLetter)
+    
+    if (formData.resume) {
+      submitData.append('resume', formData.resume)
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/v1/job-applications/submit`, {
+        method: 'POST',
+        body: submitData
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        alert('Application submitted successfully!')
+        handleCloseModal()
+      } else {
+        alert(result.message || 'Failed to submit application')
+      }
+    } catch (error) {
+      console.error('Error submitting application:', error)
+      alert('Failed to submit application. Please try again.')
+    }
   }
 
   // Filter only active jobs from API (they should already be active from the public endpoint)
@@ -106,16 +152,14 @@ const Careers = () => {
 
   // Helper function to format job data for display
   const formatJobForDisplay = (job) => {
-    // Process keyResponsibilities
+    // Process responsibilities
     let keyResponsibilities = []
-    if (Array.isArray(job.keyResponsibilities)) {
-      keyResponsibilities = job.keyResponsibilities
-    } else if (Array.isArray(job.responsibilities)) {
-      keyResponsibilities = job.responsibilities.map(item => ({ title: 'Responsibility', items: [item] }))
+    if (Array.isArray(job.responsibilities)) {
+      keyResponsibilities = job.responsibilities
     } else if (typeof job.responsibilities === 'string') {
-      keyResponsibilities = [{ title: 'Key Responsibilities', items: job.responsibilities.split('\n').filter(item => item.trim()) }]
+      keyResponsibilities = job.responsibilities.split('\n').filter(item => item.trim())
     } else {
-      keyResponsibilities = job.keyResponsibilities || job.responsibilities || []
+      keyResponsibilities = job.responsibilities || []
     }
 
     // Process qualifications
@@ -128,16 +172,14 @@ const Careers = () => {
       qualifications = job.qualifications || []
     }
 
-    // Process desiredQualities
+    // Process desiredQualities (renamed from requirements)
     let desiredQualities = []
-    if (Array.isArray(job.desiredQualities)) {
-      desiredQualities = job.desiredQualities
-    } else if (Array.isArray(job.benefits)) {
-      desiredQualities = job.benefits
-    } else if (typeof job.benefits === 'string') {
-      desiredQualities = job.benefits.split('\n').filter(item => item.trim())
+    if (Array.isArray(job.requirements)) {
+      desiredQualities = job.requirements
+    } else if (typeof job.requirements === 'string') {
+      desiredQualities = job.requirements.split('\n').filter(item => item.trim())
     } else {
-      desiredQualities = job.desiredQualities || job.benefits || []
+      desiredQualities = job.requirements || []
     }
 
     return {
@@ -241,17 +283,9 @@ const Careers = () => {
                         <div>
                           <h3 className="text-2xl text-[#363636] mb-1">{job.title}</h3>
                           <p className="text-[#9E9E9E] text-xl">{job.department}</p>
-                          {job.location && (
-                            <p className="text-sm text-gray-500 mt-1">📍 {job.location}</p>
-                          )}
                           {job.employmentType && (
                             <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
                               {job.employmentType.replace('-', ' ')}
-                            </span>
-                          )}
-                          {job.isRemote && (
-                            <span className="inline-block mt-2 ml-2 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
-                              Remote
                             </span>
                           )}
                         </div>
@@ -270,51 +304,34 @@ const Careers = () => {
                     {/* Job Details */}
                     <div className={`transition-all duration-300 ${expandedJob === job.id ? 'block' : 'hidden'}`}>
                       <div className="p-6 space-y-8">
-                        {/* Job Description */}
-                        {job.description && (
+                        {/* Employment Type and Experience Level */}
+                        {(job.employmentType || job.experienceLevel) && (
                           <div>
-                            <h4 className="text-xl font-bold text-gray-900 mb-4">Job Description</h4>
-                            <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
-                              {job.description}
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">Position Details</h4>
+                            <div className="space-y-2">
+                              {job.employmentType && (
+                                <p className="text-gray-700">
+                                  <span className="font-semibold">Employment Type:</span> {job.employmentType.replace('-', ' ')}
+                                </p>
+                              )}
+                              {job.experienceLevel && (
+                                <p className="text-gray-700">
+                                  <span className="font-semibold">Experience Level:</span> {job.experienceLevel.replace('-', ' ')}
+                                </p>
+                              )}
                             </div>
                           </div>
                         )}
 
-                        {/* Key Responsibilities */}
+                        {/* Responsibilities */}
                         {formattedJob.keyResponsibilities.length > 0 && (
                           <div>
-                            <h4 className="text-xl font-bold text-gray-900 mb-4">Key Responsibilities</h4>
-                            <div className="space-y-4">
-                              {formattedJob.keyResponsibilities.map((section, index) => (
-                                <div key={index}>
-                                  {section.title && (
-                                    <h5 className="text-lg font-semibold text-gray-800 mb-2">
-                                      {index + 1}. {section.title}
-                                    </h5>
-                                  )}
-                                  <ul className="space-y-2 ml-4">
-                                    {(section.items || []).map((item, itemIndex) => (
-                                      <li key={itemIndex} className="flex items-start gap-2">
-                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
-                                        <span className="text-gray-700 text-sm leading-relaxed">{item}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Qualifications & Educational Requirements */}
-                        {formattedJob.qualifications.length > 0 && (
-                          <div>
-                            <h4 className="text-xl font-bold text-gray-900 mb-4">Qualifications & Educational Requirements</h4>
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">Responsibilities</h4>
                             <ul className="space-y-2">
-                              {formattedJob.qualifications.map((qualification, index) => (
+                              {formattedJob.keyResponsibilities.map((responsibility, index) => (
                                 <li key={index} className="flex items-start gap-2">
                                   <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
-                                  <span className="text-gray-700 text-sm leading-relaxed">{qualification}</span>
+                                  <span className="text-gray-700 text-sm leading-relaxed">{responsibility}</span>
                                 </li>
                               ))}
                             </ul>
@@ -336,22 +353,18 @@ const Careers = () => {
                           </div>
                         )}
 
-                        {/* Additional Job Details */}
-                        {(job.salaryRange || job.experienceLevel) && (
+                        {/* Qualifications */}
+                        {formattedJob.qualifications.length > 0 && (
                           <div>
-                            <h4 className="text-xl font-bold text-gray-900 mb-4">Additional Details</h4>
-                            <div className="space-y-2">
-                              {job.experienceLevel && (
-                                <p className="text-gray-700">
-                                  <span className="font-semibold">Experience Level:</span> {job.experienceLevel.replace('-', ' ')}
-                                </p>
-                              )}
-                              {job.salaryRange && (
-                                <p className="text-gray-700">
-                                  <span className="font-semibold">Salary Range:</span> {job.salaryRange}
-                                </p>
-                              )}
-                            </div>
+                            <h4 className="text-xl font-bold text-gray-900 mb-4">Qualifications</h4>
+                            <ul className="space-y-2">
+                              {formattedJob.qualifications.map((qualification, index) => (
+                                <li key={index} className="flex items-start gap-2">
+                                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
+                                  <span className="text-gray-700 text-sm leading-relaxed">{qualification}</span>
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
 
@@ -414,15 +427,15 @@ const Careers = () => {
 
             {/* Modal Body */}
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* Full Name */}
+              {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name *
+                  Name *
                 </label>
                 <input
                   type="text"
-                  name="fullName"
-                  value={formData.fullName}
+                  name="name"
+                  value={formData.name}
                   onChange={handleInputChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -478,14 +491,101 @@ const Careers = () => {
                 />
               </div>
 
-              {/* Experience */}
+              {/* Current Designation */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Designation *
+                </label>
+                <input
+                  type="text"
+                  name="currentDesignation"
+                  value={formData.currentDesignation}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your current job designation"
+                />
+              </div>
+
+              {/* Current/Last Organisation */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current/Last Organisation *
+                </label>
+                <input
+                  type="text"
+                  name="currentLastOrganisation"
+                  value={formData.currentLastOrganisation}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your current or last organization"
+                />
+              </div>
+
+              {/* Highest Education */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Highest Education *
+                </label>
+                <input
+                  type="text"
+                  name="highestEducation"
+                  value={formData.highestEducation}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your highest education qualification"
+                />
+              </div>
+
+              {/* Notice Period */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Notice Period *
+                </label>
+                <select
+                  name="noticePeriod"
+                  value={formData.noticePeriod}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                >
+                  <option value="">Select notice period</option>
+                  <option value="immediate">Immediate</option>
+                  <option value="15-days">15 days</option>
+                  <option value="1-month">1 month</option>
+                  <option value="2-months">2 months</option>
+                  <option value="3-months">3 months</option>
+                </select>
+              </div>
+
+              {/* Comfortable to Relocate */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Comfortable to Relocate *
+                </label>
+                <select
+                  name="comfortableToRelocate"
+                  value={formData.comfortableToRelocate}
+                  onChange={(e) => setFormData(prev => ({ ...prev, comfortableToRelocate: e.target.value === 'true' }))}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                >
+                  <option value="">Select option</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+
+              {/* Total Experience */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Total Experience *
                 </label>
                 <select
-                  name="experience"
-                  value={formData.experience}
+                  name="totalExperience"
+                  value={formData.totalExperience}
                   onChange={handleInputChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
@@ -499,54 +599,20 @@ const Careers = () => {
                 </select>
               </div>
 
-              {/* Current CTC */}
+              {/* Reason for Job Change */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Current CTC
+                  Reason for Job Change *
                 </label>
-                <input
-                  type="text"
-                  name="currentCTC"
-                  value={formData.currentCTC}
+                <textarea
+                  name="reasonForJobChange"
+                  value={formData.reasonForJobChange}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your current CTC"
+                  required
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+                  placeholder="Please explain your reason for job change..."
                 />
-              </div>
-
-              {/* Expected CTC */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Expected CTC
-                </label>
-                <input
-                  type="text"
-                  name="expectedCTC"
-                  value={formData.expectedCTC}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your expected CTC"
-                />
-              </div>
-
-              {/* Notice Period */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notice Period
-                </label>
-                <select
-                  name="noticePeriod"
-                  value={formData.noticePeriod}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-                >
-                  <option value="">Select notice period</option>
-                  <option value="immediate">Immediate</option>
-                  <option value="15-days">15 days</option>
-                  <option value="1-month">1 month</option>
-                  <option value="2-months">2 months</option>
-                  <option value="3-months">3 months</option>
-                </select>
               </div>
 
               {/* Resume Upload */}
@@ -601,7 +667,7 @@ const Careers = () => {
                   type="submit"
                   className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors"
                 >
-                  Send
+                  Submit Application
                 </button>
               </div>
             </form>

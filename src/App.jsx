@@ -40,6 +40,7 @@ import AdminDashboard from '@/pages/admin/AdminDashboard'
 import MediaManagement from '@/pages/admin/MediaManagement'
 import PublicationsManagement from '@/pages/admin/PublicationsManagement'
 import CareersManagement from '@/pages/admin/CareersManagement'
+import JobApplicationsManagement from '@/pages/admin/JobApplicationsManagement'
 import ContactManagement from '@/pages/admin/ContactManagement'
 import AdminHospitals from '@/pages/admin/AdminHospitals'
 import ReferralManagement from '@/pages/admin/ReferralManagement'
@@ -112,6 +113,11 @@ function App() {
             <Route path="careers" element={
               <ProtectedRoute requiredRoles={['super_admin', 'hr_manager']}>
                 <CareersManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="job-applications" element={
+              <ProtectedRoute requiredRoles={['super_admin', 'hr_manager']}>
+                <JobApplicationsManagement />
               </ProtectedRoute>
             } />
             <Route path="contacts" element={

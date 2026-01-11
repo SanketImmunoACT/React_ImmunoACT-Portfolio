@@ -6,23 +6,13 @@ const CareerForm = ({ career = null, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     title: career?.title || '',
     department: career?.department || '',
-    location: career?.location || '',
     employmentType: career?.employmentType || 'full-time',
     experienceLevel: career?.experienceLevel || 'mid-level',
-    salaryRange: career?.salaryRange || '',
-    description: career?.description || '',
     responsibilities: career?.responsibilities ? career.responsibilities.join('\n') : '',
-    requirements: career?.requirements ? career.requirements.join('\n') : '',
+    desiredQualities: career?.requirements ? career.requirements.join('\n') : '',
     qualifications: career?.qualifications ? career.qualifications.join('\n') : '',
-    benefits: career?.benefits ? career.benefits.join('\n') : '',
-    applicationDeadline: career?.applicationDeadline ? new Date(career.applicationDeadline).toISOString().split('T')[0] : '',
     status: career?.status || 'draft',
-    isRemote: career?.isRemote || false,
     tags: career?.tags ? career.tags.join(', ') : '',
-    applicationEmail: career?.applicationEmail || '',
-    applicationUrl: career?.applicationUrl || '',
-    metaTitle: career?.metaTitle || '',
-    metaDescription: career?.metaDescription || '',
     urgency: career?.urgency || 'medium',
     workSchedule: career?.workSchedule || '',
     travelRequired: career?.travelRequired || false
@@ -53,22 +43,6 @@ const CareerForm = ({ career = null, onSave, onCancel }) => {
       newErrors.department = 'Department is required';
     }
 
-    if (!formData.location.trim()) {
-      newErrors.location = 'Location is required';
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
-    }
-
-    if (formData.applicationEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.applicationEmail)) {
-      newErrors.applicationEmail = 'Please enter a valid email address';
-    }
-
-    if (formData.applicationUrl && !/^https?:\/\/.+/.test(formData.applicationUrl)) {
-      newErrors.applicationUrl = 'Please enter a valid URL';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -79,32 +53,47 @@ const CareerForm = ({ career = null, onSave, onCancel }) => {
     if (!validateForm()) return;
 
     setLoading(true);
+    setErrors({}); // Clear previous errors
 
-    const submitData = {
-      ...formData,
-      responsibilities: formData.responsibilities ? formData.responsibilities.split('\n').map(item => item.trim()).filter(item => item) : [],
-      requirements: formData.requirements ? formData.requirements.split('\n').map(item => item.trim()).filter(item => item) : [],
-      qualifications: formData.qualifications ? formData.qualifications.split('\n').map(item => item.trim()).filter(item => item) : [],
-      benefits: formData.benefits ? formData.benefits.split('\n').map(item => item.trim()).filter(item => item) : [],
-      tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
-      applicationDeadline: formData.applicationDeadline || null
-    };
+    try {
+      const submitData = {
+        ...formData,
+        responsibilities: formData.responsibilities ? formData.responsibilities.split('\n').map(item => item.trim()).filter(item => item) : [],
+        requirements: formData.desiredQualities ? formData.desiredQualities.split('\n').map(item => item.trim()).filter(item => item) : [],
+        qualifications: formData.qualifications ? formData.qualifications.split('\n').map(item => item.trim()).filter(item => item) : [],
+        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
+      };
 
-    const endpoint = career ? `/api/v1/careers/${career.id}` : '/api/v1/careers';
-    const method = career ? 'PUT' : 'POST';
+      const endpoint = career ? `/api/v1/careers/${career.id}` : '/api/v1/careers';
+      const method = career ? 'PUT' : 'POST';
 
-    const result = await apiCall(endpoint, {
-      method,
-      body: JSON.stringify(submitData)
-    });
+      const result = await apiCall(endpoint, {
+        method,
+        body: JSON.stringify(submitData)
+      });
 
-    if (result.success) {
-      onSave(result.data.career);
-    } else {
-      setErrors({ submit: result.error });
+      if (result.success) {
+        onSave(result.data.career);
+      } else {
+        // Handle validation errors from backend
+        if (result.details && Array.isArray(result.details)) {
+          const fieldErrors = {};
+          result.details.forEach(error => {
+            if (error.path) {
+              fieldErrors[error.path] = error.msg;
+            }
+          });
+          setErrors(fieldErrors);
+        } else {
+          setErrors({ submit: result.error || 'Failed to save job posting' });
+        }
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      setErrors({ submit: 'An unexpected error occurred. Please try again.' });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -166,41 +155,6 @@ const CareerForm = ({ career = null, onSave, onCancel }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Location *
-                  </label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                      errors.location ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="e.g., Mumbai, India"
-                  />
-                  {errors.location && (
-                    <p className="mt-1 text-sm text-red-600">{errors.location}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Salary Range
-                  </label>
-                  <input
-                    type="text"
-                    name="salaryRange"
-                    value={formData.salaryRange}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="e.g., ₹10,00,000 - ₹15,00,000 per annum"
-                  />
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -256,25 +210,6 @@ const CareerForm = ({ career = null, onSave, onCancel }) => {
                   </select>
                 </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Job Description *
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={4}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                    errors.description ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Describe the job role and overview"
-                />
-                {errors.description && (
-                  <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-                )}
-              </div>
             </div>
 
             {/* Job Details */}
@@ -291,7 +226,8 @@ const CareerForm = ({ career = null, onSave, onCancel }) => {
                     value={formData.responsibilities}
                     onChange={handleChange}
                     rows={5}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                    style={{ height: '120px', resize: 'none' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 overflow-y-auto"
                     placeholder="Enter each responsibility on a new line"
                   />
                   <p className="mt-1 text-sm text-gray-500">One responsibility per line</p>
@@ -299,217 +235,35 @@ const CareerForm = ({ career = null, onSave, onCancel }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Requirements
+                    Desired Qualities
                   </label>
                   <textarea
-                    name="requirements"
-                    value={formData.requirements}
+                    name="desiredQualities"
+                    value={formData.desiredQualities}
                     onChange={handleChange}
                     rows={5}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="Enter each requirement on a new line"
+                    style={{ height: '120px', resize: 'none' }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 overflow-y-auto"
+                    placeholder="Enter each desired quality on a new line"
                   />
-                  <p className="mt-1 text-sm text-gray-500">One requirement per line</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Qualifications
-                  </label>
-                  <textarea
-                    name="qualifications"
-                    value={formData.qualifications}
-                    onChange={handleChange}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="Enter each qualification on a new line"
-                  />
-                  <p className="mt-1 text-sm text-gray-500">One qualification per line</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Benefits
-                  </label>
-                  <textarea
-                    name="benefits"
-                    value={formData.benefits}
-                    onChange={handleChange}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="Enter each benefit on a new line"
-                  />
-                  <p className="mt-1 text-sm text-gray-500">One benefit per line</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Application & Settings */}
-            <div className="space-y-4">
-              <h4 className="text-md font-medium text-gray-900 border-b pb-2">Application & Settings</h4>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Application Email
-                  </label>
-                  <input
-                    type="email"
-                    name="applicationEmail"
-                    value={formData.applicationEmail}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                      errors.applicationEmail ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="careers@immunoact.com"
-                  />
-                  {errors.applicationEmail && (
-                    <p className="mt-1 text-sm text-red-600">{errors.applicationEmail}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Application URL
-                  </label>
-                  <input
-                    type="url"
-                    name="applicationUrl"
-                    value={formData.applicationUrl}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 ${
-                      errors.applicationUrl ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="https://careers.immunoact.com/apply"
-                  />
-                  {errors.applicationUrl && (
-                    <p className="mt-1 text-sm text-red-600">{errors.applicationUrl}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Application Deadline
-                  </label>
-                  <input
-                    type="date"
-                    name="applicationDeadline"
-                    value={formData.applicationDeadline}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Urgency
-                  </label>
-                  <select
-                    name="urgency"
-                    value={formData.urgency}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Work Schedule
-                  </label>
-                  <input
-                    type="text"
-                    name="workSchedule"
-                    value={formData.workSchedule}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="e.g., 9:00 AM - 6:00 PM"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="isRemote"
-                    checked={formData.isRemote}
-                    onChange={handleChange}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Remote work allowed
-                  </label>
-                </div>
-
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="travelRequired"
-                    checked={formData.travelRequired}
-                    onChange={handleChange}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Travel required
-                  </label>
+                  <p className="mt-1 text-sm text-gray-500">One desired quality per line</p>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tags
-                </label>
-                <input
-                  type="text"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="healthcare, biotech, management (comma separated)"
-                />
-                <p className="mt-1 text-sm text-gray-500">Separate tags with commas</p>
-              </div>
-            </div>
-
-            {/* SEO */}
-            <div className="space-y-4">
-              <h4 className="text-md font-medium text-gray-900 border-b pb-2">SEO (Optional)</h4>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Meta Title
-                </label>
-                <input
-                  type="text"
-                  name="metaTitle"
-                  value={formData.metaTitle}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="SEO title for search engines"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Meta Description
+                  Qualifications
                 </label>
                 <textarea
-                  name="metaDescription"
-                  value={formData.metaDescription}
+                  name="qualifications"
+                  value={formData.qualifications}
                   onChange={handleChange}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="SEO description for search engines"
+                  rows={4}
+                  style={{ height: '100px', resize: 'none' }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 overflow-y-auto"
+                  placeholder="Enter each qualification on a new line"
                 />
+                <p className="mt-1 text-sm text-gray-500">One qualification per line</p>
               </div>
             </div>
 
