@@ -190,6 +190,7 @@ function App() {
               <ScrollToTop />
               <CookieConsent />
               <AnalyticsTracker />
+              <SpeedInsights />
             </div>
           } />
         </Routes>
