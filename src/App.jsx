@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
@@ -188,6 +189,7 @@ function App() {
               <ScrollToTop />
               <CookieConsent />
               <AnalyticsTracker />
+              <SpeedInsights />
             </div>
           } />
         </Routes>
