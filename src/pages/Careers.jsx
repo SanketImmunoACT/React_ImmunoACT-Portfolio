@@ -38,7 +38,7 @@ const Careers = () => {
     try {
       const response = await fetch(`${API_URL}/api/v1/careers/public?limit=100`)
       const data = await response.json()
-      
+
       if (response.ok) {
         setJobListings(data.careers || [])
         setError('')
@@ -101,7 +101,7 @@ const Careers = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!selectedJob) {
       alert('No job selected')
       return
@@ -122,7 +122,7 @@ const Careers = () => {
     submitData.append('totalExperience', formData.totalExperience)
     submitData.append('reasonForJobChange', formData.reasonForJobChange)
     submitData.append('coverLetter', formData.coverLetter)
-    
+
     if (formData.resume) {
       submitData.append('resume', formData.resume)
     }
@@ -281,13 +281,17 @@ const Careers = () => {
                     <div className="p-6 border-b border-gray-200">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-2xl text-[#363636] mb-1">{job.title}</h3>
+                          <div className='flex gap-3 items-center justify-end'>
+                            <h3 className="text-2xl text-[#363636] mb-1">{job.title}</h3>
+                            <span class="inline-block h-1 w-1 rounded-full bg-[#362c28] align-middle"></span>
+                            {job.employmentType && (
+                              <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                                {job.employmentType.replace('-', ' ')}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-[#9E9E9E] text-xl">{job.department}</p>
-                          {job.employmentType && (
-                            <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                              {job.employmentType.replace('-', ' ')}
-                            </span>
-                          )}
+
                         </div>
                         <button
                           onClick={() => toggleJobExpansion(job.id)}
@@ -330,7 +334,7 @@ const Careers = () => {
                             <ul className="space-y-2">
                               {formattedJob.keyResponsibilities.map((responsibility, index) => (
                                 <li key={index} className="flex items-start gap-2">
-                                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
+                                  <span className="w-1.5 h-1.5 bg-gray-600 rounded-full mt-2 flex-shrink-0"></span>
                                   <span className="text-gray-700 text-sm leading-relaxed">{responsibility}</span>
                                 </li>
                               ))}
@@ -345,7 +349,7 @@ const Careers = () => {
                             <ul className="space-y-2">
                               {formattedJob.desiredQualities.map((quality, index) => (
                                 <li key={index} className="flex items-start gap-2">
-                                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
+                                  <span className="w-1.5 h-1.5 bg-gray-600 rounded-full mt-2 flex-shrink-0"></span>
                                   <span className="text-gray-700 text-sm leading-relaxed">{quality}</span>
                                 </li>
                               ))}
@@ -360,7 +364,7 @@ const Careers = () => {
                             <ul className="space-y-2">
                               {formattedJob.qualifications.map((qualification, index) => (
                                 <li key={index} className="flex items-start gap-2">
-                                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></span>
+                                  <span className="w-1.5 h-1.5 bg-gray-600 rounded-full mt-2 flex-shrink-0"></span>
                                   <span className="text-gray-700 text-sm leading-relaxed">{qualification}</span>
                                 </li>
                               ))}
@@ -372,9 +376,12 @@ const Careers = () => {
                         <div className="pt-4">
                           <button
                             onClick={() => handleApplyNow(job)}
-                            className="bg-[#FFBF00] hover:bg-yellow-500 text-black px-[18px] py-[9px] rounded-[24px] transition-colors"
+                            className="bg-[#FFBF00] hover:bg-yellow-500 text-black px-[18px] py-[9px] rounded-[24px] transition-colors flex gap-2 items-center"
                           >
-                            Apply →
+                            Apply
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" />
+                            </svg>
                           </button>
                         </div>
                       </div>
@@ -410,11 +417,11 @@ const Careers = () => {
               <div className="text-center flex-1">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Let's Get in Touch with</h2>
                 <div className="flex items-center justify-center gap-2">
-                  <img src="/api/placeholder/120/40" alt="ImmunoACT" className="h-8" />
+                  <img src="/src/assets/logos/immunoact-logo.png" alt="ImmunoACT" className="w-36" />
                 </div>
-                <p className="text-gray-600 mt-2">We're here to help you succeed</p>
+                <p className="text-gray-600 text-base mt-2">We're here to help you succeed</p>
                 {selectedJob && (
-                  <p className="text-sm text-blue-600 mt-1">Applying for: {selectedJob.title}</p>
+                  <p className="text-base text-[#363636] mt-1">Applying for: <span className='font-semibold'> {selectedJob.title}</span></p>
                 )}
               </div>
               <button
@@ -634,7 +641,7 @@ const Careers = () => {
                   />
                   <label
                     htmlFor="resume-upload"
-                    className="inline-block mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors"
+                    className="inline-block mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full cursor-pointer transition-colors"
                   >
                     Choose File
                   </label>
@@ -665,7 +672,7 @@ const Careers = () => {
               <div className="flex justify-center pt-4">
                 <button
                   type="submit"
-                  className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+                  className="bg-[#FFBF00] hover:bg-[#E6AC00] disabled:bg-gray-300 disabled:cursor-not-allowed text-[#363636] text-lg font-normal px-8 py-3 rounded-full transition-colors duration-300"
                 >
                   Submit Application
                 </button>

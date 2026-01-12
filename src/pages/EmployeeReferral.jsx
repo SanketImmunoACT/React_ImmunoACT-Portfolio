@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ImmunoActLogo } from '@/assets';
@@ -6,24 +6,21 @@ import { ImmunoActLogo } from '@/assets';
 const EmployeeReferral = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState({
     // Referrer Information
     referrerName: '',
     referrerEmail: '',
-    referrerPhone: '',
     referrerDepartment: '',
     referrerEmployeeId: '',
-    
+
     // Job Information
     jobTitle: '',
     jobDescription: '',
     department: '',
-    location: '',
     employmentType: 'Full-time',
     experienceLevel: 'Mid Level',
-    salaryRange: '',
-    urgency: 'Medium',
-    
+
     // Candidate Information (Optional)
     candidateName: '',
     candidateEmail: '',
@@ -47,34 +44,41 @@ const EmployeeReferral = () => {
     'Other'
   ];
 
-  const locations = [
-    'Mumbai, Maharashtra',
-    'Delhi, NCR',
-    'Bangalore, Karnataka',
-    'Hyderabad, Telangana',
-    'Chennai, Tamil Nadu',
-    'Pune, Maharashtra',
-    'Ahmedabad, Gujarat',
-    'Remote',
-    'Other'
-  ];
+  // Handle ESC key to close modal and focus management
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape' && showSuccessModal) {
+        setShowSuccessModal(false);
+      }
+    };
+
+    if (showSuccessModal) {
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', handleEscKey);
+    } else {
+      // Restore body scroll when modal is closed
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showSuccessModal]);
 
   // Test data function
   const fillTestData = () => {
     setFormData({
       referrerName: 'Rajesh Kumar',
       referrerEmail: 'rajesh.kumar@immunoact.com',
-      referrerPhone: '+91 98765 43210',
       referrerDepartment: 'Research & Development',
       referrerEmployeeId: 'EMP001',
       jobTitle: 'Senior Software Engineer - CAR-T Platform',
       jobDescription: 'We are looking for an experienced software engineer to join our CAR-T platform development team. The role involves developing scalable web applications for clinical trial management, patient data analysis, and regulatory compliance systems.\n\nKey Responsibilities:\n- Design and develop React-based frontend applications\n- Build robust Node.js backend APIs\n- Implement data visualization for clinical research\n- Ensure HIPAA compliance and data security\n- Collaborate with clinical and research teams\n\nRequired Skills:\n- 5+ years experience in full-stack development\n- Proficiency in React, Node.js, and databases\n- Experience with healthcare/clinical systems preferred\n- Strong understanding of data security and compliance',
       department: 'IT',
-      location: 'Mumbai, Maharashtra',
       employmentType: 'Full-time',
       experienceLevel: 'Senior Level',
-      salaryRange: '₹15-25 LPA',
-      urgency: 'High',
       candidateName: 'Priya Sharma',
       candidateEmail: 'priya.sharma@techcompany.com',
       candidatePhone: '+91 87654 32109',
@@ -100,13 +104,13 @@ const EmployeeReferral = () => {
         toast.error('Please upload only PDF, DOC, or DOCX files');
         return;
       }
-      
+
       // Validate file size (5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error('File size should be less than 5MB');
         return;
       }
-      
+
       setResumeFile(file);
     }
   };
@@ -117,14 +121,14 @@ const EmployeeReferral = () => {
 
     try {
       const submitData = new FormData();
-      
+
       // Add all form data
       Object.keys(formData).forEach(key => {
         if (formData[key]) {
           submitData.append(key, formData[key]);
         }
       });
-      
+
       // Add resume file if selected
       if (resumeFile) {
         submitData.append('candidateResume', resumeFile);
@@ -138,35 +142,27 @@ const EmployeeReferral = () => {
       const result = await response.json();
 
       if (result.success) {
-        toast.success('Job referral submitted successfully! HR will review it soon.');
+        // Show success modal
+        setShowSuccessModal(true);
         
         // Reset form
         setFormData({
           referrerName: '',
           referrerEmail: '',
-          referrerPhone: '',
           referrerDepartment: '',
           referrerEmployeeId: '',
           jobTitle: '',
           jobDescription: '',
           department: '',
-          location: '',
           employmentType: 'Full-time',
           experienceLevel: 'Mid Level',
-          salaryRange: '',
-          urgency: 'Medium',
           candidateName: '',
           candidateEmail: '',
           candidatePhone: '',
           candidateNotes: ''
         });
         setResumeFile(null);
-        
-        // Redirect to success page or home
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
-        
+
       } else {
         toast.error(result.message || 'Failed to submit referral');
       }
@@ -182,38 +178,9 @@ const EmployeeReferral = () => {
   return (
     <div className="min-h-screen bg-white font-futura">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <img 
-                src={ImmunoActLogo} 
-                alt="ImmunoACT" 
-                className="h-8 w-auto"
-                onClick={() => navigate('/')}
-                style={{ cursor: 'pointer' }}
-              />
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <button
-                onClick={() => navigate('/')}
-                className="text-gray-600 hover:text-[#E67E22] transition-colors duration-200 font-medium"
-              >
-                Home
-              </button>
-              <button
-                onClick={() => navigate('/careers')}
-                className="text-gray-600 hover:text-[#E67E22] transition-colors duration-200 font-medium"
-              >
-                Careers
-              </button>
-            </nav>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -222,7 +189,7 @@ const EmployeeReferral = () => {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Help us find great talent! Submit job referrals and candidate recommendations to our HR team.
           </p>
-          
+
           {/* Test Button - Only show in development */}
           {import.meta.env.VITE_NODE_ENV === 'development' && (
             <div className="mt-6">
@@ -241,9 +208,9 @@ const EmployeeReferral = () => {
         </div>
 
         {/* Form */}
-        <div className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            
+
             {/* Referrer Information */}
             <div>
               <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -254,7 +221,7 @@ const EmployeeReferral = () => {
                 </div>
                 Your Information
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -270,7 +237,7 @@ const EmployeeReferral = () => {
                     placeholder="Enter your full name"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email Address *
@@ -285,21 +252,7 @@ const EmployeeReferral = () => {
                     placeholder="your.email@immunoact.com"
                   />
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    name="referrerPhone"
-                    value={formData.referrerPhone}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E67E22] focus:border-[#E67E22] transition-colors"
-                    placeholder="+91 98765 43210"
-                  />
-                </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Department
@@ -316,18 +269,19 @@ const EmployeeReferral = () => {
                     ))}
                   </select>
                 </div>
-                
-                <div className="md:col-span-2">
+
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Employee ID (Optional)
+                    Employee ID *
                   </label>
                   <input
                     type="text"
                     name="referrerEmployeeId"
                     value={formData.referrerEmployeeId}
                     onChange={handleInputChange}
+                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E67E22] focus:border-[#E67E22] transition-colors"
-                    placeholder="EMP001"
+                    placeholder="IA001"
                   />
                 </div>
               </div>
@@ -337,13 +291,13 @@ const EmployeeReferral = () => {
             <div>
               <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
                 <div className="w-8 h-8 bg-[#E67E22] rounded-full flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.0" stroke="currentColor" className="size-4 text-white">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z" />
                   </svg>
                 </div>
                 Job Details
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -359,7 +313,7 @@ const EmployeeReferral = () => {
                     placeholder="e.g., Senior Software Engineer"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Department *
@@ -377,25 +331,7 @@ const EmployeeReferral = () => {
                     ))}
                   </select>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Location *
-                  </label>
-                  <select
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E67E22] focus:border-[#E67E22] transition-colors"
-                  >
-                    <option value="">Select location</option>
-                    {locations.map(loc => (
-                      <option key={loc} value={loc}>{loc}</option>
-                    ))}
-                  </select>
-                </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Employment Type *
@@ -413,7 +349,7 @@ const EmployeeReferral = () => {
                     <option value="Internship">Internship</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Experience Level *
@@ -431,48 +367,15 @@ const EmployeeReferral = () => {
                     <option value="Executive">Executive</option>
                   </select>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Salary Range
-                  </label>
-                  <input
-                    type="text"
-                    name="salaryRange"
-                    value={formData.salaryRange}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E67E22] focus:border-[#E67E22] transition-colors"
-                    placeholder="e.g., ₹8-12 LPA"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Urgency Level *
-                  </label>
-                  <select
-                    name="urgency"
-                    value={formData.urgency}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E67E22] focus:border-[#E67E22] transition-colors"
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                    <option value="Urgent">Urgent</option>
-                  </select>
-                </div>
-                
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Job Description *
+                    Job Description
                   </label>
                   <textarea
                     name="jobDescription"
                     value={formData.jobDescription}
                     onChange={handleInputChange}
-                    required
                     rows={6}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E67E22] focus:border-[#E67E22] transition-colors"
                     placeholder="Describe the role, responsibilities, and requirements..."
@@ -494,7 +397,7 @@ const EmployeeReferral = () => {
               <p className="text-sm text-gray-600 mb-6">
                 If you have a specific candidate in mind, please provide their details below.
               </p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -509,7 +412,7 @@ const EmployeeReferral = () => {
                     placeholder="Enter candidate's full name"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Candidate Email
@@ -523,7 +426,7 @@ const EmployeeReferral = () => {
                     placeholder="candidate@email.com"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Candidate Phone
@@ -537,7 +440,7 @@ const EmployeeReferral = () => {
                     placeholder="+91 98765 43210"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Resume Upload
@@ -546,13 +449,13 @@ const EmployeeReferral = () => {
                     type="file"
                     onChange={handleFileChange}
                     accept=".pdf,.doc,.docx"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E67E22] focus:border-[#E67E22] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#E67E22] file:text-white hover:file:bg-[#D35400]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E67E22] focus:border-[#E67E22] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-normal file:bg-[#FFBF00] file:text-black cursor-pointer hover:file:bg-[#E6AC00]"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     PDF, DOC, or DOCX files only. Max size: 5MB
                   </p>
                 </div>
-                
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Additional Notes about Candidate
@@ -574,14 +477,14 @@ const EmployeeReferral = () => {
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 border border-gray-300 rounded-full text-gray-700 font-medium hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-8 py-3 bg-[#E67E22] text-white font-semibold rounded-lg hover:bg-[#D35400] focus:outline-none focus:ring-2 focus:ring-[#E67E22] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center"
+                className="bg-[#FFBF00] hover:bg-[#E6AC00] disabled:bg-gray-300 disabled:cursor-not-allowed text-[#363636] text-lg font-medium px-4 py-3 rounded-full transition-colors duration-300 w-full max-w-[180px]"
               >
                 {loading ? (
                   <>
@@ -599,6 +502,124 @@ const EmployeeReferral = () => {
           </form>
         </div>
       </main>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          style={{
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+          onClick={(e) => {
+            // Close modal when clicking on backdrop
+            if (e.target === e.currentTarget) {
+              setShowSuccessModal(false);
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-2xl max-w-md w-full mx-4 transform relative"
+            style={{
+              animation: 'scaleIn 0.3s ease-out'
+            }}
+          >
+            {/* Close button */}
+            <div className="absolute top-4 right-4 z-10">
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+                aria-label="Close modal"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {/* Modal Header */}
+            <div className="text-center p-8 pb-4">
+              {/* Success Icon */}
+              <div className="mx-auto flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              {/* Success Message */}
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                🎉 Success!
+              </h3>
+              <p className="text-gray-600 text-base leading-relaxed">
+                Your job referral has been submitted successfully!
+              </p>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-8 pb-4">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="w-5 h-5 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h4 className="text-sm font-semibold text-orange-800 mb-1">
+                      What happens next?
+                    </h4>
+                    <ul className="text-sm text-orange-700 space-y-1">
+                      <li>• Our HR team will review your referral</li>
+                      <li>• We'll get back to you within 2-3 business days</li>
+                      <li>• Thank you for helping us find great talent!</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-8 pb-8">
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    navigate('/');
+                  }}
+                  className="flex-1 bg-[#FFBF00] hover:bg-[#E6AC00] text-[#363636] font-semibold py-3 px-4 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#FFBF00] focus:ring-offset-2"
+                >
+                  Go to Homepage
+                </button>
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                >
+                  Submit Another
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add CSS animations */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          
+          @keyframes scaleIn {
+            from { 
+              opacity: 0;
+              transform: scale(0.9) translateY(-10px);
+            }
+            to { 
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+          }
+        `
+      }} />
     </div>
   );
 };

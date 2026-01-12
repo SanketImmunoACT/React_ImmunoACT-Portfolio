@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
   const { user, apiCall, isSuperAdmin, isOfficeExecutive, isHRManager } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     contacts: { total: 0, pending: 0 },
     media: { total: 0, published: 0 },
@@ -10,6 +13,7 @@ const AdminDashboard = () => {
     careers: { total: 0, active: 0 }
   });
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState({});
 
   useEffect(() => {
     fetchDashboardStats();
@@ -98,6 +102,78 @@ const AdminDashboard = () => {
     return 'Administrator';
   };
 
+  // Dynamic action handlers
+  const handleQuickAction = async (actionType) => {
+    setActionLoading(prev => ({ ...prev, [actionType]: true }));
+
+    try {
+      switch (actionType) {
+        case 'add-media':
+          toast.success('Opening media creation...', {
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+              </svg>
+            ),
+            duration: 2000
+          });
+          // Navigate to media management with create action
+          navigate('/admin/media?action=create');
+          break;
+
+        case 'add-publication':
+          toast.success('Opening publication creation...', {
+            icon: (
+
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+              </svg>
+            ),
+            duration: 2000
+          });
+          // Navigate to publications with create action
+          navigate('/admin/publications?action=create');
+          break;
+
+        case 'post-job':
+          toast.success('Opening job posting creation...', {
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.0" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z" />
+              </svg>
+
+            ),
+            duration: 2000
+          });
+          // Navigate to careers with create action
+          navigate('/admin/careers?action=create');
+          break;
+
+        case 'view-contacts':
+          toast.success('Loading recent contact inquiries...', {
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.0" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+              </svg>
+            ),
+            duration: 2000
+          });
+          // Navigate to contacts with pending filter
+          navigate('/admin/contacts?status=pending');
+          break;
+
+        default:
+          toast.error('Action not implemented yet');
+      }
+    } catch (error) {
+      toast.error('Failed to perform action');
+    } finally {
+      setTimeout(() => {
+        setActionLoading(prev => ({ ...prev, [actionType]: false }));
+      }, 1500);
+    }
+  };
+
   const getQuickActions = () => {
     const actions = [];
 
@@ -105,7 +181,7 @@ const AdminDashboard = () => {
       actions.push(
         {
           name: 'Add Media Article',
-          href: '/admin/media/new',
+          actionType: 'add-media',
           icon: (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
@@ -116,7 +192,7 @@ const AdminDashboard = () => {
         },
         {
           name: 'Add Publication',
-          href: '/admin/publications/new',
+          actionType: 'add-publication',
           icon: (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -132,7 +208,7 @@ const AdminDashboard = () => {
       actions.push(
         {
           name: 'Post New Job',
-          href: '/admin/careers/new',
+          actionType: 'post-job',
           icon: (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -144,14 +220,10 @@ const AdminDashboard = () => {
       );
     }
 
-    if (isSuperAdmin) {
-      // No additional actions for super admin beyond the common ones
-    }
-
     actions.push(
       {
         name: 'View Contacts',
-        href: '/admin/contacts',
+        actionType: 'view-contacts',
         icon: (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -268,33 +340,46 @@ const AdminDashboard = () => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {getQuickActions().map((action, index) => (
-            <a
+            <button
               key={action.name}
-              href={action.href}
-              className="group relative overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100/50 hover:from-white hover:to-slate-50 border border-slate-200/60 rounded-xl p-6 transition-all duration-300 hover:shadow-medium hover:-translate-y-1 animate-slide-up"
+              onClick={() => handleQuickAction(action.actionType)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleQuickAction(action.actionType);
+                }
+              }}
+              disabled={actionLoading[action.actionType]}
+              className="group relative overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100/50 hover:from-white hover:to-slate-50 border border-slate-200/60 rounded-xl p-6 transition-all duration-300 hover:shadow-medium hover:-translate-y-1 animate-slide-up disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-left w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
               style={{ animationDelay: `${index * 100}ms` }}
+              aria-label={`${action.name} - ${action.description}`}
+              title={actionLoading[action.actionType] ? 'Loading...' : `Click to ${action.description.toLowerCase()}`}
             >
               <div className="flex items-center">
-                <div className={`flex-shrink-0 w-12 h-12 bg-gradient-to-br ${action.gradient || 'from-slate-400 to-slate-600'} rounded-xl flex items-center justify-center text-white shadow-medium group-hover:scale-110 transition-transform duration-300`}>
-                  {action.icon}
+                <div className={`flex-shrink-0 w-12 h-12 bg-gradient-to-br ${action.gradient || 'from-slate-400 to-slate-600'} rounded-xl flex items-center justify-center text-white shadow-medium group-hover:scale-110 transition-transform duration-300 ${actionLoading[action.actionType] ? 'animate-pulse' : ''}`}>
+                  {actionLoading[action.actionType] ? (
+                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                  ) : (
+                    action.icon
+                  )}
                 </div>
                 <div className="ml-4 flex-1">
                   <p className="font-semibold text-slate-900 group-hover:text-slate-800 transition-colors">
                     {action.name}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    {action.description}
+                    {actionLoading[action.actionType] ? 'Loading...' : action.description}
                   </p>
                 </div>
               </div>
               <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-white/20 to-transparent rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-500"></div>
-            </a>
+            </button>
           ))}
         </div>
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white shadow-soft rounded-2xl p-8 border border-slate-200/60">
+      {/* <div className="bg-white shadow-soft rounded-2xl p-8 border border-slate-200/60">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold text-slate-900">Recent Activity</h2>
@@ -308,7 +393,7 @@ const AdminDashboard = () => {
           </button>
         </div>
         <RecentActivityFeed />
-      </div>
+      </div> */}
     </div>
   );
 };

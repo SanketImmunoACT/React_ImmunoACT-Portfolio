@@ -170,14 +170,14 @@ const AdminLayout = () => {
                   </svg>
                 </button>
                 
-                <div className="flex-1 max-w-lg">
+                {/* <div className="flex-1 max-w-lg">
                   <GlobalSearch />
-                </div>
+                </div> */}
               </div>
               
               <div className="flex items-center space-x-4">
                 {/* Notifications */}
-                <NotificationCenter />
+                {/* <NotificationCenter /> */}
                 
                 {/* User menu */}
                 <div className="flex items-center space-x-3">

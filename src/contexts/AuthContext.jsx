@@ -5,7 +5,7 @@ const decodeToken = (token) => {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
       return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
     return JSON.parse(jsonPayload);
@@ -19,11 +19,11 @@ const decodeToken = (token) => {
 const isTokenExpired = (token, bufferMinutes = 5) => {
   const decoded = decodeToken(token);
   if (!decoded || !decoded.exp) return true;
-  
+
   const currentTime = Date.now() / 1000;
   const expirationTime = decoded.exp;
   const bufferTime = bufferMinutes * 60; // Convert minutes to seconds
-  
+
   return currentTime >= (expirationTime - bufferTime);
 };
 
@@ -69,13 +69,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('adminToken');
     setToken(null);
     setUser(null);
-    
+
     // Clear the token check interval
     if (tokenCheckInterval) {
       clearInterval(tokenCheckInterval);
       setTokenCheckInterval(null);
     }
-    
+
     // Redirect to login page
     window.location.href = '/admin/login';
   };
@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async (retryCount = 0) => {
       const storedToken = localStorage.getItem('adminToken');
-      
+
       if (!storedToken) {
         setLoading(false);
         return;
@@ -139,7 +139,7 @@ export const AuthProvider = ({ children }) => {
           const data = await response.json();
           setUser(data.user);
           setToken(storedToken);
-          
+
           // Setup token monitoring for automatic logout
           setupTokenMonitoring(storedToken);
         } else {
@@ -149,20 +149,20 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('Auth check failed:', error);
-        
+
         // Handle different types of errors
-        if ((error.message.includes('CORS') || 
-            error.message.includes('NetworkError') || 
-            error.message.includes('Failed to fetch') ||
-            error.name === 'TypeError') && retryCount < 2) {
+        if ((error.message.includes('CORS') ||
+          error.message.includes('NetworkError') ||
+          error.message.includes('Failed to fetch') ||
+          error.name === 'TypeError') && retryCount < 2) {
           console.log(`Network/CORS error during token verification, retrying... (${retryCount + 1}/3)`);
           // Retry after a short delay
           setTimeout(() => checkAuth(retryCount + 1), 1000 * (retryCount + 1));
           return;
-        } else if (error.message.includes('CORS') || 
-                   error.message.includes('NetworkError') || 
-                   error.message.includes('Failed to fetch') ||
-                   error.name === 'TypeError') {
+        } else if (error.message.includes('CORS') ||
+          error.message.includes('NetworkError') ||
+          error.message.includes('Failed to fetch') ||
+          error.name === 'TypeError') {
           console.log('Network/CORS error during token verification, keeping token for retry');
           // Still setup monitoring even with network errors
           if (setupTokenMonitoring(storedToken)) {
@@ -172,8 +172,8 @@ export const AuthProvider = ({ children }) => {
               const decoded = decodeToken(storedToken);
               if (decoded && decoded.userId) {
                 // Set a minimal user object to prevent logout
-                setUser({ 
-                  id: decoded.userId, 
+                setUser({
+                  id: decoded.userId,
                   role: decoded.role || 'office_executive',
                   firstName: 'User',
                   lastName: ''
@@ -235,9 +235,9 @@ export const AuthProvider = ({ children }) => {
 
     } catch (error) {
       console.error('Login error:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Login failed' 
+      return {
+        success: false,
+        error: error.message || 'Login failed'
       };
     }
   };
@@ -260,7 +260,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('adminToken');
       setToken(null);
       setUser(null);
-      
+
       // Clear the token check interval
       if (tokenCheckInterval) {
         clearInterval(tokenCheckInterval);
@@ -290,9 +290,9 @@ export const AuthProvider = ({ children }) => {
 
     } catch (error) {
       console.error('Password change error:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Password change failed' 
+      return {
+        success: false,
+        error: error.message || 'Password change failed'
       };
     }
   };
@@ -300,11 +300,23 @@ export const AuthProvider = ({ children }) => {
   // Helper function to make authenticated API calls
   const apiCall = async (endpoint, options = {}) => {
     const url = `${API_URL}${endpoint}`;
+
+    // Check if we have a token before making the call
+    const currentToken = token || localStorage.getItem('adminToken');
+
+    if (!currentToken) {
+      console.log('No token available for API call');
+      return {
+        success: false,
+        error: 'Authentication required. Please log in again.'
+      };
+    }
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-        ...options.headers
+        ...options.headers,
+        'Authorization': `Bearer ${currentToken}`
       },
       credentials: 'include',
       mode: 'cors',
@@ -312,18 +324,40 @@ export const AuthProvider = ({ children }) => {
     };
 
     try {
+      // console.log(`Making API call to ${endpoint} with token:`, currentToken ? 'Present' : 'Missing');
+      // console.log('Request headers:', config.headers);
+      // console.log('Full config:', config);
+
       const response = await fetch(url, config);
-      
+
       // Handle CORS and network errors
       if (!response.ok) {
         const data = await response.json().catch(() => ({ message: 'Network error' }));
-        
-        // If unauthorized, logout user only if it's not a CORS issue
+
+        console.log(`API call failed with status ${response.status}:`, data);
+
+        // If unauthorized, check if it's a permission issue vs expired token
         if (response.status === 401 && !data.message.includes('CORS')) {
-          console.log('Unauthorized response, logging out user');
-          logout();
+          console.log('Unauthorized response:', data);
+
+          // Don't auto-logout, just return the error
+          return {
+            success: false,
+            error: data.message || 'Authentication failed - please log in again',
+            status: 401,
+            needsReauth: true
+          };
         }
-        
+
+        if (response.status === 403) {
+          console.log('Forbidden response:', data);
+          return {
+            success: false,
+            error: data.message || 'Access denied - insufficient permissions',
+            status: 403
+          };
+        }
+
         throw new Error(data.message || `HTTP ${response.status}`);
       }
 
@@ -332,22 +366,22 @@ export const AuthProvider = ({ children }) => {
 
     } catch (error) {
       console.error(`API call to ${endpoint} failed:`, error);
-      
+
       // Don't logout on network/CORS errors
-      if (error.message.includes('CORS') || 
-          error.message.includes('NetworkError') || 
-          error.message.includes('Failed to fetch') ||
-          error.name === 'TypeError') {
+      if (error.message.includes('CORS') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('Failed to fetch') ||
+        error.name === 'TypeError') {
         console.log('Network/CORS error, not logging out user');
-        return { 
-          success: false, 
-          error: 'Network error - please check your connection and try again' 
+        return {
+          success: false,
+          error: 'Network error - please check your connection and try again'
         };
       }
-      
-      return { 
-        success: false, 
-        error: error.message || 'API call failed' 
+
+      return {
+        success: false,
+        error: error.message || 'API call failed'
       };
     }
   };

@@ -5,15 +5,15 @@ import toast from 'react-hot-toast';
 
 const ReferralManagement = () => {
   const { apiCall, user, token } = useAuth();
-  const { searchInput, debouncedSearch, isSearching, setSearchInput, clearSearch } = useDebounceSearch();
+  const { searchInput, debouncedSearch, setSearchInput, clearSearch } = useDebounceSearch();
   const [referrals, setReferrals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({
     search: '',
     status: '',
-    department: '',
-    urgency: ''
+    department: ''
   });
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -22,22 +22,63 @@ const ReferralManagement = () => {
   });
   const [selectedReferral, setSelectedReferral] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [stats, setStats] = useState({
-    totalReferrals: 0,
-    pendingReferrals: 0,
-    underReviewReferrals: 0,
-    approvedReferrals: 0,
-    convertedReferrals: 0,
-    urgentReferrals: 0
-  });
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  // Check authentication
+  useEffect(() => {
+    if (!user || !token) {
+      window.location.href = '/admin/login';
+      return;
+    }
+  }, [user, token]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.kebab-menu')) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   // Simple direct data fetching
   const loadData = async () => {
+    if (loadingData) {
+      return;
+    }
+    
+    setLoadingData(true);
     setLoading(true);
     
     try {
-      // Fetch referrals
-      const referralsResult = await apiCall('/api/v1/job-referrals?page=1&limit=10');
+      // Check authentication first
+      if (!token || !user) {
+        window.location.href = '/admin/login';
+        return;
+      }
+
+      // Build query parameters for filtering
+      const queryParams = new URLSearchParams({
+        page: pagination.currentPage.toString(),
+        limit: '10'
+      });
+
+      // Add filters if they exist
+      if (filters.search) {
+        queryParams.append('search', filters.search);
+      }
+      if (filters.status) {
+        queryParams.append('status', filters.status);
+      }
+      if (filters.department) {
+        queryParams.append('department', filters.department);
+      }
+
+      // Fetch referrals with filters
+      const referralsResult = await apiCall(`/api/v1/job-referrals?${queryParams.toString()}`);
       
       if (referralsResult?.success && referralsResult?.data?.data?.referrals) {
         setReferrals(referralsResult.data.data.referrals);
@@ -48,26 +89,28 @@ const ReferralManagement = () => {
           hasNext: false,
           hasPrev: false
         });
-      }
-      
-      // Fetch stats
-      const statsResult = await apiCall('/api/v1/job-referrals/stats');
-      if (statsResult?.success && statsResult?.data) {
-        setStats(statsResult.data);
+      } else if (referralsResult?.status === 401) {
+        toast.error('Session expired. Please log in again.');
+        setTimeout(() => {
+          window.location.href = '/admin/login';
+        }, 2000);
+        return;
       }
       
     } catch (error) {
-      console.error('Error loading referral data:', error);
       setError('Failed to load data');
     } finally {
       setLoading(false);
+      setLoadingData(false);
     }
   };
 
-  // Load data on mount
+  // Load data on mount and when filters/pagination change (like JobApplicationsManagement)
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user && token) {
+      loadData();
+    }
+  }, [user, token, filters.status, filters.search, filters.department, pagination.currentPage]);
 
   // Update search filter when debounced search changes
   useEffect(() => {
@@ -79,22 +122,26 @@ const ReferralManagement = () => {
     await loadData();
   };
 
-  const fetchStats = async () => {
-    await loadData();
-  };
-
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setPagination(prev => ({ ...prev, currentPage: 1 }));
+    // Data will be automatically loaded by useEffect watching filters
   };
 
   const handleStatusUpdate = async (referralId, newStatus, hrNotes = '', priority = 'Medium') => {
     try {
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
+
+      if (!user) {
+        toast.error('User information not available. Please refresh and try again.');
+        return;
+      }
+
       const result = await apiCall(`/api/v1/job-referrals/${referralId}/status`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           status: newStatus,
           hrNotes,
@@ -105,42 +152,24 @@ const ReferralManagement = () => {
       if (result.success) {
         toast.success('Referral status updated successfully');
         fetchReferrals();
-        fetchStats();
         setShowDetailsModal(false);
       } else {
-        toast.error(result.error || 'Failed to update status');
+        // Handle different types of errors
+        if (result.status === 401 || result.needsReauth) {
+          toast.error('Your session has expired. Please log in again.');
+          // Show a confirmation dialog before redirecting
+          if (confirm('Your session has expired. Would you like to go to the login page now?')) {
+            logout();
+            window.location.href = '/admin/login';
+          }
+        } else if (result.status === 403) {
+          toast.error('Access denied. You do not have permission to update referral status.');
+        } else {
+          toast.error(result.error || 'Failed to update status');
+        }
       }
     } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Failed to update status');
-    }
-  };
-
-  const handleConvertToJob = async (referralId) => {
-    if (!confirm('Are you sure you want to convert this referral to a job posting?')) return;
-
-    try {
-      const result = await apiCall(`/api/v1/job-referrals/${referralId}/convert`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          // You can customize the job data here if needed
-        })
-      });
-
-      if (result.success) {
-        toast.success('Referral converted to job posting successfully');
-        fetchReferrals();
-        fetchStats();
-        setShowDetailsModal(false);
-      } else {
-        toast.error(result.error || 'Failed to convert referral');
-      }
-    } catch (error) {
-      console.error('Error converting referral:', error);
-      toast.error('Failed to convert referral');
+      toast.error('Failed to update status: ' + error.message);
     }
   };
 
@@ -155,12 +184,10 @@ const ReferralManagement = () => {
       if (result.success) {
         toast.success('Referral deleted successfully');
         fetchReferrals();
-        fetchStats();
       } else {
         toast.error(result.error || 'Failed to delete referral');
       }
     } catch (error) {
-      console.error('Error deleting referral:', error);
       toast.error('Failed to delete referral');
     }
   };
@@ -170,20 +197,9 @@ const ReferralManagement = () => {
       'Pending': 'bg-yellow-100 text-yellow-800 border border-yellow-200',
       'Under Review': 'bg-blue-100 text-blue-800 border border-blue-200',
       'Approved': 'bg-green-100 text-green-800 border border-green-200',
-      'Rejected': 'bg-red-100 text-red-800 border border-red-200',
-      'Converted to Job': 'bg-purple-100 text-purple-800 border border-purple-200'
+      'Rejected': 'bg-red-100 text-red-800 border border-red-200'
     };
     return `inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${colors[status] || 'bg-gray-100 text-gray-800 border border-gray-200'}`;
-  };
-
-  const getUrgencyBadge = (urgency) => {
-    const colors = {
-      'Low': 'bg-gray-100 text-gray-800',
-      'Medium': 'bg-blue-100 text-blue-800',
-      'High': 'bg-orange-100 text-orange-800',
-      'Urgent': 'bg-red-100 text-red-800'
-    };
-    return `inline-flex items-center px-2 py-1 text-xs font-medium rounded ${colors[urgency] || 'bg-gray-100 text-gray-800'}`;
   };
 
   if (loading && referrals.length === 0) {
@@ -199,67 +215,11 @@ const ReferralManagement = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header with Stats */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Referral Management</h1>
           <p className="text-slate-600 mt-1">Manage employee job referrals and candidate recommendations</p>
-        </div>
-        <div className="flex items-center space-x-4">
-          {/* Test Button - Only show in development */}
-          {import.meta.env.VITE_NODE_ENV === 'development' && (
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={async () => {
-                  console.log('=== SETTING UP REFERRALS TABLE ===');
-                  const setupResult = await apiCall('/api/v1/setup/referrals-table', {
-                    method: 'POST'
-                  });
-                  console.log('Setup Result:', setupResult);
-                  if (setupResult.success) {
-                    toast.success('Referrals table created successfully!');
-                    fetchReferrals();
-                    fetchStats();
-                  } else {
-                    toast.error('Failed to setup table: ' + setupResult.error);
-                  }
-                }}
-                className="px-3 py-1 bg-green-200 hover:bg-green-300 text-green-800 rounded-lg text-xs font-medium"
-              >
-                Setup Table
-              </button>
-              <button
-                onClick={async () => {
-                  console.log('=== MANUAL REFERRAL API TEST ===');
-                  const statsResult = await apiCall('/api/v1/job-referrals/stats');
-                  console.log('Stats Result:', statsResult);
-                  const referralsResult = await apiCall('/api/v1/job-referrals?limit=5');
-                  console.log('Referrals Result:', referralsResult);
-                }}
-                className="px-3 py-1 bg-yellow-200 hover:bg-yellow-300 text-yellow-800 rounded-lg text-xs font-medium"
-              >
-                Test API
-              </button>
-            </div>
-          )}
-          <div className="flex items-center space-x-4 text-sm">
-            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
-              <span className="text-slate-500">Total:</span>
-              <span className="font-semibold text-slate-900 ml-1">{stats?.totalReferrals || 0}</span>
-            </div>
-            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
-              <span className="text-slate-500">Pending:</span>
-              <span className="font-semibold text-yellow-600 ml-1">{stats?.pendingReferrals || 0}</span>
-            </div>
-            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
-              <span className="text-slate-500">Converted:</span>
-              <span className="font-semibold text-purple-600 ml-1">{stats?.convertedReferrals || 0}</span>
-            </div>
-            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-soft">
-              <span className="text-slate-500">Urgent:</span>
-              <span className="font-semibold text-red-600 ml-1">{stats?.urgentReferrals || 0}</span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -276,28 +236,32 @@ const ReferralManagement = () => {
 
       {/* Filters */}
       <div className="bg-white shadow-soft rounded-2xl p-6 border border-slate-200/60">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
               Search
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                {isSearching ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-orange-500"></div>
-                ) : (
-                  <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                )}
-              </div>
               <input
                 type="text"
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(e) => {
+                  e.preventDefault();
+                  setSearchInput(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
                 placeholder="Search referrals..."
-                className="w-full pl-10 pr-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200"
+                className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200"
               />
+              {(loadingData || searchInput !== debouncedSearch) && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent"></div>
+                </div>
+              )}
             </div>
           </div>
           <div>
@@ -314,7 +278,6 @@ const ReferralManagement = () => {
               <option value="Under Review">Under Review</option>
               <option value="Approved">Approved</option>
               <option value="Rejected">Rejected</option>
-              <option value="Converted to Job">Converted to Job</option>
             </select>
           </div>
           <div>
@@ -340,33 +303,45 @@ const ReferralManagement = () => {
               <option value="Operations">Operations</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Urgency
-            </label>
-            <select
-              value={filters.urgency}
-              onChange={(e) => handleFilterChange('urgency', e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300/60 rounded-xl bg-white/50 backdrop-blur-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200"
-            >
-              <option value="">All Urgency</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Urgent">Urgent</option>
-            </select>
-          </div>
           <div className="flex items-end">
+            <div className="flex space-x-2">
             <button
               onClick={() => {
                 clearSearch();
-                setFilters({ search: '', status: '', department: '', urgency: '' });
+                setFilters({ search: '', status: '', department: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}
-              className="px-4 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors font-medium"
+              className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 rounded-lg transition-all duration-200 font-medium border border-slate-200 text-sm"
             >
               Clear Filters
             </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await loadData();
+                    toast.success('Data refreshed successfully');
+                  } catch (error) {
+                    toast.error('Failed to refresh data');
+                  }
+                }}
+                disabled={loadingData}
+                className="px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 hover:text-orange-900 rounded-lg transition-all duration-200 font-medium border border-orange-200 disabled:opacity-50 text-sm"
+              >
+                {loadingData ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent mr-2"></div>
+                    Refreshing...
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                  </div>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -377,22 +352,19 @@ const ReferralManagement = () => {
           <table className="min-w-full divide-y divide-slate-200/60">
             <thead className="bg-gradient-to-r from-slate-50 to-slate-100/50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Job Details
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Referrer
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Urgency
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -400,20 +372,20 @@ const ReferralManagement = () => {
             <tbody className="bg-white divide-y divide-slate-200/60">
               {Array.isArray(referrals) && referrals.map((referral, index) => (
                 <tr key={referral.id} className="hover:bg-slate-50/50 transition-colors animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <div>
                       <div className="text-sm font-semibold text-slate-900">
                         {referral.jobTitle}
                       </div>
                       <div className="text-sm text-slate-500">
-                        {referral.department} • {referral.location}
+                        {referral.department}
                       </div>
                       <div className="text-xs text-slate-400">
                         {referral.employmentType} • {referral.experienceLevel}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <div className="text-sm text-slate-900">
                       {referral.referrerName}
                     </div>
@@ -426,17 +398,32 @@ const ReferralManagement = () => {
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={getStatusBadge(referral.status)}>
+                  <td className="px-6 py-4 text-center">
+                    <span className={getStatusBadge(referral.status)} style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '4px 12px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      borderRadius: '9999px',
+                      backgroundColor: referral.status === 'Pending' ? '#fef3c7' : 
+                                     referral.status === 'Under Review' ? '#dbeafe' :
+                                     referral.status === 'Approved' ? '#d1fae5' :
+                                     referral.status === 'Rejected' ? '#fee2e2' : '#f3f4f6',
+                      color: referral.status === 'Pending' ? '#92400e' : 
+                             referral.status === 'Under Review' ? '#1e40af' :
+                             referral.status === 'Approved' ? '#065f46' :
+                             referral.status === 'Rejected' ? '#991b1b' : '#374151',
+                      border: '1px solid',
+                      borderColor: referral.status === 'Pending' ? '#fcd34d' : 
+                                   referral.status === 'Under Review' ? '#60a5fa' :
+                                   referral.status === 'Approved' ? '#34d399' :
+                                   referral.status === 'Rejected' ? '#f87171' : '#d1d5db'
+                    }}>
                       {referral.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={getUrgencyBadge(referral.urgency)}>
-                      {referral.urgency}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <div className="text-sm text-slate-900">
                       {new Date(referral.createdAt).toLocaleDateString()}
                     </div>
@@ -444,41 +431,51 @@ const ReferralManagement = () => {
                       {new Date(referral.createdAt).toLocaleTimeString()}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
+                  <td className="px-6 py-4 text-center">
+                    <div className="relative inline-block kebab-menu">
                       <button
-                        onClick={() => {
-                          setSelectedReferral(referral);
-                          setShowDetailsModal(true);
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === referral.id ? null : referral.id);
                         }}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
+                        className="inline-flex items-center justify-center w-8 h-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
                       >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                         </svg>
-                        View
                       </button>
-                      {referral.status === 'Approved' && (
-                        <button
-                          onClick={() => handleConvertToJob(referral.id)}
-                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-lg transition-colors"
-                        >
-                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                          </svg>
-                          Convert
-                        </button>
+                      {openMenuId === referral.id && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 z-10">
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                setSelectedReferral(referral);
+                                setShowDetailsModal(true);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                            >
+                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              View Details
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleDelete(referral.id);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            >
+                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Delete
+                            </button>
+                          </div>
+                        </div>
                       )}
-                      <button
-                        onClick={() => handleDelete(referral.id)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
-                      >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -543,7 +540,7 @@ const ReferralManagement = () => {
             <button
               onClick={() => {
                 clearSearch();
-                setFilters({ search: '', status: '', department: '', urgency: '' });
+                setFilters({ search: '', status: '', department: '' });
                 setPagination(prev => ({ ...prev, currentPage: 1 }));
               }}
               className="mt-4 text-orange-600 hover:text-orange-800 font-medium"
@@ -560,7 +557,6 @@ const ReferralManagement = () => {
           referral={selectedReferral}
           onClose={() => setShowDetailsModal(false)}
           onStatusUpdate={handleStatusUpdate}
-          onConvertToJob={handleConvertToJob}
         />
       )}
     </div>
@@ -568,7 +564,7 @@ const ReferralManagement = () => {
 };
 
 // Referral Details Modal Component
-const ReferralDetailsModal = ({ referral, onClose, onStatusUpdate, onConvertToJob }) => {
+const ReferralDetailsModal = ({ referral, onClose, onStatusUpdate }) => {
   const [status, setStatus] = useState(referral.status);
   const [hrNotes, setHrNotes] = useState(referral.hrNotes || '');
   const [priority, setPriority] = useState(referral.priority || 'Medium');
@@ -671,7 +667,7 @@ const ReferralDetailsModal = ({ referral, onClose, onStatusUpdate, onConvertToJo
                   <label className="block text-sm font-medium text-gray-700">Phone</label>
                   <p className="mt-1 text-sm text-gray-900">{referral.candidatePhone || 'Not provided'}</p>
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700">Resume</label>
                   {referral.candidateResume ? (
                     <a
@@ -685,7 +681,7 @@ const ReferralDetailsModal = ({ referral, onClose, onStatusUpdate, onConvertToJo
                   ) : (
                     <p className="mt-1 text-sm text-gray-900">Not provided</p>
                   )}
-                </div>
+                </div> */}
                 {referral.candidateNotes && (
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">Notes</label>
@@ -738,15 +734,6 @@ const ReferralDetailsModal = ({ referral, onClose, onStatusUpdate, onConvertToJo
             </div>
 
             <div className="flex justify-end space-x-4 mt-6">
-              {status === 'Approved' && (
-                <button
-                  type="button"
-                  onClick={() => onConvertToJob(referral.id)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  Convert to Job
-                </button>
-              )}
               <button
                 type="button"
                 onClick={onClose}
